@@ -1,0 +1,36 @@
+body {
+    padding: 0;
+    margin: 0;
+    font-family: sans-serif;
+    color: #fff;
+    background: #0c0c0c;
+    text-align: center;
+}
+
+iframe {
+    margin: auto;
+    width: 350px;
+}
+
+.nombre{
+    width: 350px;
+    display: block;
+    margin-bottom: 35px;
+}
+.unVideo{
+
+    width: 350px;
+    display:inline-block;
+}
+.nombre p{
+    margin: 0;
+}
+
+.titulo {
+    color: #09b;
+}
+.introduccion{    
+    width: 95%;
+    text-align: left;
+    margin: auto;
+}
