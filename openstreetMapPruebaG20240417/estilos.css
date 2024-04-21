@@ -1,0 +1,102 @@
+body {
+
+    background-color: #a0a;
+}
+
+#map {
+    height: 400px;
+    width: 80%;
+
+}
+
+.contenedor {
+    display: flex;
+    justify-content: center;
+    /* Centra horizontalmente */
+    align-items: center;
+    /* Centra verticalmente */
+    text-align: center;
+    /* Centra el texto horizontalmente */
+}
+
+.encabezado {
+    display: flex;
+    justify-content: center;
+    /* Centra horizontalmente */
+    align-items: center;
+    /* Centra verticalmente */
+    text-align: center;
+    /* Centra el texto horizontalmente */
+}
+
+/* Estilos generales para los botones */
+.recordBtn,
+.stopBtn,
+.playBtn {
+    background-color: transparent;
+    /* Fondo transparente */
+    border: none;
+    /* Sin borde */
+    color: white;
+    /* Color del texto */
+    padding: 0;
+    /* Sin relleno */
+    text-align: center;
+    /* Alineación del texto */
+    text-decoration: none;
+    /* Sin decoración de texto */
+    display: inline-block;
+    /* Mostrar como un elemento en línea */
+    font-size: 16px;
+    /* Tamaño de fuente */
+    margin: 4px;
+    /* Margen exterior */
+    cursor: pointer;
+    /* Cursor de ratón */
+    border-radius: 50%;
+    /* Borde redondeado para botón de grabar */
+    width: 50px;
+    /* Ancho */
+    height: 50px;
+    /* Alto */
+}
+
+/* Estilo para el botón de grabar */
+.recordBtn {
+    background-color: #f44336;
+    /* Color rojo */
+}
+
+/* Estilo para el botón de detener */
+.stopBtn {
+    background-color: #000;
+    /* Color negro */
+}
+
+/* Estilo para el botón de reproducir */
+.playBtn {
+    background-color: transparent;
+    /* Fondo transparente */
+}
+
+/* Estilos para los íconos dentro de los botones */
+.recordBtn i,
+.stopBtn i,
+.playBtn i {
+    font-size: 24px;
+    /* Tamaño de fuente del ícono */
+    vertical-align: middle;
+    /* Alineación vertical al centro */
+}
+
+/* Estilo específico para el botón de detener */
+.stopBtn i {
+    margin-left: 2px;
+    /* Margen a la izquierda del ícono */
+}
+
+/* Estilo específico para el botón de reproducir */
+.playBtn i {
+    /* transform: rotate(0deg);*/
+    /* Rotación de 90 grados para el ícono */
+}

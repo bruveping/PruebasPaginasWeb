@@ -1,0 +1,11 @@
+[
+    {"name": "Localización 1", "lat": -34.601777, "lon": -58.461563, "audio": "audio001.mp3"},
+    {"name": "Localización 2", "lat": -34.602526, "lon": -58.464567, "audio": "audio002.mp3"},
+    {"name": "Localización 3", "lat": -34.603392, "lon": -58.465704, "audio": "audio003.mp3"},
+    {"name": "Localización 4", "lat": -34.536312, "lon": -58.713828, "audio": "audio004.mp3"},
+    {"name": "Localización 5", "lat": -34.536427, "lon": -58.713205, "audio": "audio005.mp3"},
+    {"name": "Localización 6", "lat": -34.522011, "lon": -58.700901, "audio": "audio006.mp3"},
+    {"name": "Localización 7", "lat": -34.522391, "lon": -58.699935, "audio": "audio007.mp3"},
+    {"name": "Localización 8", "lat": -34.520764, "lon": -58.69941, "audio": "audio008.mp3"}
+
+]
