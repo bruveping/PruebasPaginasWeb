@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Ángel Jara — Portafolio: artista sonoro y visual. Improvisación, livecoding, Pure Data, visualización de datos y experimentación estética.">
+    <meta name="author" content="Ángel Jara">
+    <meta name="keywords" content="arte sonoro, livecoding, visualización de datos, Pure Data, portafolio">
+    <title>Ángel Jara — Artista sonoro y visual</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#0b0b0d">
+    <style>
+        /* Variables y resets */
+        :root{
+            --bg:#0b0b0d;
+            --paper:#0f1113;
+            --muted:#9aa2a6;
+            --accent:#6ce1d6; /* acento sutil */
+            --glass: rgba(255,255,255,0.03);
+            --card:#0f1214;
+            --radius:12px;
+            --fw-heading:700;
+            --fw-body:400;
+            --max-width:1200px;
+            --gap:20px;
+        }
+        [data-theme="light"]{
+            --bg:#ffffff;
+            --paper:#fbfbfb;
+            --muted:#4a5560;
+            --accent:#0aa3a0;
+            --glass: rgba(11,11,13,0.04);
+            --card:#ffffff;
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%; margin:0; font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:var(--bg); color: #e6eef0; scroll-behavior:smooth}
+        a{color:inherit; text-decoration:none}
+
+        /* Layout */
+        .wrap{max-width:var(--max-width); margin:0 auto; padding:40px 24px}
+        header.nav{position:sticky; top:12px; z-index:40}
+        nav{display:flex; gap:16px; align-items:center; justify-content:space-between}
+        .brand{display:flex; gap:18px; align-items:center}
+        .logo{width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg,var(--accent), #9befe8); display:flex; align-items:center; justify-content:center; color:#052425; font-weight:700}
+        .navlinks{display:flex; gap:16px; align-items:center}
+        .navlinks a{padding:8px 12px; border-radius:8px; color:var(--muted); font-size:0.95rem}
+        .navlinks a:hover{background:var(--glass); color:var(--accent)}
+        .controls{display:flex; gap:8px; align-items:center}
+
+        /* Hero */
+        .hero{min-height:72vh; display:grid; grid-template-columns:1fr; align-items:center; position:relative; overflow:hidden}
+        .hero-inner{display:flex; gap:40px; align-items:flex-start; padding:80px 0}
+        .intro{max-width:720px}
+        h1{font-family:'Space Grotesk', Inter, sans-serif; margin:0; font-size:clamp(2.1rem, 5vw, 4rem); letter-spacing:-0.02em; font-weight:var(--fw-heading)}
+        .subtitle{color:var(--accent); font-weight:600; margin-top:8px}
+        p.lead{color:var(--muted); line-height:1.6; margin-top:18px}
+
+        /* Animated canvas-like background using gradients */
+        .bg-visual{position:absolute; inset:0; z-index:0; pointer-events:none; background: radial-gradient(600px 400px at 10% 20%, rgba(108,225,214,0.06), transparent 8%), radial-gradient(500px 350px at 90% 80%, rgba(108,225,214,0.03), transparent 10%); mix-blend-mode:screen; animation: drift 18s linear infinite}
+        @keyframes drift{0%{transform:translate(0,0) rotate(0)}50%{transform:translate(30px,-20px) rotate(3deg)}100%{transform:translate(0,0) rotate(0)}}
+
+        /* Sections */
+        section{padding:80px 0; position:relative}
+        h2.section-title{font-family:'Space Grotesk'; margin:0 0 18px 0; font-size:1.35rem}
+
+        /* Masonry / cards */
+        .masonry{column-count:3; column-gap:var(--gap)}
+        @media (max-width:1000px){.masonry{column-count:2}}
+        @media (max-width:640px){.masonry{column-count:1}}
+        .card{break-inside:avoid; background:var(--card); border-radius:var(--radius); margin:0 0 var(--gap); padding:14px; box-shadow:0 6px 20px rgba(2,6,8,0.7); transition:transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s}
+        .card:hover{transform:translateY(-8px) scale(1.01); box-shadow:0 18px 40px rgba(2,6,8,0.65)}
+        .media{position:relative; border-radius:10px; overflow:hidden}
+        .meta{display:flex; justify-content:space-between; align-items:flex-start; margin-top:10px}
+        .title{font-weight:600}
+        .desc{color:var(--muted); font-size:0.95rem}
+
+        /* Responsive iframe */
+        .iframe-wrap{position:relative; width:100%; aspect-ratio:16/9; background:#000}
+        .iframe-wrap iframe{position:absolute; inset:0; width:100%; height:100%; border:0}
+
+        /* Statement & Contact */
+        .statement{max-width:900px; color:var(--muted)}
+        .contact{display:flex; gap:18px; align-items:center; flex-wrap:wrap}
+        .chip{background:linear-gradient(90deg, rgba(255,255,255,0.02), transparent); padding:10px 14px; border-radius:999px; color:var(--muted)}
+
+        /* Preloader */
+        #preloader{position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:9999}
+        .spinner{width:110px; height:110px; border-radius:50%; background:conic-gradient(var(--accent), transparent 40%); animation:spin 1.8s linear infinite; display:grid; place-items:center}
+        .spinner::after{content:""; width:62px; height:62px; border-radius:50%; background:var(--paper)}
+        @keyframes spin{to{transform:rotate(1turn)}}
+
+        /* Reveal animation */
+        .reveal{opacity:0; transform:translateY(12px) scale(.995); transition:opacity .7s ease, transform .7s cubic-bezier(.2,.9,.2,1)}
+        .reveal.is-visible{opacity:1; transform:translateY(0) scale(1)}
+
+        /* Footer */
+        footer{padding:40px 0; color:var(--muted); font-size:0.95rem}
+
+        /* Small utilities */
+        .muted{color:var(--muted)}
+        .btn{background:var(--accent); color:#052425; padding:8px 12px; border-radius:8px; font-weight:600}
+    </style>
+    </head>
+<body>
+    <!-- Preloader artístico -->
+    <div id="preloader" aria-hidden="true">
+        <div class="spinner" aria-hidden="true"></div>
+    </div>
+
+    <div class="wrap">
+        <header class="nav">
+            <nav>
+                <div class="brand">
+                    <div class="logo">AJ</div>
+                    <div>
+                        <div style="font-weight:700">Ángel Jara</div>
+                        <div style="font-size:0.85rem; color:var(--muted)">Artista sonoro y visual — Buenos Aires</div>
+                    </div>
+                </div>
+                <div class="navlinks">
+                    <a href="#works">Obras</a>
+                    <a href="#statement">Statement</a>
+                    <a href="#contact">Contacto</a>
+                </div>
+                <div class="controls">
+                    <button id="themeToggle" class="chip" aria-label="Alternar tema">Tema</button>
+                </div>
+            </nav>
+        </header>
+
+        <main>
+            <section class="hero">
+                <div class="bg-visual" aria-hidden="true"></div>
+                <div class="hero-inner">
+                    <div class="intro reveal">
+                        <h1>Ángel Jara</h1>
+                        <div class="subtitle">Artista sonoro y visual</div>
+                        <p class="lead">Investiga aspectos poéticos, experimentales y conceptuales del sonido, la cognición expandida, la sonorización de la imagen fija y en movimiento, las conexiones entre objetos, tradiciones, procedimientos y teorías críticas, la visualización de datos y los intersticios entre actores humanos y no humanos.</p>
+                        <p style="margin-top:22px"><a href="#works" class="btn">Ver obras</a></p>
+                    </div>
+                    <div style="flex:1; min-width:280px" class="reveal">
+                        <!-- Pequeño panel visual con microinteracciones -->
+                        <div style="padding:18px; border-radius:14px; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); box-shadow:0 8px 30px rgba(2,6,8,0.6);">
+                            <div style="font-weight:700; margin-bottom:8px">Fragmentos recientes</div>
+                            <div style="display:grid; gap:10px">
+                                <div class="chip">Improvisación — livecoding</div>
+                                <div class="chip">Visualización — datos sonoros</div>
+                                <div class="chip">Pure Data — instalaciones</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="works">
+                <h2 class="section-title">Obras / Videos</h2>
+                <div class="masonry">
+                    <!-- Obra 1 -->
+                    <article class="card reveal">
+                        <div class="media">
+                            <div class="iframe-wrap">
+                                <iframe src="https://www.youtube.com/embed/N6grNEpJcq4" title="Obra 1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                        </div>
+                        <div class="meta">
+                            <div>
+                                <div class="title">Obra 1</div>
+                                <div class="desc">Improvisación livecoding – Strudel Repl</div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Obra 2 -->
+                    <article class="card reveal">
+                        <div class="media">
+                            <div class="iframe-wrap">
+                                <iframe src="https://www.youtube.com/embed/4k9vseLY01U" title="Obra 2" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                        </div>
+                        <div class="meta">
+                            <div>
+                                <div class="title">Obra 2</div>
+                                <div class="desc">Improvisación livecoding – Strudel Repl</div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Obra 3 -->
+                    <article class="card reveal">
+                        <div class="media">
+                            <div class="iframe-wrap">
+                                <iframe src="https://www.youtube.com/embed/z7Vqqfhvljc" title="Obra 3" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                        </div>
+                        <div class="meta">
+                            <div>
+                                <div class="title">Obra 3</div>
+                                <div class="desc">Improvisación livecoding – Strudel Repl</div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Obra 4 -->
+                    <article class="card reveal">
+                        <div class="media">
+                            <div class="iframe-wrap">
+                                <iframe src="https://www.youtube.com/embed/xEFCqzl-4h8" title="Obra 4" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                        </div>
+                        <div class="meta">
+                            <div>
+                                <div class="title">Obra 4</div>
+                                <div class="desc">Improvisación livecoding – Pure Data</div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section id="statement">
+                <h2 class="section-title">Statement</h2>
+                <div class="statement reveal">
+                    <p>Ángel Jara vive y trabaja en Buenos Aires. Investiga aspectos poéticos, experimentales y conceptuales del sonido, la cognición expandida, la sonorización de la imagen fija y en movimiento, las conexiones entre objetos, tradiciones, procedimientos y teorías críticas, la visualización de datos y los intersticios entre actores humanos y no humanos.</p>
+                </div>
+            </section>
+
+            <section id="contact">
+                <h2 class="section-title">Contacto</h2>
+                <div class="contact reveal">
+                    <div class="chip">Mastodon: @bruveping@mastodon.art</div>
+                    <div class="chip">Buenos Aires</div>
+                    <div style="margin-left:auto; color:var(--muted)">© <span id="year"></span> Ángel Jara</div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div class="muted">Diseño: estética minimalista y experimental · Animaciones suaves · Responsive</div>
+        </footer>
+    </div>
+
+    <script>
+    // --- Comentarios: JS ligero para interactividad ---
+    // Preloader
+    document.addEventListener('DOMContentLoaded', function(){
+        document.getElementById('year').textContent = new Date().getFullYear();
+        // Simula carga breve para demo
+        setTimeout(()=>{
+            const p = document.getElementById('preloader');
+            p.style.transition = 'opacity .6s ease';
+            p.style.opacity = '0';
+            setTimeout(()=>p.remove(),700);
+        }, 700);
+    });
+
+    // Theme toggle (clara / oscura)
+    const toggle = document.getElementById('themeToggle');
+    const root = document.documentElement;
+    // Recupera preferencia local
+    const stored = localStorage.getItem('theme');
+    if(stored === 'light') root.setAttribute('data-theme','light');
+    toggle.addEventListener('click', ()=>{
+        const current = root.getAttribute('data-theme');
+        if(current === 'light'){
+            root.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            root.setAttribute('data-theme','light');
+            localStorage.setItem('theme', 'light');
+        }
+    });
+
+    // Scroll reveal con IntersectionObserver
+    const reveals = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{
+            if(e.isIntersecting){
+                e.target.classList.add('is-visible');
+                // optional: unobserve for perf
+                io.unobserve(e.target);
+            }
+        });
+    }, {threshold:0.12});
+    reveals.forEach(r=>io.observe(r));
+
+    // Ajuste para anchors (offset para header sticky) — suavizado
+    document.querySelectorAll('a[href^="#"]').forEach(a=>{
+        a.addEventListener('click', (ev)=>{
+            const href = a.getAttribute('href');
+            if(href.length>1){
+                ev.preventDefault();
+                const el = document.querySelector(href);
+                if(el) window.scrollTo({top: el.getBoundingClientRect().top + window.scrollY - 70, behavior:'smooth'});
+            }
+        });
+    });
+
+    // Mejora: pausar iframes fuera de pantalla (ejemplo simple)
+    const iframes = document.querySelectorAll('iframe');
+    const iframeObserver = new IntersectionObserver((entries)=>{
+        entries.forEach(en=>{
+            const src = en.target.getAttribute('src');
+            if(!en.isIntersecting){
+                // remueve autoplay si hubiera (evita uso de resources) — solo ejemplo, no modifica YouTube query
+            }
+        });
+    }, {threshold:0});
+    iframes.forEach(f=>iframeObserver.observe(f));
+
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+</body>
+</html>
