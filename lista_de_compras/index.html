@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Lista de Supermercado</title>
+    <!-- Favicon usando un Emoji -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .product-chip {
+            transition: all 0.2s;
+            cursor: pointer;
+            user-select: none;
+        }
+        .product-chip.selected {
+            background-color: #22c55e;
+            color: white;
+            border-color: #16a34a;
+            transform: scale(0.95);
+        }
+        .category-card {
+            break-inside: avoid;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen pb-20">
+
+    <header class="bg-green-600 text-white p-6 shadow-md mb-8">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 class="text-3xl font-bold flex items-center gap-2">
+                <span>🛒</span> Mi Súper Lista
+            </h1>
+            <div class="flex gap-2">
+                <label class="bg-white text-green-700 px-4 py-2 rounded-lg font-semibold cursor-pointer hover:bg-green-50 transition shadow-sm">
+                    📂 Importar (.json/.csv)
+                    <input type="file" id="importInput" class="hidden" accept=".json,.csv">
+                </label>
+                <button onclick="clearList()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold shadow-sm transition">
+                    🗑️ Limpiar Todo
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- SECTOR DE SELECCIÓN -->
+        <div class="lg:col-span-2 space-y-8" id="catalog">
+            <!-- Las categorías se generarán aquí con JS -->
+        </div>
+
+        <!-- SECTOR DE OUTPUT -->
+        <div class="lg:col-span-1">
+            <div class="bg-white p-6 rounded-xl shadow-lg sticky top-8 border border-gray-100">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-gray-800">
+                    📋 Tu Lista de Compras
+                </h2>
+                
+                <div id="emptyMessage" class="text-gray-400 italic text-center py-8">
+                    No hay productos seleccionados
+                </div>
+
+                <div id="outputContainer" class="hidden space-y-4">
+                    <textarea id="outputArea" readonly class="w-full h-64 p-3 text-sm font-mono border rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="copyToClipboard()" class="col-span-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold transition">
+                            🔗 Copiar al Portapapeles
+                        </button>
+                        <button onclick="downloadFile('txt')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded text-sm transition">⬇️ .TXT</button>
+                        <button onclick="downloadFile('md')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded text-sm transition">⬇️ .MD</button>
+                        <button onclick="downloadFile('csv')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded text-sm transition">⬇️ .CSV</button>
+                        <button onclick="downloadFile('json')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded text-sm transition">⬇️ .JSON</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Datos integrados (basados en tu listado maestro)
+        const db = {
+            "supermercado": [
+                {
+                    "id": "cat-1",
+                    "categoria": "Carnicería y Granja", "icono": "🥩",
+                    "subcategorias": [
+                        { "nombre": "Vacuno", "productos": ["Milanesas (Nalga/Bola de lomo)", "Peceto", "Cuadril", "Asado / Tira de asado", "Vacío", "Carne picada (Especial/Común)", "Matambre"] },
+                        { "nombre": "Pollo", "productos": ["Pollo entero", "Supremas (Pechugas)", "Pata y Muslo", "Menudos"] },
+                        { "nombre": "Masas", "productos": ["Tapas de empanadas (Horno)", "Tapas de empanadas (Freír)", "Tapas de tarta (Hojaldre)", "Tapas de tarta (Pascualina)"] }
+                    ]
+                },
+                {
+                    "id": "cat-2",
+                    "categoria": "Lácteos y Quesos", "icono": "🧀",
+                    "subcategorias": [
+                        { "nombre": "Básicos", "productos": ["Leche (Entera/Desnatada)", "Yogur (Firme/Bebible)", "Manteca", "Crema de leche", "Dulce de leche"] },
+                        { "nombre": "Quesos y Fiambrería", "productos": ["Queso cremoso (Cuartirolo)", "Queso en barra (Tybo/Dambo)", "Queso de rallar (Reggianito/Parmesano)", "Jamón cocido", "Salame / Salamín"] }
+                    ]
+                },
+                {
+                    "id": "cat-3",
+                    "categoria": "Verdulería", "icono": "🥦",
+                    "subcategorias": [
+                        { "nombre": "Vegetales", "productos": ["Papa", "Cebolla", "Zanoría", "Calabaza / Zapallo", "Lechuga", "Tomate Perita", "Tomate Redondo", "Morrón (Rojo/Verde)"] },
+                        { "nombre": "Frutas", "productos": ["Banana", "Manzana", "Naranja", "Limón", "Palta", "Fruta de estación"] }
+                    ]
+                },
+                {
+                    "id": "cat-4",
+                    "categoria": "Almacén", "icono": "🥫",
+                    "subcategorias": [
+                        { "nombre": "Secos", "productos": ["Arroz", "Fideos (Tallarines/Tirabuzones)", "Harina (000/Leudante)", "Pan rallado / Rebozador", "Polenta", "Lentejas"] },
+                        { "nombre": "Condimentos", "productos": ["Aceite (Girasol/Oliva)", "Sal (Fina/Gruesa)", "Azúcar", "Mayonesa / Mostaza / Ketchup", "Vinagre / Aceto balsámico", "Especias (Pimienta, Ají, Comino)"] }
+                    ]
+                },
+                {
+                    "id": "cat-5",
+                    "categoria": "Limpieza e Higiene", "icono": "🧽",
+                    "subcategorias": [
+                        { "nombre": "Hogar", "productos": ["Detergente", "Lavandina", "Jabón líquido para ropa", "Suavizante", "Rollos de cocina", "Limpiador de pisos"] },
+                        { "nombre": "Personal", "productos": ["Papel higiénico", "Shampoo / Acondicionador", "Jabón de tocador", "Desodorante", "Pasta dental", "Espuma de afeitar"] }
+                    ]
+                },
+                {
+                    "id": "cat-6",
+                    "categoria": "Bebidas", "icono": "💧",
+                    "subcategorias": [
+                        { "nombre": "Agua", "productos": ["Agua en botella", "Agua en bidón"] },
+                        { "nombre": "Jugos", "productos": ["Jugo Pura fruta", "Jugo Cepita"] }
+                    ]
+                },
+                {
+                    "id": "cat-7",
+                    "categoria": "Pescadería", "icono": "🐟🐠🦈",
+                    "subcategorias": [
+                        { "nombre": "pescado", "productos": ["Filet de merluza", "Rabas de Calamar","Cornalitos"] }
+                    ]
+                }
+            ]
+        };
+
+        let selectedProducts = new Set();
+
+        // Inicializar el catálogo
+        function initCatalog() {
+            const catalog = document.getElementById('catalog');
+            db.supermercado.forEach(cat => {
+                const section = document.createElement('section');
+                section.id = cat.id;
+                section.className = 'bg-white p-6 rounded-xl shadow-sm border border-gray-100 category-card';
+                
+                let html = `
+                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                        <h3 class="text-xl font-bold flex items-center gap-2 text-green-700">
+                            ${cat.icono} ${cat.categoria}
+                        </h3>
+                        <button onclick="toggleAllInCategory('${cat.id}')" class="text-xs bg-gray-100 hover:bg-green-100 text-gray-600 hover:text-green-700 px-3 py-1 rounded-full transition font-semibold">
+                            ✅ Seleccionar Todo
+                        </button>
+                    </div>`;
+
+                cat.subcategorias.forEach(sub => {
+                    html += `<h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4">${sub.nombre}</h4>
+                             <div class="flex flex-wrap gap-2 mb-2">`;
+                    sub.productos.forEach(prod => {
+                        html += `
+                            <div class="product-chip px-3 py-1.5 rounded-full border border-gray-200 bg-white text-sm font-medium hover:border-green-400" 
+                                 onclick="toggleProduct(this, '${prod}')" data-name="${prod}">
+                                ${prod}
+                            </div>`;
+                    });
+                    html += `</div>`;
+                });
+                
+                section.innerHTML = html;
+                catalog.appendChild(section);
+            });
+        }
+
+        function toggleProduct(el, name) {
+            if (selectedProducts.has(name)) {
+                selectedProducts.delete(name);
+                el.classList.remove('selected');
+            } else {
+                selectedProducts.add(name);
+                el.classList.add('selected');
+            }
+            updateOutput();
+        }
+
+        // Nueva función: Seleccionar/Deseleccionar todo en una categoría
+        function toggleAllInCategory(catId) {
+            const section = document.getElementById(catId);
+            const chips = section.querySelectorAll('.product-chip');
+            const allSelected = Array.from(chips).every(chip => chip.classList.contains('selected'));
+
+            chips.forEach(chip => {
+                const name = chip.getAttribute('data-name');
+                if (allSelected) {
+                    // Si todos están seleccionados, quitar todos
+                    selectedProducts.delete(name);
+                    chip.classList.remove('selected');
+                } else {
+                    // Si falta alguno, seleccionar todos
+                    selectedProducts.add(name);
+                    chip.classList.add('selected');
+                }
+            });
+            updateOutput();
+        }
+
+        function updateOutput() {
+            const container = document.getElementById('outputContainer');
+            const empty = document.getElementById('emptyMessage');
+            const area = document.getElementById('outputArea');
+
+            if (selectedProducts.size === 0) {
+                container.classList.add('hidden');
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            empty.classList.add('hidden');
+
+            let text = "LISTA DE COMPRAS\n================\n";
+            // Ordenamos alfabéticamente para que el output sea prolijo
+            const sortedItems = Array.from(selectedProducts).sort();
+            sortedItems.forEach(p => {
+                text += `- [ ] ${p}\n`;
+            });
+            area.value = text;
+        }
+
+        function clearList() {
+            selectedProducts.clear();
+            document.querySelectorAll('.product-chip').forEach(c => c.classList.remove('selected'));
+            updateOutput();
+        }
+
+        function copyToClipboard() {
+            const area = document.getElementById('outputArea');
+            area.select();
+            document.execCommand('copy');
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "¡Copiado!";
+            setTimeout(() => btn.innerText = originalText, 2000);
+        }
+
+        function downloadFile(format) {
+            let content = "";
+            let filename = `lista_supermercado.${format}`;
+            let mimeType = "text/plain";
+
+            const items = Array.from(selectedProducts).sort();
+
+            switch(format) {
+                case 'md':
+                    content = "# Lista de Compras\n\n" + items.map(i => `- [ ] ${i}`).join('\n');
+                    break;
+                case 'txt':
+                    content = "LISTA DE COMPRAS\n" + items.map(i => `[ ] ${i}`).join('\n');
+                    break;
+                case 'csv':
+                    content = "Producto,Completado\n" + items.map(i => `"${i}",no`).join('\n');
+                    mimeType = "text/csv";
+                    break;
+                case 'json':
+                    content = JSON.stringify({ fecha: new Date().toLocaleDateString(), productos: items }, null, 2);
+                    mimeType = "application/json";
+                    break;
+            }
+
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Sistema de Importación
+        document.getElementById('importInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const text = event.target.result;
+                try {
+                    if (file.name.endsWith('.json')) {
+                        const data = JSON.parse(text);
+                        applySelection(data.productos || []);
+                    } else if (file.name.endsWith('.csv')) {
+                        const lines = text.split('\n').slice(1);
+                        const names = lines.map(line => line.split(',')[0].replace(/"/g, '').trim()).filter(n => n);
+                        applySelection(names);
+                    }
+                } catch (err) {
+                    alert("Error al procesar el archivo. Asegúrate de que el formato sea correcto.");
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        function applySelection(names) {
+            clearList();
+            names.forEach(name => {
+                const chips = document.querySelectorAll(`[data-name="${name}"]`);
+                if (chips.length > 0) {
+                    chips.forEach(chip => {
+                        selectedProducts.add(name);
+                        chip.classList.add('selected');
+                    });
+                } else {
+                    selectedProducts.add(name);
+                }
+            });
+            updateOutput();
+        }
+
+        window.onload = initCatalog;
+    </script>
+</body>
+</html>
