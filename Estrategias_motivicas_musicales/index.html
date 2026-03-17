@@ -635,159 +635,118 @@ body::after {
 
 </main>
 
-<!-- ═══════════════════════ SCRIPTS ═══════════════════════ -->
-<script>
-'use strict';
 
-/* ──────────────────────────────────────────────────────────
-   CATÁLOGO DE ESTRATEGIAS
-   ➜ Para agregar una nueva: copia el objeto {} al array,
-     completa los campos y ya queda integrado en el catálogo.
-   ────────────────────────────────────────────────────────── */
-const STRATEGIES = [
+<!-- SCRIPTS -->
+<script>
+/* CATALOG - add new strategies to this array */
+var STRATEGIES = [
   {
     id: "orig",
     title: "Motivo Original",
     type: "Referencia",
-    description: "La estructura atómica base (Do, Re, Mi, Sol) sobre la cual se aplican los procesos de transformación. Funciona como molécula madre del sistema.",
-    abc: `X:1
-T:Motivo Original
-M:4/4
-L:1/4
-Q:1/4=120
-K:C
-C D E G |]`
+    description: "La estructura atomica base (Do, Re, Mi, Sol) sobre la cual se aplican los procesos de transformacion. Funciona como molecula madre del sistema.",
+    abc: "X:1\nT:Motivo Original\nM:4/4\nL:1/4\nQ:1/4=120\nK:C\nC D E G |]"
   },
   {
     id: "sec",
-    title: "Secuencia Diatónica",
-    type: "Transposición",
-    description: "Desplazamiento del motivo a través de los grados de la escala. Mantiene la relación interválica diatónica pero altera las tensiones armónicas.",
-    abc: `X:2
-T:Secuencia Diatónica
-M:4/4
-L:1/4
-Q:1/4=120
-K:C
-D E F A |]`
+    title: "Secuencia Diatonica",
+    type: "Transposicion",
+    description: "Desplazamiento del motivo a traves de los grados de la escala. Mantiene la relacion intervalica diatonica pero altera las tensiones armonicas.",
+    abc: "X:2\nT:Secuencia Diatonica\nM:4/4\nL:1/4\nQ:1/4=120\nK:C\nD E F A |]"
   },
   {
     id: "inv",
-    title: "Inversión",
+    title: "Inversion",
     type: "Espejo",
-    description: "Reflexión vertical de los intervalos. Los movimientos ascendentes se convierten en descendentes y viceversa: espejo molecular en el eje horizontal.",
-    abc: `X:3
-T:Inversión
-M:4/4
-L:1/4
-Q:1/4=120
-K:C
-C B, A, F, |]`
+    description: "Reflexion vertical de los intervalos. Los movimientos ascendentes se convierten en descendentes y viceversa: espejo molecular en el eje horizontal.",
+    abc: "X:3\nT:Inversion\nM:4/4\nL:1/4\nQ:1/4=120\nK:C\nC B, A, F, |]"
   },
   {
     id: "ret",
-    title: "Retrogradación",
+    title: "Retrogradacion",
     type: "Cangrejo",
-    description: "Lectura del motivo en sentido temporal inverso. Proceso que invierte el orden cronológico de los eventos: la cadena ARN leída 3'→5'.",
-    abc: `X:4
-T:Retrogradación
-M:4/4
-L:1/4
-Q:1/4=120
-K:C
-G E D C |]`
+    description: "Lectura del motivo en sentido temporal inverso. Proceso que invierte el orden cronologico de los eventos.",
+    abc: "X:4\nT:Retrogradacion\nM:4/4\nL:1/4\nQ:1/4=120\nK:C\nG E D C |]"
   },
   {
     id: "int",
-    title: "Interpolación",
-    type: "Adición",
-    description: "Inserción de notas catalizadoras entre los nodos principales del motivo original. Expande la duración sin alterar la identidad estructural.",
-    abc: `X:5
-T:Interpolación
-M:4/4
-L:1/8
-Q:1/8=120
-K:C
-C D E F G A G2 |]`
+    title: "Interpolacion",
+    type: "Adicion",
+    description: "Insercion de notas catalizadoras entre los nodos principales del motivo original. Expande la duracion sin alterar la identidad estructural.",
+    abc: "X:5\nT:Interpolacion\nM:4/4\nL:1/8\nQ:1/8=120\nK:C\nC D E F G A G2 |]"
   },
   {
     id: "ext",
-    title: "Extrapolación",
-    type: "Extensión",
-    description: "Proyección de la lógica del motivo hacia el exterior de sus límites iniciales. La función continúa más allá del dominio original definido.",
-    abc: `X:6
-T:Extrapolación
-M:4/4
-L:1/4
-Q:1/4=120
-K:C
-C D E G | A B c2 |]`
+    title: "Extrapolacion",
+    type: "Extension",
+    description: "Proyeccion de la logica del motivo hacia el exterior de sus limites iniciales. La funcion continua mas alla del dominio original definido.",
+    abc: "X:6\nT:Extrapolacion\nM:4/4\nL:1/4\nQ:1/4=120\nK:C\nC D E G | A B c2 |]"
   },
   {
     id: "per",
-    title: "Permutación",
-    type: "Isomería",
-    description: "Reordenamiento de los mismos elementos para crear una estructura distinta con idéntica masa tonal. Isómero posicional del motivo original.",
-    abc: `X:7
-T:Permutación
-M:4/4
-L:1/4
-Q:1/4=120
-K:C
-G E C D |]`
+    title: "Permutacion",
+    type: "Isomeria",
+    description: "Reordenamiento de los mismos elementos para crear una estructura distinta con identica masa tonal. Isomero posicional del motivo original.",
+    abc: "X:7\nT:Permutacion\nM:4/4\nL:1/4\nQ:1/4=120\nK:C\nG E C D |]"
   }
   /*
-  ──────────────────────────────────────────────────────────
-  AGREGAR NUEVAS ESTRATEGIAS AQUÍ:
-  {
-    id: "unique-id",
-    title: "Nombre de la Estrategia",
-    type: "Tipo / Proceso",
-    description: "Descripción del proceso químico-musical...",
-    abc: `X:8
-T:Título ABC
-M:4/4
-L:1/4
-Q:1/4=120
-K:C
-...notación... |]`
-  },
-  ────────────────────────────────────────────────────────── */
+  ADD NEW STRATEGIES HERE:
+  ,{
+    id: "new-id",
+    title: "Nombre",
+    type: "Tipo",
+    description: "Descripcion...",
+    abc: "X:8\nT:Titulo\nM:4/4\nL:1/4\nQ:1/4=120\nK:C\n... |]"
+  }
+  */
 ];
 
-
-/* ──────────────────────────────────────────────────────────
-   ESTADO DE LA APLICACIÓN
-   ────────────────────────────────────────────────────────── */
-const state = {
-  activeId:      null,
-  visualObj:     null,
-  synth:         null,
-  audioCtx:      null,
-  isPlaying:     false,
-  isLoading:     false,
+var state = {
+  activeId: null,
+  visualObj: null,
+  synth: null,
+  audioCtx: null,
+  isPlaying: false,
+  isLoading: false
 };
 
-
-/* ──────────────────────────────────────────────────────────
-   INICIALIZACIÓN
-   ────────────────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
   renderSidebar();
   setupABCToggle();
   setupPlayerButtons();
-  // Cargar primera estrategia por defecto
-  if (STRATEGIES.length) loadStrategy(STRATEGIES[0].id);
+  if (STRATEGIES.length > 0) loadStrategy(STRATEGIES[0].id);
 });
 
-
-/* ──────────────────────────────────────────────────────────
-   RENDER DEL SIDEBAR
-   ────────────────────────────────────────────────────────── */
 function renderSidebar() {
-  const list = document.getElementById('strategy-list');
-  const count = STRATEGIES.length;
-
-  document.getElementById('sidebar-count').textContent = `${count} estrategia${count !== 1 ? 's' : ''} cargada${count !== 1 ? 's' : ''}`;
+  var list = document.getElementById('strategy-list');
+  var count = STRATEGIES.length;
+  document.getElementById('sidebar-count').textContent = count + ' estrategia' + (count !== 1 ? 's' : '') + ' cargada' + (count !== 1 ? 's' : '');
   document.getElementById('module-count').textContent = count;
-  
+  list.innerHTML = '';
+  for (var i = 0; i < STRATEGIES.length; i++) {
+    (function(s, idx) {
+      var btn = document.createElement('button');
+      btn.className = 'strategy-item s-item';
+      btn.id = 'item-' + s.id;
+      var numStr = String(idx + 1);
+      if (numStr.length < 2) numStr = '0' + numStr;
+      btn.innerHTML = '<div class="s-index">S-' + numStr + '</div><div class="s-name">' + s.title + '</div><div class="s-tag">' + s.type + '</div>';
+      btn.addEventListener('click', function() { loadStrategy(s.id); });
+      list.appendChild(btn);
+    })(STRATEGIES[i], i);
+  }
+}
+
+function loadStrategy(id) {
+  var strategy = null;
+  var stratIndex = 0;
+  for (var i = 0; i < STRATEGIES.length; i++) {
+    if (STRATEGIES[i].id === id) { strategy = STRATEGIES[i]; stratIndex = i; break; }
+  }
+  if (!strategy) return;
+
+  stopAudio();
+  state.activeId = id;
+
+  var items = document.querySelectorAll('.s-item');
+  for (var j = 0; j < items.length; j++) items[j].classList.r  
