@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estrategia: Motivo Original</title>
+    
+    <!-- ABCJS para partituras y audio -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/abcjs/6.2.2/abcjs-basic-min.js"></script>
+
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #27ae60;
+            --bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg);
+            color: var(--primary);
+            line-height: 1.6;
+        }
+
+        .card {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        /* Contenedor de partitura */
+        #paper {
+            width: 100%;
+            margin: 20px 0;
+            min-height: 100px;
+        }
+
+        /* Controles */
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: transform 0.1s, background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover { background-color: #219150; }
+        button:active { transform: scale(0.98); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .explanation {
+            background-color: #f0f7ff;
+            padding: 20px;
+            border-left: 4px solid var(--accent);
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+
+        .explanation strong { color: var(--primary); }
+
+        /* Ocultar elementos de impresión de abcjs que no necesitemos */
+        .abcjs-inline-audio { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>0. Motivo Original</h2>
+
+        <!-- Partitura -->
+        <div id="paper"></div>
+
+        <!-- Botón de Reproducción -->
+        <div class="audio-controls">
+            <button id="play-btn">
+                <span>▶</span> Reproducir Motivo
+            </button>
+            <span id="status" style="font-size: 0.8rem; color: #666;">Listo</span>
+        </div>
+
+        <!-- Explicación Técnica -->
+        <div class="explanation">
+            <p><strong>Explicación Técnica:</strong> El Motivo Original constituye la unidad mínima de información o "átomo" del desarrollo químico musical. En este ejemplo, se establece una estructura interválica ascendente (2da mayor, 2da mayor, 3ra menor) basada en la escala de Do Mayor. Funciona como la referencia fundamental (sustrato) sobre la cual se aplicarán las transformaciones moleculares como la inversión, retrogradación o secuencia.</p>
+        </div>
+    </div>
+
+    <script>
+        // Notación ABC
+        const abcString = `
+X:1
+T:Motivo Original
+M:4/4
+L:1/4
+K:C
+C D E G |]`;
+
+        let visualObj;
+        let synthControl;
+
+        function init() {
+            // Renderizar la partitura visualmente
+            visualObj = ABCJS.renderAbc("paper", abcString, { 
+                responsive: "resize",
+                paddingleft: 0,
+                paddingright: 0
+            })[0];
+
+            document.getElementById("play-btn").addEventListener("click", playAudio);
+        }
+
+        async function playAudio() {
+            const btn = document.getElementById("play-btn");
+            const status = document.getElementById("status");
+
+            if (!ABCJS.synth.supportsAudio()) {
+                alert("Audio no soportado en este navegador.");
+                return;
+            }
+
+            btn.disabled = true;
+            status.innerText = "Cargando audio...";
+
+            try {
+                // Crear y configurar el sintetizador
+                synthControl = new ABCJS.synth.CreateSynth();
+                
+                await synthControl.init({
+                    visualObj: visualObj,
+                    options: {
+                        soundFontUrl: "https://paulrosen.github.io/midi-js-soundfonts/FluidR3_GM/"
+                    }
+                });
+
+                await synthControl.prime();
+                status.innerText = "Reproduciendo...";
+                await synthControl.start();
+                
+                // Simular fin de reproducción (abcjs no tiene callback directo fácil en basic)
+                setTimeout(() => {
+                    status.innerText = "Listo";
+                    btn.disabled = false;
+                }, 3000);
+
+            } catch (err) {
+                console.error(err);
+                status.innerText = "Error de audio";
+                btn.disabled = false;
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
+
