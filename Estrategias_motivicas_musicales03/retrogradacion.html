@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estrategia: Retrogradación (Cangrejo)</title>
+    
+    <!-- ABCJS para partituras y audio -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/abcjs/6.2.2/abcjs-basic-min.js"></script>
+
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #e74c3c; /* Color Rojo para Retrogradación */
+            --bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg);
+            color: var(--primary);
+            line-height: 1.6;
+        }
+
+        .card {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        #paper {
+            width: 100%;
+            margin: 20px 0;
+            min-height: 100px;
+        }
+
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: transform 0.1s, background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover { background-color: #c0392b; }
+        button:active { transform: scale(0.98); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .explanation {
+            background-color: #fdf2f2;
+            padding: 20px;
+            border-left: 4px solid var(--accent);
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+
+        .explanation strong { color: var(--primary); }
+        .abcjs-inline-audio { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>3. Retrogradación (Cangrejo)</h2>
+
+        <!-- Partitura -->
+        <div id="paper"></div>
+
+        <!-- Botón de Reproducción -->
+        <div class="audio-controls">
+            <button id="play-btn">
+                <span>▶</span> Reproducir Retrogradación
+            </button>
+            <span id="status" style="font-size: 0.8rem; color: #666;">Listo</span>
+        </div>
+
+        <!-- Explicación Técnica -->
+        <div class="explanation">
+            <p><strong>Explicación Técnica:</strong> La Retrogradación consiste en presentar el motivo original en orden inverso, comenzando por la última nota y terminando en la primera (técnica del "cangrejo"). Si el original es C-D-E-G, la retrogradación resulta en G-E-D-C. Este recurso altera la dirección del tiempo musical pero conserva la paleta interválica exacta, permitiendo una variación lógica que el oído reconoce como familiar pero estructuralmente transformada.</p>
+        </div>
+    </div>
+
+    <script>
+        // Notación ABC para Retrogradación
+        // Original: C D E G 
+        // Retrogradación: G E D C
+        const abcString = `
+X:4
+T:Retrogradación
+M:4/4
+L:1/4
+K:C
+G E D C |]`;
+
+        let visualObj;
+        let synthControl;
+
+        function init() {
+            visualObj = ABCJS.renderAbc("paper", abcString, { 
+                responsive: "resize",
+                paddingleft: 0,
+                paddingright: 0
+            })[0];
+
+            document.getElementById("play-btn").addEventListener("click", playAudio);
+        }
+
+        async function playAudio() {
+            const btn = document.getElementById("play-btn");
+            const status = document.getElementById("status");
+
+            if (!ABCJS.synth.supportsAudio()) {
+                alert("Audio no soportado.");
+                return;
+            }
+
+            btn.disabled = true;
+            status.innerText = "Cargando audio...";
+
+            try {
+                synthControl = new ABCJS.synth.CreateSynth();
+                await synthControl.init({
+                    visualObj: visualObj,
+                    options: {
+                        soundFontUrl: "https://paulrosen.github.io/midi-js-soundfonts/FluidR3_GM/"
+                    }
+                });
+
+                await synthControl.prime();
+                status.innerText = "Reproduciendo...";
+                await synthControl.start();
+                
+                setTimeout(() => {
+                    status.innerText = "Listo";
+                    btn.disabled = false;
+                }, 3000);
+
+            } catch (err) {
+                console.error(err);
+                status.innerText = "Error";
+                btn.disabled = false;
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
+
