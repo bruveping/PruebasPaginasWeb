@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Desarrollo Químico 🎹</title>
+    <!-- Favicon SVG con Piano -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎹</text></svg>">
+    
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+        }
+
+        * { box-sizing: border-box; }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden; /* Evitamos scroll en el root */
+        }
+
+        .layout {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Barra Lateral */
+        aside {
+            width: var(--sidebar-width);
+            background: white;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .header {
+            padding: 20px;
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 1.2rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .strategy-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .strategy-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-color);
+        }
+
+        .strategy-item:hover {
+            background-color: #f0f7ff;
+            color: var(--accent-color);
+        }
+
+        .strategy-item.active {
+            background-color: var(--accent-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        .strategy-item span.number {
+            font-size: 0.8rem;
+            opacity: 0.6;
+            width: 20px;
+        }
+
+        /* Contenedor del Visor */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .viewer-controls {
+            padding: 10px 20px;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        iframe {
+            flex: 1;
+            border: none;
+            width: 100%;
+            height: 100%;
+            background: white;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 6px 15px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: #eee;
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Mobile Friendly */
+        @media (max-width: 768px) {
+            aside {
+                display: none; /* En producción se podría añadir un menú hamburguesa */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="layout">
+        <!-- Navegador de Estrategias -->
+        <aside>
+            <div class="header">
+                <h1><span>🎹</span> Catálogo Químico</h1>
+            </div>
+            <nav class="strategy-list" id="menu">
+                <!-- Los items se generan dinámicamente -->
+            </nav>
+        </aside>
+
+        <!-- Visualizador de Cápsulas -->
+        <main>
+            <div class="viewer-controls">
+                <div id="current-info">Cargando estrategia...</div>
+                <div class="nav-buttons">
+                    <button class="btn" id="prevBtn">← Anterior</button>
+                    <button class="btn" id="nextBtn">Siguiente →</button>
+                </div>
+            </div>
+            <iframe id="viewer" src="about:blank"></iframe>
+        </main>
+    </div>
+
+    <script>
+        // Configuración de la lista de archivos (Catálogo Modular)
+        // Simplemente añade el nombre del archivo aquí cuando crees uno nuevo
+        const catalog = [
+            { id: 'original', title: 'Motivo Original', file: 'original.html' },
+            { id: 'secuencia', title: 'Secuencia Diatónica', file: 'secuencia.html' },
+            { id: 'inversion', title: 'Inversión (Espejo)', file: 'inversion.html' },
+            { id: 'retrogradacion', title: 'Retrogradación', file: 'retrogradacion.html' },
+            { id: 'interpolacion', title: 'Interpolación', file: 'interpolacion.html' },
+            { id: 'extrapolacion', title: 'Extrapolación', file: 'extrapolacion.html' },
+            { id: 'permutacion', title: 'Permutación', file: 'permutacion.html' }
+        ];
+
+        let currentIndex = 0;
+        const menuEl = document.getElementById('menu');
+        const iframeEl = document.getElementById('viewer');
+        const infoEl = document.getElementById('current-info');
+
+        // Generar Menú Lateral
+        function renderMenu() {
+            menuEl.innerHTML = '';
+            catalog.forEach((item, index) => {
+                const a = document.createElement('a');
+                a.href = "#";
+                a.className = `strategy-item ${index === currentIndex ? 'active' : ''}`;
+                a.innerHTML = `<span class="number">${index}</span> <span>${item.title}</span>`;
+                a.onclick = (e) => {
+                    e.preventDefault();
+                    loadStrategy(index);
+                };
+                menuEl.appendChild(a);
+            });
+        }
+
+        // Cargar Estrategia en el Iframe
+        function loadStrategy(index) {
+            if (index < 0 || index >= catalog.length) return;
+            
+            currentIndex = index;
+            const strategy = catalog[currentIndex];
+            
+            // Actualizar UI
+            iframeEl.src = strategy.file;
+            infoEl.innerHTML = `<strong>${currentIndex}.</strong> ${strategy.title}`;
+            
+            // Actualizar botones
+            document.getElementById('prevBtn').disabled = currentIndex === 0;
+            document.getElementById('nextBtn').disabled = currentIndex === catalog.length - 1;
+
+            renderMenu();
+        }
+
+        // Eventos de Navegación
+        document.getElementById('prevBtn').onclick = () => loadStrategy(currentIndex - 1);
+        document.getElementById('nextBtn').onclick = () => loadStrategy(currentIndex + 1);
+
+        // Teclas rápidas (flechas)
+        window.addEventListener('keydown', (e) => {
+            if (e.key === "ArrowRight") loadStrategy(currentIndex + 1);
+            if (e.key === "ArrowLeft") loadStrategy(currentIndex - 1);
+        });
+
+        // Inicio
+        window.onload = () => {
+            loadStrategy(0);
+        };
+    </script>
+</body>
+</html>
+
