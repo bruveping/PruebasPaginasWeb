@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catálogo de Desarrollo Motívico 🎹</title>
-    <!-- Favicon SVG con Piano -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎹</text></svg>">
     
     <style>
@@ -25,7 +24,7 @@
             font-family: 'Segoe UI', system-ui, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            overflow: hidden; /* Evitamos scroll en el root */
+            overflow: hidden;
         }
 
         .layout {
@@ -75,6 +74,7 @@
             gap: 10px;
             text-decoration: none;
             color: var(--text-color);
+            font-size: 0.9rem;
         }
 
         .strategy-item:hover {
@@ -89,9 +89,10 @@
         }
 
         .strategy-item span.number {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             opacity: 0.6;
-            width: 20px;
+            width: 25px;
+            font-family: monospace;
         }
 
         /* Contenedor del Visor */
@@ -109,6 +110,40 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Estilos para el Navegador rápido */
+        .quick-nav {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        input[type="number"] {
+            width: 50px;
+            padding: 4px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        select {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-width: 200px;
+            outline: none;
         }
 
         iframe {
@@ -121,20 +156,24 @@
 
         .nav-buttons {
             display: flex;
-            gap: 10px;
+            gap: 5px;
         }
 
         .btn {
-            padding: 6px 15px;
+            padding: 6px 12px;
             border: 1px solid #ddd;
             background: white;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            transition: background 0.2s;
         }
 
         .btn:hover:not(:disabled) {
-            background: #eee;
+            background: #f8f9fa;
+            border-color: var(--accent-color);
         }
 
         .btn:disabled {
@@ -142,104 +181,160 @@
             cursor: not-allowed;
         }
 
-        /* Mobile Friendly */
-        @media (max-width: 768px) {
-            aside {
-                display: none; /* En producción se podría añadir un menú hamburguesa */
-            }
+        @media (max-width: 900px) {
+            aside { display: none; }
+            select { max-width: 150px; }
         }
     </style>
 </head>
 <body>
 
     <div class="layout">
-        <!-- Navegador de Estrategias -->
+        <!-- Navegador Lateral -->
         <aside>
             <div class="header">
-                <h1><span>🎹</span> Catálogo Químico</h1>
+                <h1><span>🎹</span> Desarrollo Motívico</h1>
             </div>
             <nav class="strategy-list" id="menu">
-                <!-- Los items se generan dinámicamente -->
+                <!-- Items dinámicos -->
             </nav>
         </aside>
 
-        <!-- Visualizador de Cápsulas -->
+        <!-- Contenido Principal -->
         <main>
             <div class="viewer-controls">
-                <div id="current-info">Cargando estrategia...</div>
-                <div class="nav-buttons">
-                    <button class="btn" id="prevBtn">← Anterior</button>
-                    <button class="btn" id="nextBtn">Siguiente →</button>
+                <!-- Info e Input Numérico -->
+                <div class="control-group">
+                    <div class="quick-nav">
+                        <label for="jumpTo">Índice:</label>
+                        <input type="number" id="jumpTo" min="0" value="0">
+                    </div>
+                    <div id="current-info" style="font-size: 0.9rem; font-weight: 500;"></div>
+                </div>
+
+                <!-- Menú Desplegable y Navegación -->
+                <div class="control-group">
+                    <select id="dropdownMenu">
+                        <!-- Opciones dinámicas -->
+                    </select>
+                    <div class="nav-buttons">
+                        <button class="btn" id="prevBtn" title="Anterior (Flecha Izquierda)">←</button>
+                        <button class="btn" id="nextBtn" title="Siguiente (Flecha Derecha)">→</button>
+                    </div>
                 </div>
             </div>
-            <iframe id="viewer" src="about:blank"></iframe>
+            
+            <iframe id="viewer" name="viewer" src="about:blank"></iframe>
         </main>
     </div>
 
     <script>
-        // Configuración de la lista de archivos (Catálogo Modular)
-        // Simplemente añade el nombre del archivo aquí cuando crees uno nuevo
+        // Listado de archivos. 
+        // TIP: Si usas el script de Python que te sugerí, este array se llenaría solo.
         const catalog = [
-            { id: 'original', title: 'Motivo Original', file: 'original.html' },
-            { id: 'secuencia', title: 'Secuencia Diatónica', file: 'secuencia.html' },
-            { id: 'inversion', title: 'Inversión (Espejo)', file: 'inversion.html' },
-            { id: 'retrogradacion', title: 'Retrogradación', file: 'retrogradacion.html' },
-            { id: 'interpolacion', title: 'Interpolación', file: 'interpolacion.html' },
-            { id: 'extrapolacion', title: 'Extrapolación', file: 'extrapolacion.html' },
-            { id: 'permutacion', title: 'Permutación', file: 'permutacion.html' }
+            { title: 'Motivo Original', file: 'original.html' },
+            { title: 'Secuencia Diatónica', file: 'secuencia.html' },
+            { title: 'Inversión (Espejo)', file: 'inversion.html' },
+            { title: 'Retrogradación', file: 'retrogradacion.html' },
+            { title: 'Interpolación', file: 'interpolacion.html' },
+            { title: 'Extrapolación', file: 'extrapolacion.html' },
+            { title: 'Permutación', file: 'permutacion.html' },
+            { title: 'Aumentación Rítmica', file: 'aumentacion.html' },
+            { title: 'Disminución Rítmica', file: 'disminucion.html' },
+            { title: 'Fragmentación', file: 'fragmentacion.html' }
         ];
 
         let currentIndex = 0;
+        
+        // Elementos del DOM
         const menuEl = document.getElementById('menu');
+        const dropdownEl = document.getElementById('dropdownMenu');
+        const jumpInput = document.getElementById('jumpTo');
         const iframeEl = document.getElementById('viewer');
         const infoEl = document.getElementById('current-info');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
 
-        // Generar Menú Lateral
-        function renderMenu() {
+        // Inicializar UI (Menú lateral y Dropdown)
+        function initUI() {
             menuEl.innerHTML = '';
+            dropdownEl.innerHTML = '';
+            
             catalog.forEach((item, index) => {
+                // 1. Llenar Menú Lateral
                 const a = document.createElement('a');
                 a.href = "#";
-                a.className = `strategy-item ${index === currentIndex ? 'active' : ''}`;
+                a.className = "strategy-item";
+                a.dataset.index = index;
                 a.innerHTML = `<span class="number">${index}</span> <span>${item.title}</span>`;
-                a.onclick = (e) => {
-                    e.preventDefault();
-                    loadStrategy(index);
-                };
+                a.onclick = (e) => { e.preventDefault(); loadStrategy(index); };
                 menuEl.appendChild(a);
+
+                // 2. Llenar Dropdown
+                const opt = document.createElement('option');
+                opt.value = index;
+                opt.textContent = `${index}. ${item.title}`;
+                dropdownEl.appendChild(opt);
             });
+
+            jumpInput.max = catalog.length - 1;
         }
 
-        // Cargar Estrategia en el Iframe
+        // Función principal de carga
         function loadStrategy(index) {
-            if (index < 0 || index >= catalog.length) return;
+            // Validar límites
+            if (index < 0) index = 0;
+            if (index >= catalog.length) index = catalog.length - 1;
             
-            currentIndex = index;
+            currentIndex = parseInt(index);
             const strategy = catalog[currentIndex];
-            
-            // Actualizar UI
-            iframeEl.src = strategy.file;
-            infoEl.innerHTML = `<strong>${currentIndex}.</strong> ${strategy.title}`;
-            
-            // Actualizar botones
-            document.getElementById('prevBtn').disabled = currentIndex === 0;
-            document.getElementById('nextBtn').disabled = currentIndex === catalog.length - 1;
 
-            renderMenu();
+            // 1. Actualizar Iframe
+            iframeEl.src = strategy.file;
+
+            // 2. Actualizar Info
+            infoEl.textContent = strategy.title;
+
+            // 3. Sincronizar Controles
+            jumpInput.value = currentIndex;
+            dropdownEl.value = currentIndex;
+
+            // 4. Actualizar Menú Lateral (clase activa)
+            document.querySelectorAll('.strategy-item').forEach((item, i) => {
+                item.classList.toggle('active', i === currentIndex);
+                if (i === currentIndex) item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            });
+
+            // 5. Estado de botones
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = currentIndex === catalog.length - 1;
         }
 
-        // Eventos de Navegación
-        document.getElementById('prevBtn').onclick = () => loadStrategy(currentIndex - 1);
-        document.getElementById('nextBtn').onclick = () => loadStrategy(currentIndex + 1);
+        // EVENTOS
 
-        // Teclas rápidas (flechas)
+        // Cambio en Dropdown
+        dropdownEl.onchange = (e) => loadStrategy(e.target.value);
+
+        // Cambio en Input Numérico
+        jumpInput.oninput = (e) => {
+            const val = parseInt(e.target.value);
+            if (!isNaN(val)) loadStrategy(val);
+        };
+
+        // Botones de navegación
+        prevBtn.onclick = () => loadStrategy(currentIndex - 1);
+        nextBtn.onclick = () => loadStrategy(currentIndex + 1);
+
+        // Teclas rápidas
         window.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT') return; // Evitar disparar si escribes en el input
             if (e.key === "ArrowRight") loadStrategy(currentIndex + 1);
             if (e.key === "ArrowLeft") loadStrategy(currentIndex - 1);
         });
 
-        // Inicio
+        // Arranque
         window.onload = () => {
+            initUI();
             loadStrategy(0);
         };
     </script>
