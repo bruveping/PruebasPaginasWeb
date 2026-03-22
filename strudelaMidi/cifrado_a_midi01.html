@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cifrados a MIDI 01</title>
+    <script src="https://unpkg.com/@tonejs/midi"></script>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: #eee; padding: 20px; }
+        textarea { width: 100%; height: 100px; background: #333; color: #fff; border: 1px solid #555; }
+        button { background: #4caf50; color: white; padding: 10px 20px; border: none; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Generador midi con cifrado</h2>
+    <p>Ingresa tus acordes (ej: C E G, F A C, G B D o c4 d#4 g4 , f4 g#4 c4):</p>
+    <textarea id="inputAcordes">C4 E4 G4, F4 A4 C5, G4 B4 D5</textarea>
+    <br>
+    <button onclick="generarMIDI()">Generar y Descargar MIDI</button>
+
+    <script>
+
+  async function generarMIDI() {
+    // Asegúrate de que la librería @tonejs/midi esté cargada
+    const midi = new Midi(); 
+    const track = midi.addTrack();
+    const rawData = document.getElementById('inputAcordes').value;
+    const pasos = rawData.split(','); 
+
+    pasos.forEach((paso, i) => {
+        const notas = paso.trim().split(/\s+/); 
+        
+        // i es el índice del acorde (0, 1, 2...)
+        // Multiplicamos por 4 para que el primer acorde empiece en 0, 
+        // el segundo en 4, el tercero en 8, etc. (Inicio de cada compás)
+        const tiempoInicio = i * 4; 
+
+        notas.forEach(nota => {
+            if (nota) {
+                track.addNote({
+                    name: nota,
+                    time: tiempoInicio, 
+                    duration: 4 // El acorde dura todo el compás (redonda)
+                });
+            }
+        });
+    });
+
+    const buffer = midi.toArray();
+    const blob = new Blob([buffer], { type: "audio/midi" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "cifrado_a_midi.mid";
+    a.click();
+    
+    // Limpieza de memoria
+    URL.revokeObjectURL(url);
+}   </script>
+</body>
+</html>
