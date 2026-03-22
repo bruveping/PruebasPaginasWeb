@@ -19,6 +19,12 @@ Estrategias_motivicas_musicales02 [Estrategias_motivicas_musicales02](https://br
 
 Estrategias_motivicas_musicales03 [Estrategias_motivicas_musicales03](https://bruveping.github.io/PruebasPaginasWeb/Estrategias_motivicas_musicales03/)
 
+strudelaMidi01 [Estrategias_motivicas_musicales03](https://bruveping.github.io/PruebasPaginasWeb/strudelaMidi/cifrado_a_midi01.html)
+
+strudelaMidi02 [Estrategias_motivicas_musicales03](https://bruveping.github.io/PruebasPaginasWeb/strudelaMidi/cifrado_a_midi02.html)
+
+
+
 
 
 
