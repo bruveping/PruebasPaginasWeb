@@ -23,6 +23,7 @@ strudelaMidi01 [strudelaMidi01](https://bruveping.github.io/PruebasPaginasWeb/st
 
 strudelaMidi02 [strudelaMidi02](https://bruveping.github.io/PruebasPaginasWeb/strudelaMidi/cifrado_a_midi02.html)
 
+strudelaMidi [strudelaMidi02](https://bruveping.github.io/PruebasPaginasWeb/strudelaMidi/)
 
 
 
