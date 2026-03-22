@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cifrado a MIDI - Motor de Subdivisión</title>
+    <script src="https://unpkg.com/@tonejs/midi"></script>
+    <style>
+        :root { --bg: #0d1117; --text: #c9d1d9; --accent: #238636; --border: #30363d; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); padding: 40px; line-height: 1.6; }
+        .container { max-width: 900px; margin: 0 auto; background: #161b22; padding: 30px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h1 { color: #58a6ff; margin-top: 0; font-weight: 300; letter-spacing: -1px; }
+        textarea { 
+            width: 100%; height: 150px; background: #000; color: #7ee787; border: 1px solid var(--border); 
+            padding: 15px; border-radius: 8px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 1.2em;
+            resize: vertical; box-sizing: border-box; outline: none; transition: border-color 0.3s;
+        }
+        textarea:focus { border-color: #58a6ff; }
+        .controls { display: flex; gap: 20px; align-items: center; margin-top: 20px; flex-wrap: wrap; }
+        button { 
+            background: var(--accent); color: white; border: none; padding: 15px 30px; 
+            cursor: pointer; border-radius: 6px; font-weight: 600; font-size: 1.1em;
+            transition: transform 0.1s, background 0.2s;
+        }
+        button:active { transform: scale(0.98); }
+        button:hover { background: #2ea043; }
+        .hint { color: #8b949e; font-size: 0.85em; margin-top: 10px; }
+        code { background: #21262d; padding: 2px 5px; border-radius: 4px; color: #ff7b72; }
+        .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 0.9em; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎹 Cifrados a MIDI</h1>
+        <p class="hint">Estructura recursiva inspirada en Strudel. Soporta anidamiento infinito y división de tiempo cíclica.</p>
+        
+        <textarea id="inputStrudel" placeholder="Escribe tu código aquí...">[[c#1][f#1][[d1][gb1]][c1]]/4</textarea>
+        
+        <div class="controls">
+            <button onclick="procesarYDescargar()">GENERAR MIDI</button>
+            <label class="checkbox-container">
+                <input type="checkbox" id="flMode" checked> +1 Octava (Modo FL Studio / Yamaha)
+            </label>
+        </div>
+
+        <div class="hint" style="margin-top: 30px;">
+            <strong>Manual rápido:</strong><br>
+            • <code>[a, b, c]</code> -> Acorde (suenan juntas)<br>
+            • <code>[a] [b]</code> -> Sucesión (subdivide el tiempo disponible)<br>
+            • <code>/n</code> -> Multiplica la duración del bloque por <i>n</i><br>
+            • Soporta <code>#</code>, <code>s</code> (sostenido) y <code>b</code> (bemol).
+        </div>
+    </div>
+
+    <script>
+        function parsearAArbol(texto) {
+            let str = texto.replace(/\s*,\s*/g, ',');
+            str = str.replace(/\[/g, ' [ ').replace(/\]/g, ' ] ').replace(/\//g, ' /');
+            const tokens = str.trim().split(/\s+/).filter(t => t.length > 0);
+            
+            let raiz = { tipo: 'grupo', hijos: [], mult: 1 };
+            let pila = [raiz];
+
+            tokens.forEach(t => {
+                if (t === '[') {
+                    let nuevo = { tipo: 'grupo', hijos: [], mult: 1 };
+                    pila[pila.length - 1].hijos.push(nuevo);
+                    pila.push(nuevo);
+                } else if (t === ']') {
+                    if (pila.length > 1) pila.pop();
+                } else if (t.startsWith('/')) {
+                    let v = parseFloat(t.substring(1));
+                    if (!isNaN(v)) {
+                        let actual = pila[pila.length - 1];
+                        if (actual.hijos.length > 0) actual.hijos[actual.hijos.length - 1].mult = v;
+                        else actual.mult = v;
+                    }
+                } else {
+                    pila[pila.length - 1].hijos.push({ tipo: 'nota', notas: t.split(','), mult: 1 });
+                }
+            });
+            return raiz;
+        }
+
+        function limpiarNota(n, fl) {
+            let s = n.trim().toLowerCase().replace('s', '#');
+            let m = s.match(/^([a-g][#b]?)(-?\d+)$/);
+            if (!m) return null;
+            let oct = parseInt(m[2]) + (fl ? 1 : 0);
+            return m[1].toUpperCase() + oct;
+        }
+
+        function generarEventos(nodo, inicio, dur, track, fl) {
+            let dReal = dur * nodo.mult;
+            if (nodo.tipo === 'nota') {
+                nodo.notas.forEach(n => {
+                    let notaF = limpiarNota(n, fl);
+                    if (notaF) track.addNote({ name: notaF, time: inicio, duration: dReal });
+                });
+            } else {
+                let cant = nodo.hijos.length;
+                if (cant === 0) return;
+                let tPaso = dReal / cant;
+                let cursor = inicio;
+                nodo.hijos.forEach(h => {
+                    generarEventos(h, cursor, tPaso, track, fl);
+                    cursor += (tPaso * h.mult);
+                });
+            }
+        }
+
+        async function procesarYDescargar() {
+            try {
+                const midi = new Midi();
+                const track = midi.addTrack();
+                const codigo = document.getElementById('inputStrudel').value;
+                const fl = document.getElementById('flMode').checked;
+                
+                // 1 Ciclo base = 4 segundos/beats
+                const arbol = parsearAArbol(codigo);
+                console.log("Estructura Delta Urbano:", arbol); // Para tu inspección técnica
+                
+                generarEventos(arbol, 0, 2, track, fl);
+
+                const buffer = midi.toArray();
+                const blob = new Blob([buffer], { type: "audio/midi" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "cifrado_a_midi_output.mid";
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                alert("Error en el parseo. Revisa los corchetes.");
+            }
+        }
+    </script>
+</body>
+</html>
