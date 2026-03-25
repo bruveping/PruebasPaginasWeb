@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIDI a Strudel REPL</title>
+    <script src="https://unpkg.com/@tonejs/midi"></script>
+    <style>
+        :root { --bg: #0d1117; --text: #c9d1d9; --accent: #58a6ff; --accent-hover: #1f6feb; --border: #30363d; --success: #238636; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 20px; line-height: 1.5; }
+        .container { max-width: 800px; margin: 0 auto; background: #161b22; padding: 25px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        h1 { margin-top: 0; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+        .file-upload-wrapper { margin-bottom: 20px; position: relative; }
+        input[type="file"] { display: none; }
+        .file-upload-btn { background: var(--border); color: var(--text); border: 1px dashed #8b949e; padding: 20px; text-align: center; border-radius: 6px; cursor: pointer; display: block; transition: all 0.2s; }
+        .file-upload-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(88, 166, 255, 0.05); }
+        textarea { width: 100%; height: 250px; background: #000; color: #7ee787; border: 1px solid var(--border); padding: 15px; font-family: 'Courier New', monospace; font-size: 1.1em; box-sizing: border-box; border-radius: 6px; resize: vertical; margin-bottom: 15px; }
+        .btn-action { background: var(--accent); color: white; border: none; padding: 12px 24px; cursor: pointer; border-radius: 6px; font-weight: bold; transition: background 0.2s; }
+        .btn-action:hover { background: var(--accent-hover); }
+        .checkbox-container { margin-top: 10px; display: block; color: #8b949e; margin-bottom: 20px; cursor: pointer; }
+        .log { margin-top: 15px; font-family: monospace; font-size: 0.9em; padding: 10px; border-radius: 4px; }
+        .log.success { color: #7ee787; background: rgba(35, 134, 54, 0.1); border: 1px solid rgba(35, 134, 54, 0.4); }
+        .log.error { color: #ff7b72; background: rgba(255, 123, 114, 0.1); border: 1px solid rgba(255, 123, 114, 0.4); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎹 MIDI a Strudel REPL</h1>
+        <p style="color: #8b949e; margin-bottom: 20px;">Sube un archivo <code>.mid</code>. El script detectará acordes (encerrándolos en <code>[nota,nota]</code>) y silencios proporcionales.</p>
+        
+        <div class="file-upload-wrapper">
+            <label for="midiInput" class="file-upload-btn" id="dropZone">
+                📁 Haz clic para seleccionar un archivo MIDI o arrástralo aquí
+            </label>
+            <input type="file" id="midiInput" accept=".mid,.midi">
+        </div>
+
+        <label class="checkbox-container">
+            <input type="checkbox" id="flMode"> Compensar Modo FL Studio (-1 octava)
+        </label>
+        
+        <textarea id="outputStrudel" placeholder="Aquí aparecerá el código Strudel..." readonly></textarea>
+        
+        <button class="btn-action" onclick="copiarAlPortapapeles()">Copiar Código</button>
+        <div id="statusLog" class="log" style="display: none;"></div>
+    </div>
+
+    <script>
+        const midiInput = document.getElementById('midiInput');
+        const dropZone = document.getElementById('dropZone');
+
+        midiInput.addEventListener('change', procesarMidi);
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--accent)';
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.style.borderColor = '#8b949e');
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#8b949e';
+            if (e.dataTransfer.files.length) {
+                midiInput.files = e.dataTransfer.files;
+                procesarMidi({ target: midiInput });
+            }
+        });
+
+        function formatoStrudelNota(notaMidi, flMode) {
+            let m = notaMidi.match(/^([A-G])([#b]?)(-?\d+)$/i);
+            if (!m) return notaMidi.toLowerCase();
+
+            let nota = m[1].toLowerCase();
+            let alteracion = m[2].toLowerCase();
+            if (alteracion === '#') alteracion = 's';
+            
+            let octava = parseInt(m[3]) - (flMode ? 1 : 0); 
+            
+            return `${nota}${alteracion}${octava}`;
+        }
+
+        function mostrarLog(mensaje, tipo) {
+            const log = document.getElementById('statusLog');
+            log.style.display = 'block';
+            log.className = `log ${tipo}`;
+            log.innerText = mensaje;
+        }
+
+        async function procesarMidi(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            dropZone.innerText = `📄 Archivo cargado: ${file.name}`;
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const uint8Array = new Uint8Array(arrayBuffer);
+
+                if (uint8Array.length < 4 || uint8Array[0] !== 0x4D || uint8Array[1] !== 0x54 || uint8Array[2] !== 0x68 || uint8Array[3] !== 0x64) {
+                    mostrarLog("❌ El archivo no es un MIDI válido.", "error");
+                    return;
+                }
+
+                const midi = new Midi(uint8Array);
+                let todasLasNotas = [];
+                midi.tracks.forEach(t => todasLasNotas = todasLasNotas.concat(t.notes));
+
+                if (todasLasNotas.length === 0) {
+                    mostrarLog("⚠️ El archivo MIDI no contiene notas.", "error");
+                    return;
+                }
+
+                todasLasNotas.sort((a, b) => a.time - b.time || a.midi - b.midi);
+
+                const flMode = document.getElementById('flMode').checked;
+                const tolerancia = 0.05; 
+                let eventos = [];
+                
+                let acordeActual = [todasLasNotas[0]];
+                let inicioActual = todasLasNotas[0].time;
+                let finActual = inicioActual + todasLasNotas[0].duration;
+
+                for (let i = 1; i < todasLasNotas.length; i++) {
+                    let nota = todasLasNotas[i];
+                    if (Math.abs(nota.time - inicioActual) < tolerancia) {
+                        acordeActual.push(nota);
+                        finActual = Math.max(finActual, nota.time + nota.duration);
+                    } else {
+                        eventos.push({
+                            tipo: 'nota',
+                            notas: acordeActual,
+                            inicio: inicioActual,
+                            duracion: finActual - inicioActual
+                        });
+                        acordeActual = [nota];
+                        inicioActual = nota.time;
+                        finActual = nota.time + nota.duration;
+                    }
+                }
+                eventos.push({ tipo: 'nota', notas: acordeActual, inicio: inicioActual, duracion: finActual - inicioActual });
+
+                let secuenciaFinal = [];
+                let cursor = 0;
+
+                for (let ev of eventos) {
+                    if (ev.inicio - cursor > tolerancia) {
+                        secuenciaFinal.push({ tipo: 'silencio', duracion: ev.inicio - cursor });
+                    }
+                    secuenciaFinal.push(ev);
+                    cursor = ev.inicio + ev.duracion;
+                }
+
+                let duracionMinima = secuenciaFinal.reduce((min, ev) => Math.min(min, ev.duracion), Infinity);
+                duracionMinima = Math.max(duracionMinima, 0.05);
+
+                let tokensStrudel = [];
+
+                secuenciaFinal.forEach(ev => {
+                    let peso = ev.duracion / duracionMinima;
+                    peso = Math.round(peso * 100) / 100;
+
+                    let bloqueTexto = "";
+                    
+                    if (ev.tipo === 'silencio') {
+                        bloqueTexto = "~";
+                    } else {
+                        let notasUnicas = [...new Set(ev.notas.map(n => formatoStrudelNota(n.name, flMode)))];
+                        
+                        // Si hay más de una nota, envolvemos en corchetes
+                        if (notasUnicas.length > 1) {
+                            bloqueTexto = `[${notasUnicas.join(",")}]`;
+                        } else {
+                            bloqueTexto = notasUnicas[0];
+                        }
+                    }
+
+                    if (peso !== 1) {
+                        bloqueTexto += `@${peso}`;
+                    }
+
+                    tokensStrudel.push(bloqueTexto);
+                });
+
+                let duracionTotalSegundos = cursor;
+                let multiplicadorGlobal = duracionTotalSegundos / 2;
+                multiplicadorGlobal = Math.round(multiplicadorGlobal * 100) / 100;
+
+                let resultado = `[${tokensStrudel.join(" ")}]`;
+                
+                if (multiplicadorGlobal !== 1) {
+                    resultado += `/${multiplicadorGlobal}`;
+                }
+
+                document.getElementById('outputStrudel').value = resultado;
+                mostrarLog(`✅ MIDI procesado. Duración: ${duracionTotalSegundos.toFixed(2)} seg.`, "success");
+
+            } catch (error) {
+                mostrarLog("❌ Error: " + (error.message || "MIDI inválido."), "error");
+            }
+        }
+
+        function copiarAlPortapapeles() {
+            const texto = document.getElementById('outputStrudel');
+            if (!texto.value) return;
+            texto.select();
+            document.execCommand('copy');
+            mostrarLog("📋 ¡Código Strudel copiado!", "success");
+        }
+    </script>
+</body>
+</html>
+
