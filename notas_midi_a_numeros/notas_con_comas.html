@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Delta Urbano: Strudel to ChucK Array</title>
+    <style>
+        body { font-family: 'Courier New', monospace; background: #121212; color: #00ff00; padding: 20px; }
+        .box { max-width: 700px; margin: auto; border: 1px solid #00ff00; padding: 20px; box-shadow: 0 0 10px #00ff00; }
+        textarea { width: 95%; height: 80px; background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 10px; margin-bottom: 10px;}
+        .result { background: #1e1e1e; padding: 15px; border: 1px dashed #555; margin-top: 10px; color: #fff; font-size: 0.9em; }
+        button { background: #00ff00; color: #000; border: none; padding: 10px; cursor: pointer; font-weight: bold; width: 100%; }
+        button:active { background: #008800; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h3>[DELTA URBANO] CONVERSOR</h3>
+    <textarea id="strudelIn" placeholder="c1 d1 f#3 d3 ab3"></textarea>
+    <button onclick="procesar()">GENERAR LINEA CHUCK</button>
+    <div id="chuckOut" class="result">// El array aparecerá acá...</div>
+    <button onclick="copiar()" style="margin-top:10px; background:#444; color:#fff;">COPIAR CODIGO</button>
+</div>
+
+<script>
+function procesar() {
+    const input = document.getElementById('strudelIn').value.toLowerCase();
+    const notasBase = {'c':0,'c#':1,'db':1,'d':2,'d#':3,'eb':3,'e':4,'f':5,'f#':6,'gb':6,'g':7,'g#':8,'ab':8,'a':9,'a#':10,'bb':10,'b':11};
+    const regex = /([a-g][#b]?)(-?\d+)/g;
+    let match;
+    let midis = [];
+
+    while ((match = regex.exec(input)) !== null) {
+        const midi = (parseInt(match[2]) + 1) * 12 + notasBase[match[1]];
+        midis.push(midi);
+    }
+
+    const chuckLine = "[" + midis.join(", ") + "] @=> int notas[];";
+    document.getElementById('chuckOut').innerText = midis.length > 0 ? chuckLine : "Error: No hay notas válidas.";
+}
+
+function copiar() {
+    const el = document.getElementById('chuckOut');
+    navigator.clipboard.writeText(el.innerText);
+}
+</script>
+</body>
+</html>
