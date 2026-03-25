@@ -27,6 +27,10 @@ strudelaMidi [strudelaMidi](https://bruveping.github.io/PruebasPaginasWeb/strude
 
 cifrado_a_midi [cifrado_a_midi](https://bruveping.github.io/PruebasPaginasWeb/cifrado_a_midi/)
 
+notas_midi_a_numeros [notas_midi_a_numeros](https://bruveping.github.io/PruebasPaginasWeb/notas_midi_a_numeros/)
+
+notas_midi_a_numeros notas_con_comas [notas_midi_a_numeros notas_con_comas](https://bruveping.github.io/PruebasPaginasWeb/notas_midi_a_numeros/notas_con_comas.html)
+
 
 
 
