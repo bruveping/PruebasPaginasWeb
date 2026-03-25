@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cifrado a MIDI</title>
+    <script src="https://unpkg.com/@tonejs/midi"></script>
+    <style>
+        :root { --bg: #0d1117; --text: #c9d1d9; --accent: #238636; --border: #30363d; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: #161b22; padding: 20px; border-radius: 8px; border: 1px solid var(--border); }
+        textarea { width: 100%; height: 250px; background: #000; color: #7ee787; border: 1px solid var(--border); padding: 15px; font-family: monospace; font-size: 1.1em; box-sizing: border-box; }
+        button { background: var(--accent); color: white; border: none; padding: 15px 30px; cursor: pointer; border-radius: 6px; font-weight: bold; margin-top: 10px; }
+        .checkbox-container { margin-top: 10px; display: block; color: #8b949e; }
+        .log { margin-top: 15px; font-family: monospace; color: #ff7b72; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎹 Cifrado a MIDI</h1>
+        <textarea id="inputStrudel">[g2 a2 d2@2
+cs2 fs2 b1@2
+a2 d2 g2@2
+g2 c2 d2@2
+e2 eb2 d2@2
+cs2 fs2 b1@2
+a2 d2 g2@2
+g2 c2 d2@2]/32</textarea>
+        
+        <label class="checkbox-container">
+            <input type="checkbox" id="flMode"> Modo FL Studio (+1 octava)
+        </label>
+        <button onclick="procesar()">GENERAR Y DESCARGAR</button>
+        <div id="statusLog" class="log"></div>
+    </div>
+
+    <script>
+        function parse(texto) {
+            // Normalizar texto y aislar operadores para tokenización correcta
+            let s = texto.replace(/\n/g, ' ').replace(/\s*,\s*/g, ',');
+            s = s.replace(/\[/g, ' [ ').replace(/\]/g, ' ] ').replace(/\//g, ' / ').replace(/@/g, ' @ ');
+            const tokens = s.trim().split(/\s+/).filter(t => t.length > 0);
+            
+            let raiz = { tipo: 'grupo', hijos: [], mult: 1 };
+            let pila = [raiz];
+
+            for (let i = 0; i < tokens.length; i++) {
+                let t = tokens[i];
+                if (t === '[') {
+                    let n = { tipo: 'grupo', hijos: [], mult: 1 };
+                    pila[pila.length - 1].hijos.push(n);
+                    pila.push(n);
+                } else if (t === ']') {
+                    if (pila.length > 1) pila.pop();
+                } else if (t === '/' || t === '@') {
+                    let v = parseFloat(tokens[++i]);
+                    if (!isNaN(v)) {
+                        let actual = pila[pila.length - 1];
+                        if (actual.hijos.length > 0) actual.hijos[actual.hijos.length - 1].mult = v;
+                        else actual.mult = v;
+                    }
+                } else {
+                    pila[pila.length - 1].hijos.push({ tipo: 'nota', notas: t.split(','), mult: 1 });
+                }
+            }
+            return raiz;
+        }
+
+        function getNota(n, fl) {
+            let s = n.trim().toLowerCase().replace('s', '#');
+            let m = s.match(/^([a-g][#b]?)(-?\d+)$/);
+            if (!m) return null;
+            return m[1].toUpperCase() + (parseInt(m[2]) + (fl ? 1 : 0));
+        }
+
+        // REDISEÑO: División Proporcional Estricta
+        function generarEventos(nodo, inicio, duracionAsignada, track, fl) {
+            if (nodo.tipo === 'nota') {
+                nodo.notas.forEach(n => {
+                    let nf = getNota(n, fl);
+                    // La nota ocupa toda la duración que su padre le asignó
+                    if (nf) track.addNote({ name: nf, time: inicio, duration: duracionAsignada });
+                });
+                return duracionAsignada; // Retorna cuánto avanzó el cursor
+            } else {
+                let sumaPesos = nodo.hijos.reduce((a, b) => a + b.mult, 0);
+                if (sumaPesos === 0) return 0;
+                
+                let cursor = inicio;
+                nodo.hijos.forEach(h => {
+                    // REGLA 2: D se reparte proporcionalmente a la suma de pesos (mult)
+                    let duracionProporcional = duracionAsignada * (h.mult / sumaPesos);
+                    generarEventos(h, cursor, duracionProporcional, track, fl);
+                    
+                    // Desplazamiento estricto del cursor (evita solapamientos)
+                    cursor += duracionProporcional; 
+                });
+                return duracionAsignada;
+            }
+        }
+
+        async function procesar() {
+            try {
+                const midi = new Midi();
+                const track = midi.addTrack();
+                const arbol = parse(document.getElementById('inputStrudel').value);
+                const fl = document.getElementById('flMode').checked;
+
+                // REGLA 3: Multiplicador Externo (Expansión de Tiempo)
+                // Por defecto, todo el bloque dura 1 ciclo (4 beats)
+                let duracionGlobal = 2; 
+                
+                // Si el usuario envolvió todo en un grupo (ej: [...]/32)
+                if (arbol.hijos.length === 1 && arbol.hijos[0].mult !== 1) {
+                    // Multiplicamos la duración absoluta
+                    duracionGlobal = 2 * arbol.hijos[0].mult;
+                    // Reseteamos su peso interno a 1 para que 'generarEventos' 
+                    // no divida redundantemente, ya que el tiempo absoluto ya se expandió.
+                    arbol.hijos[0].mult = 1; 
+                }
+
+                generarEventos(arbol, 0, duracionGlobal, track, fl);
+
+                const blob = new Blob([midi.toArray()], { type: "audio/midi" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = "delta_urbano_proporcional.mid";
+                a.click();
+                
+                document.getElementById('statusLog').innerText = "✅ MIDI Generado correctamente (" + duracionGlobal + " tiempos calculados).";
+            } catch (err) {
+                document.getElementById('statusLog').innerText = "❌ Error al generar: Revisa la sintaxis de corchetes.";
+            }
+        }
+    </script>
+</body>
+</html>

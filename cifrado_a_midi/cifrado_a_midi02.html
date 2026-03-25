@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cifrado a MIDI (Subdivisión)</title>
+    <script src="https://unpkg.com/@tonejs/midi"></script>
+    <style>
+        body { 
+            font-family: 'Courier New', Courier, monospace; 
+            padding: 20px; 
+            background: #1e1e1e; 
+            color: #d4d4d4; 
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h2 { color: #569cd6; }
+        textarea { 
+            width: 100%; 
+            height: 120px; 
+            margin-bottom: 15px; 
+            background: #2d2d2d; 
+            color: #ce9178; 
+            border: 1px solid #4d4d4d; 
+            padding: 10px; 
+            font-size: 1.1em;
+            box-sizing: border-box;
+        }
+        button { 
+            background: #4caf50; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            cursor: pointer; 
+            border-radius: 4px; 
+            font-weight: bold;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+        button:hover { background: #45a049; }
+        .configuraciones { margin-bottom: 15px; }
+        .explicacion { color: #808080; font-size: 0.9em; line-height: 1.5; }
+        code { color: #dcdcaa; }
+    </style>
+</head>
+<body>
+    <h2>🎹 Cifrado a MIDI (Árbol Strudel)</h2>
+    <div class="explicacion">
+        <p>Escribe tu código usando corchetes anidados. Soporta: <code>cs1</code>, <code>c#1</code> y <code>db1</code>.</p>
+        <p><strong>Ejemplo:</strong> <code>[[c#1,e1,g#1] [f#1,a1,c#2]]/4</code></p>
+    </div>
+    
+    <textarea id="inputCodigo">[[c#1][f#1][[d1][gb1]][c1]]/4</textarea>
+    
+    <div class="configuraciones">
+        <label>
+            <input type="checkbox" id="ajusteFlStudio"> 
+            Ajustar para FL Studio (+1 octava)
+        </label>
+    </div>
+
+    <button onclick="descargarMIDI()">Generar y Descargar archivo MIDI</button>
+
+    <script>
+        function analizarStrudel(entrada) {
+            // Limpieza y preparación de tokens
+            let entradaLimpia = entrada.replace(/\s*,\s*/g, ',');
+            entradaLimpia = entradaLimpia.replace(/\[/g, ' [ ').replace(/\]/g, ' ] ').replace(/\//g, ' /');
+            
+            const tokens = entradaLimpia.trim().split(/\s+/).filter(t => t.length > 0);
+            
+            let raiz = { tipo: 'grupo', elementos: [], multiplicador: 1 };
+            let pila = [raiz];
+
+            for (let i = 0; i < tokens.length; i++) {
+                const token = tokens[i];
+                
+                if (token === '[') {
+                    let nuevoGrupo = { tipo: 'grupo', elementos: [], multiplicador: 1 };
+                    pila[pila.length - 1].elementos.push(nuevoGrupo);
+                    pila.push(nuevoGrupo);
+                } 
+                else if (token === ']') {
+                    if (pila.length > 1) pila.pop();
+                } 
+                else if (token.startsWith('/')) {
+                    const valor = parseFloat(token.substring(1));
+                    if (!isNaN(valor)) {
+                        const grupoActual = pila[pila.length - 1];
+                        if (grupoActual.elementos.length > 0) {
+                            grupoActual.elementos[grupoActual.elementos.length - 1].multiplicador = valor;
+                        } else {
+                            grupoActual.multiplicador = valor;
+                        }
+                    }
+                } 
+                else {
+                    const notas = token.split(',');
+                    pila[pila.length - 1].elementos.push({ 
+                        tipo: 'acorde', 
+                        notas: notas, 
+                        multiplicador: 1 
+                    });
+                }
+            }
+            return raiz;
+        }
+
+        function formatearNota(nota, flStudio) {
+            if (!nota) return "";
+            
+            // Normalizar: convertimos 's' a '#' por si usas el estilo Strudel puro
+            let n = nota.trim().toLowerCase().replace('s', '#');
+            
+            // Regex mejorada:
+            // ^([a-g])      -> Empieza con una nota de A a G
+            // ([#b]?)       -> Opcionalmente tiene un sostenido o bemol
+            // (-?\d+)$      -> Termina con la octava (permite octavas negativas como c-1)
+            let match = n.match(/^([a-g])([#b]?)(-?\d+)$/);
+            
+            if (!match) return "";
+            
+            let nombreNota = match[1].toUpperCase() + match[2];
+            let octava = parseInt(match[3]);
+            
+            if (flStudio) {
+                octava += 1;
+            }
+            
+            return nombreNota + octava;
+        }
+
+        function crearEventosMIDI(nodo, tiempoInicio, duracionAsignada, pista, flStudio) {
+            const duracionReal = duracionAsignada * nodo.multiplicador;
+
+            if (nodo.tipo === 'acorde') {
+                nodo.notas.forEach(nota => {
+                    const notaFormateada = formatearNota(nota, flStudio);
+                    if (notaFormateada) {
+                        pista.addNote({
+                            name: notaFormateada,
+                            time: tiempoInicio,
+                            duration: duracionReal
+                        });
+                    }
+                });
+                return duracionReal;
+            } 
+            else if (nodo.tipo === 'grupo') {
+                const numeroDeElementos = nodo.elementos.length;
+                if (numeroDeElementos === 0) return duracionReal;
+                
+                const duracionPaso = duracionReal / numeroDeElementos;
+                let tiempoActual = tiempoInicio;
+                
+                nodo.elementos.forEach(hijo => {
+                    crearEventosMIDI(hijo, tiempoActual, duracionPaso, pista, flStudio);
+                    tiempoActual += (duracionPaso * hijo.multiplicador);
+                });
+                return duracionReal;
+            }
+        }
+
+        async function descargarMIDI() {
+            try {
+                const midi = new Midi(); 
+                const pista = midi.addTrack();
+                const entrada = document.getElementById('inputCodigo').value;
+                const flStudio = document.getElementById('ajusteFlStudio').checked;
+                
+                const duracionBase = 4; 
+                const arbo = analizarStrudel(entrada);
+                
+                crearEventosMIDI(arbo, 0, duracionBase, pista, flStudio);
+
+                const buffer = midi.toArray();
+                const blob = new Blob([buffer], { type: "audio/midi" });
+                const url = URL.createObjectURL(blob);
+                const enlace = document.createElement("a");
+                enlace.href = url;
+                enlace.download = "cifrado_strudel.mid";
+                enlace.click();
+                
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error(error);
+                alert("Error en la sintaxis. Revisa los corchetes.");
+            }
+        }
+    </script>
+</body>
+</html>
