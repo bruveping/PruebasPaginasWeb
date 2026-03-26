@@ -41,7 +41,7 @@ I im vm VI7 ivm V7 I,comun mayor,interestante,jonico,40
 I7 IV II7 V7,comun mayor,interestante,jonico,41
 I7 idim7 I7 II7 ivm V7,comun mayor,interestante,jonico,42
 I7 IV ivm V7 I,comun mayor,interestante,jonico,43
-II7 ivm G7 C,comun mayor,interestante,jonico,44
+II7 ivm V7 I,comun mayor,interestante,jonico,44
 iim7 V7 iim7 V7,comun mayor,interestante,jonico,45
 iim7 IIb7 I,comun mayor,interestante,jonico,46
 II7 ivm iiim VI7 iim7 V7,comun mayor,interestante,jonico,47
@@ -84,7 +84,7 @@ im idim7 V7 im,comun menor,interestante,eolico,5
 im vdim7 V7 im,comun menor,interestante,eolico,6
 im  i#dim7 ivm V7,comun menor,interestante,eolico,7
 im VIb II7 V7 im,comun menor,interestante,eolico,8
-im idirn7 ivm V7,comun menor,interestante,eolico,9
+im idim7 ivm V7,comun menor,interestante,eolico,9
 im Vaug im,comun menor,interestante,eolico,10
 im idim7 im II7 ivm V7,comun menor,interestante,eolico,11
 im II7 V7 im,comun menor,interestante,eolico,12
