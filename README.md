@@ -31,8 +31,9 @@ notas_midi_a_numeros [notas_midi_a_numeros](https://bruveping.github.io/PruebasP
 
 notas_midi_a_numeros notas_con_comas [notas_midi_a_numeros notas_con_comas](https://bruveping.github.io/PruebasPaginasWeb/notas_midi_a_numeros/notas_con_comas.html)
 
-
 midi_a_cifrado [midi_a_cifrado](https://bruveping.github.io/PruebasPaginasWeb/midi_a_cifrado/)
+
+explorador_de_cadencias_2026 [explorador_de_cadencias_2026](https://bruveping.github.io/PruebasPaginasWeb/explorador_de_cadencias_2026/)
 
 
 
