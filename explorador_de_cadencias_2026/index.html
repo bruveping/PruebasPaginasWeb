@@ -3,289 +3,311 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Armonía Studio - Explorador de Progresiones</title>
+    <title>Armonía Studio - Fusión</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
     <style>
-        .chord-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .chord-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        .active-key { background-color: #2563eb !important; color: white; border-color: #1e40af; }
-        .playing { border: 2px solid #3b82f6 !important; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        body { font-family: 'Inter', sans-serif; overflow: hidden; }
+        .mono-font { font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark-scroll::-webkit-scrollbar-thumb { background: #475569; }
+        .node-circle { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); fill: #1e293b; }
+        .tension-line { fill: none; stroke-width: 2; stroke-dasharray: 8,4; stroke: #334155; opacity: 0.5; }
+        .playing-node { stroke: #3b82f6 !important; stroke-width: 3px !important; fill: #2563eb !important; }
+        .chord-card { transition: all 0.2s ease-in-out; cursor: pointer; }
+        .chord-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-color: #94a3b8; }
+        .editor-input:focus { outline: none; box-shadow: none; }
+        
+        /* Asegurar que el input de búsqueda sea siempre clickable */
+        #searchInput { pointer-events: auto !important; position: relative; z-index: 50; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-900 font-sans">
+<body class="flex flex-col h-screen bg-slate-50 text-slate-900">
 
-    <div class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Header -->
-        <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-                <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Armonía Studio</h1>
-                <p class="text-slate-500 mt-2 text-lg">Explorador de progresiones con preescucha y exportación MIDI.</p>
-            </div>
-            
-            <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 flex gap-2">
-                <div class="flex flex-col">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase px-2">Volumen Maestro</span>
-                    <input type="range" id="masterVolume" min="0" max="1" step="0.1" value="0.5" class="h-6 mx-2">
+    <!-- TOP: WORKSTATION -->
+    <div class="h-[50vh] flex flex-col bg-slate-950 text-slate-100 shadow-2xl relative z-10 flex-shrink-0">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">Armonía Studio</h1>
+                <div class="h-6 w-px bg-slate-700 mx-2"></div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Tonalidad:</span>
+                    <div id="keySelector" class="flex bg-slate-900 rounded-lg p-1 border border-slate-800 overflow-x-auto dark-scroll"></div>
                 </div>
             </div>
-        </header>
-
-        <!-- Panel de Control -->
-        <section class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-12">
-            <!-- Selector de Tonalidad -->
-            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h2 class="text-sm font-bold text-slate-400 uppercase mb-4 tracking-widest">Tonalidad Principal</h2>
-                <div id="keySelector" class="grid grid-cols-6 sm:grid-cols-9 gap-2">
-                    <!-- JS Inyectará botones aquí -->
-                </div>
+            <div class="flex items-center gap-3">
+                <button id="btnPlay" class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" fill-rule="evenodd"></path></svg>
+                    Reproducir
+                </button>
+                <button id="btnExportMidi" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Exportar MIDI
+                </button>
+                <button id="btnClear" class="p-2 text-slate-400 hover:text-red-400 transition-colors" title="Limpiar Editor">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
             </div>
+        </div>
 
-            <!-- Ajustes de Tiempo -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h2 class="text-sm font-bold text-slate-400 uppercase mb-4 tracking-widest">Ajustes</h2>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <label class="text-sm font-medium">BPM</label>
-                        <input type="number" id="bpmInput" value="120" min="40" max="220" class="w-20 p-1 border rounded text-center font-bold">
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <label class="text-sm font-medium">Compases</label>
-                        <input type="number" id="barsInput" value="0" min="0" class="w-20 p-1 border rounded text-center font-bold">
-                    </div>
-                    <p class="text-[10px] text-slate-400 italic">0 = 1 compás por acorde</p>
-                </div>
+        <div class="flex-1 relative flex flex-col">
+            <div class="absolute top-0 left-0 w-full p-6 z-10 pointer-events-none">
+                <input type="text" id="progInput" 
+                    class="editor-input w-full bg-transparent border-none text-3xl font-bold mono-font text-white placeholder-slate-700 pointer-events-auto"
+                    placeholder="Escribe acordes... ej: I IV V IIb7#11" autocomplete="off" spellcheck="false">
             </div>
+            <div id="canvasContainer" class="flex-1 w-full h-full"></div>
+        </div>
+    </div>
 
-            <!-- Filtro -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h2 class="text-sm font-bold text-slate-400 uppercase mb-4 tracking-widest">Filtrar</h2>
-                <input type="text" id="searchInput" placeholder="Ej: dórico, menor, V7..." class="w-full p-2 border rounded-xl bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none">
+    <!-- BOTTOM: CATALOG -->
+    <div class="h-[50vh] flex flex-col bg-slate-50 relative z-30">
+        <div class="px-6 py-4 border-b border-slate-200 bg-white sticky top-0 z-50 flex gap-4 items-center">
+            <div class="relative flex-1">
+                <svg class="w-5 h-5 absolute left-3 top-2.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" id="searchInput" placeholder="Buscar en base de datos 148..." 
+                    class="w-full pl-10 pr-4 py-2 bg-slate-100 border border-transparent rounded-lg text-sm focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all outline-none text-slate-900">
             </div>
-        </section>
-
-        <!-- Canvas de Resultados -->
-        <main>
-            <h2 class="text-xl font-bold text-slate-800 mb-6 tracking-tight">Catálogo de Progresiones</h2>
-            <div id="progContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Cargando... -->
-                <div class="col-span-full py-20 text-center">
-                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-300 border-t-blue-600 mb-4"></div>
-                    <p class="text-slate-500">Cargando catálogo...</p>
-                </div>
-            </div>
-        </main>
+            <div class="text-sm text-slate-500 font-medium whitespace-nowrap"><span id="resultsCount">0</span> progresiones</div>
+        </div>
+        <div id="cardsGrid" class="flex-1 overflow-y-auto p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start content-start"></div>
     </div>
 
     <script>
-        // --- CONSTANTES MUSICALES ---
-        const KEYS = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
-        const KEY_OFFSETS = { "C":0, "C#":1, "Db":1, "D":2, "D#":3, "Eb":3, "E":4, "F":5, "F#":6, "Gb":6, "G":7, "G#":8, "Ab":8, "A":9, "A#":10, "Bb":10, "B":11 };
-        const CHORD_INTERVALS = { 'maj': [0, 4, 7], 'min': [0, 3, 7], 'dom7': [0, 4, 7, 10], 'min7': [0, 3, 7, 10], 'dim7': [0, 3, 6, 9], 'aug': [0, 4, 8] };
-        
-        const ROMAN_MAP = {
-            'I': [0, 'maj'], 'I7': [0, 'dom7'], 'Iaug': [0, 'aug'], 'im': [0, 'min'], 'i7': [0, 'min7'],
-            'iim': [2, 'min'], 'iim7': [2, 'min7'], 'II7': [2, 'dom7'], 'IIb7': [1, 'dom7'],
-            'iiim': [4, 'min'], 'iiim7': [4, 'min7'], 'III': [4, 'maj'], 'III7': [4, 'dom7'],
-            'IIIb': [3, 'maj'], 'IIIb7': [3, 'dom7'], 'IIIbm': [3, 'min'], 'iiibm': [3, 'min'],
-            'IV': [5, 'maj'], 'IV7': [5, 'dom7'], 'ivm': [5, 'min'], 'iv#m': [6, 'min'],
-            'V': [7, 'maj'], 'V7': [7, 'dom7'], 'Vaug': [7, 'aug'], 'V+': [7, 'aug'], 'vm': [7, 'min'], 'vm7': [7, 'min7'], 'Vm': [7, 'min'],
-            'vi': [9, 'min'], 'vim': [9, 'min'], 'vim7': [9, 'min7'], 'VI': [9, 'maj'], 'VI7': [9, 'dom7'], 'VIb': [8, 'maj'], 'VIb7': [8, 'dom7'],
-            'VII': [11, 'maj'], 'VII7': [11, 'dom7'], 'VIIb': [10, 'maj'], 'VIIb7': [10, 'dom7'],
-            'idim7': [0, 'dim7'], 'vdim7': [7, 'dim7'], 'i#dim7': [1, 'dim7'], 'idirn7': [0, 'dim7']
-        };
+        const KEYS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+        const NOTE_NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'];
+        let currentKey = 'C';
+        let currentKeyIndex = 0;
+        let dbProgressions = [];
 
-        const MODE_COLORS = {
-            'jonico': 'bg-blue-50 border-blue-200 text-blue-800',
-            'eolico': 'bg-indigo-50 border-indigo-200 text-indigo-800',
-            'dorico': 'bg-emerald-50 border-emerald-200 text-emerald-800',
-            'mixolidio': 'bg-amber-50 border-amber-200 text-amber-800',
-            'frigio': 'bg-red-50 border-red-200 text-red-800',
-            'lidio': 'bg-purple-50 border-purple-200 text-purple-800',
-            'locrio': 'bg-slate-50 border-slate-200 text-slate-800',
-            'comun mayor': 'bg-blue-50 border-blue-200 text-blue-800',
-            'comun menor': 'bg-indigo-50 border-indigo-200 text-indigo-800'
-        };
+        // --- D3 SETUP ---
+        const width = window.innerWidth;
+        const height = window.innerHeight * 0.5;
+        const svg = d3.select("#canvasContainer").append("svg").attr("width", "100%").attr("height", "100%").attr("viewBox", `0 0 ${width} ${height}`);
+        const gLines = svg.append("g");
+        const gNodes = svg.append("g");
 
-        // --- ESTADO ---
-        let currentKey = "C";
-        let dataStore = [];
-        const TICKS_PER_BEAT = 480;
+        // --- AUDIO ENGINE ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
 
-        // --- AUDIO ENGINE (Web Audio API) ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // --- PARSER ---
+        function parseChord(romanStr, keyIdx) {
+            let str = romanStr.trim();
+            if(!str) return null;
 
-        function playChord(notes, durationMs) {
-            const gainNode = audioCtx.createGain();
-            const masterVol = document.getElementById('masterVolume').value;
-            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.2 * masterVol, audioCtx.currentTime + 0.05);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + durationMs/1000);
-            gainNode.connect(audioCtx.destination);
+            let rootOffset = 0;
+            if (str.startsWith('b')) { rootOffset = -1; str = str.substring(1); }
+            else if (str.startsWith('#')) { rootOffset = 1; str = str.substring(1); }
 
-            notes.forEach(midi => {
-                const osc = audioCtx.createOscillator();
-                osc.type = 'triangle'; 
-                osc.frequency.setValueAtTime(440 * Math.pow(2, (midi - 69) / 12), audioCtx.currentTime);
-                osc.connect(gainNode);
-                osc.start();
-                osc.stop(audioCtx.currentTime + durationMs/1000);
-            });
-        }
+            const match = str.match(/^(VIII|III|VII|II|IV|VI|I|V)(.*)$/i);
+            if (!match) return null;
 
-        async function previewProgression(progStr, cardElement) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            
-            const bpm = parseInt(document.getElementById('bpmInput').value) || 120;
-            const beatDuration = 60000 / bpm;
-            const tokens = progStr.split(/\s+/);
-            const offset = KEY_OFFSETS[currentKey] || 0;
+            const romanBase = match[1];
+            let suffix = match[2] || '';
+            const isMinorBase = romanBase === romanBase.toLowerCase();
 
-            cardElement.classList.add('playing');
-            
-            for (let i = 0; i < tokens.length; i++) {
-                const match = ROMAN_MAP[tokens[i]];
-                if (match) {
-                    const midiNotes = CHORD_INTERVALS[match[1]].map(v => 48 + match[0] + v + offset);
-                    playChord(midiNotes, beatDuration * 2); 
-                    await new Promise(r => setTimeout(r, beatDuration * 1.5));
-                }
+            if (suffix.startsWith('b') && !suffix.match(/^b[59]/) && !suffix.startsWith('b13')) {
+                rootOffset -= 1;
+                suffix = suffix.substring(1);
+            } else if (suffix.startsWith('#') && !suffix.match(/^#[59]/) && !suffix.startsWith('#11')) {
+                rootOffset += 1;
+                suffix = suffix.substring(1);
             }
-            
-            cardElement.classList.remove('playing');
-        }
 
-        // --- MANEJO DE DATOS ---
-        async function loadData() {
-            try {
-                const response = await fetch('progresionesMayoresMenores148.json');
-                if (!response.ok) throw new Error();
-                dataStore = await response.json();
-                render(dataStore);
-            } catch (err) {
-                document.getElementById('progContainer').innerHTML = `
-                    <div class="col-span-full text-center p-10 bg-red-50 text-red-700 rounded-2xl border border-red-100">
-                        Error al cargar 'progresionesMayoresMenores148.json'. Asegúrate de que el archivo existe y el servidor local está activo.
-                    </div>`;
+            const degreeMap = { 'i': 0, 'ii': 2, 'iii': 4, 'iv': 5, 'v': 7, 'vi': 9, 'vii': 11 };
+            let baseDegreeValue = degreeMap[romanBase.toLowerCase()];
+            if (baseDegreeValue === undefined) return null;
+
+            let finalRootVal = (baseDegreeValue + rootOffset) % 12;
+            if (finalRootVal < 0) finalRootVal += 12;
+            let absoluteRoot = (keyIdx + finalRootVal) % 12;
+
+            let intervals = (isMinorBase && !suffix.includes('maj')) ? [0, 3, 7] : [0, 4, 7];
+            
+            if (suffix.includes('dim')) intervals = [0, 3, 6];
+            else if (suffix.includes('aug') || suffix.includes('+')) intervals = [0, 4, 8];
+            else if (suffix.includes('m') && !suffix.includes('maj')) intervals = [0, 3, 7];
+
+            if (suffix.includes('maj7') || suffix.includes('M7')) intervals.push(11);
+            else if (suffix.includes('7')) {
+                if (intervals[1] === 3 && intervals[2] === 6) intervals.push(suffix.includes('dim7') ? 9 : 10);
+                else intervals.push(10);
             }
+
+            if (suffix.includes('#11')) intervals.push(18);
+            if (suffix.includes('b9')) intervals.push(13);
+            else if (suffix.includes('9')) intervals.push(14);
+
+            let midiNotes = intervals.map(iv => 60 + absoluteRoot + iv);
+            midiNotes = midiNotes.map(n => n > 72 ? n - 12 : n);
+
+            return {
+                original: romanStr,
+                rootNoteName: NOTE_NAMES[absoluteRoot],
+                midiNotes: midiNotes.sort((a,b)=>a-b)
+            };
         }
 
-        function createCard(item) {
-            const prog = item.p || item.progression || "";
-            const mode = (item.m || item.mode || "jonico").toLowerCase();
-            const colorClass = MODE_COLORS[mode] || 'bg-white border-slate-200';
+        function updateVisualizer() {
+            const raw = document.getElementById('progInput').value;
+            const chords = raw.split(/\s+/).filter(Boolean);
+            const parsed = chords.map(c => parseChord(c, currentKeyIndex)).filter(Boolean);
             
-            const div = document.createElement('div');
-            div.className = `chord-card ${colorClass} p-5 rounded-2xl border shadow-sm flex flex-col justify-between`;
-            
-            div.innerHTML = `
-                <div>
-                    <div class="flex justify-between items-start mb-3">
-                        <span class="text-[10px] font-black uppercase opacity-60 tracking-tighter">ID: ${item.id}</span>
-                        <span class="text-[10px] font-bold uppercase">${mode}</span>
-                    </div>
-                    <h3 class="text-xl font-mono font-bold mb-1 tracking-tight">${prog}</h3>
-                    <p class="text-[11px] opacity-70 mb-4 italic leading-tight">${item.t || item.type || ""}</p>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="previewProgression('${prog}', this.parentElement.parentElement)" class="bg-white/50 hover:bg-white text-[11px] font-bold py-2 rounded-lg transition-all border border-black/5 shadow-sm">ESCUCHAR</button>
-                    <button onclick="handleExport('${item.id}')" class="bg-slate-900 hover:bg-black text-white text-[11px] font-bold py-2 rounded-lg transition-all shadow-md">MIDI</button>
-                </div>
-            `;
-            return div;
-        }
-
-        function render(list) {
-            const container = document.getElementById('progContainer');
-            container.innerHTML = '';
-            list.forEach(item => container.appendChild(createCard(item)));
-        }
-
-        // --- MIDI EXPORT ---
-        function handleExport(id) {
-            const item = dataStore.find(d => d.id == id);
-            if (!item) return;
-            
-            const bpm = parseInt(document.getElementById('bpmInput').value) || 120;
-            const customBars = parseInt(document.getElementById('barsInput').value) || 0;
-            const offset = KEY_OFFSETS[currentKey] || 0;
-            const tokens = (item.p || item.progression).split(/\s+/);
-            
-            const beatsPerChord = customBars > 0 ? (customBars * 4) / tokens.length : 4;
-            const chords = [];
-
-            tokens.forEach(token => {
-                const match = ROMAN_MAP[token];
-                if (match) {
-                    const notes = CHORD_INTERVALS[match[1]].map(v => 48 + match[0] + v + offset);
-                    chords.push({ notes, duration: beatsPerChord });
+            const nodeData = parsed.map((d, i) => {
+                let xPos = width / 2;
+                if (parsed.length > 1) {
+                    const padding = 100;
+                    xPos = padding + ((width - padding * 2) / (parsed.length - 1)) * i;
                 }
+                return { ...d, id: `n-${i}`, x: xPos, y: (height / 2) + Math.sin(i * 1.2) * 20 };
             });
 
-            generateMIDI(chords, bpm);
+            gLines.selectAll("path").data([nodeData]).join("path")
+                .attr("class", "tension-line")
+                .transition().duration(300)
+                .attr("d", d3.line().x(d => d.x).y(d => d.y).curve(d3.curveMonotoneX));
+
+            const nodes = gNodes.selectAll("g.chord-group").data(nodeData, d => d.id);
+            const enter = nodes.enter().append("g").attr("class", "chord-group").attr("transform", d => `translate(${d.x}, ${d.y})`);
+
+            enter.append("circle").attr("class", "node-circle").attr("r", 0).transition().duration(400).attr("r", 32);
+            enter.append("text").attr("class", "mono-font text-sm font-bold").attr("text-anchor", "middle").attr("dy", ".3em").attr("fill", "#f8fafc").text(d => d.original);
+            enter.append("text").attr("class", "mono-font text-[10px]").attr("text-anchor", "middle").attr("dy", "-3.8em").attr("fill", "#64748b").text(d => d.rootNoteName);
+
+            nodes.transition().duration(300).attr("transform", d => `translate(${d.x}, ${d.y})`).select("text").text(d => d.original);
+            nodes.exit().remove();
         }
 
-        function generateMIDI(progression, bpm) {
-            const tempo = Math.round(60000000 / bpm);
-            let bytes = [0x4d, 0x54, 0x68, 0x64, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x01, (TICKS_PER_BEAT >> 8) & 0xff, TICKS_PER_BEAT & 0xff];
-            let track = [0x00, 0xff, 0x51, 0x03, (tempo >> 16) & 0xff, (tempo >> 8) & 0xff, tempo & 0xff];
+        function playProgression() {
+            initAudio();
+            const chords = document.getElementById('progInput').value.split(/\s+/).filter(Boolean).map(c => parseChord(c, currentKeyIndex)).filter(Boolean);
+            const duration = 2.0; 
+            const start = audioCtx.currentTime + 0.1;
 
-            progression.forEach(chord => {
-                const ticks = Math.round(chord.duration * TICKS_PER_BEAT);
-                chord.notes.forEach((n, i) => { writeVarInt(track, i === 0 ? 0 : 0); track.push(0x90, n, 0x60); });
-                chord.notes.forEach((n, i) => { writeVarInt(track, i === 0 ? ticks : 0); track.push(0x80, n, 0x40); });
+            chords.forEach((chord, i) => {
+                const time = start + (i * duration);
+                chord.midiNotes.forEach(note => {
+                    const osc = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = 440 * Math.pow(2, (note - 69) / 12);
+                    g.gain.setValueAtTime(0, time);
+                    g.gain.linearRampToValueAtTime(0.2, time + 0.05);
+                    g.gain.exponentialRampToValueAtTime(0.01, time + duration);
+                    osc.connect(g).connect(audioCtx.destination);
+                    osc.start(time); osc.stop(time + duration);
+                });
+                setTimeout(() => {
+                    d3.selectAll(".node-circle").classed("playing-node", false);
+                    d3.select(gNodes.selectAll(".chord-group").nodes()[i]).select("circle").classed("playing-node", true);
+                }, (time - audioCtx.currentTime) * 1000);
             });
-
-            track.push(0x00, 0xff, 0x2f, 0x00);
-            bytes.push(0x4d, 0x54, 0x72, 0x6b);
-            const len = track.length;
-            bytes.push((len >> 24) & 0xff, (len >> 16) & 0xff, (len >> 8) & 0xff, len & 0xff);
-            bytes = bytes.concat(track);
-
-            const blob = new Blob([new Uint8Array(bytes)], { type: 'audio/midi' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `armonia_${currentKey}.mid`;
-            a.click();
+            setTimeout(() => d3.selectAll(".node-circle").classed("playing-node", false), (chords.length * duration + 0.2) * 1000);
         }
 
-        function writeVarInt(arr, value) {
-            let buffer = value & 0x7F;
-            while ((value >>= 7) > 0) { buffer <<= 8; buffer |= 0x80; buffer |= (value & 0x7F); }
-            while (true) { arr.push(buffer & 0xFF); if (buffer & 0x80) buffer >>= 8; else break; }
+        function writeVarLen(v) {
+            let res = [v & 0x7F];
+            while (v >>= 7) res.unshift((v & 0x7F) | 0x80);
+            return res;
+        }
+
+        function exportMIDI() {
+            const chords = document.getElementById('progInput').value.split(/\s+/).filter(Boolean).map(c => parseChord(c, currentKeyIndex)).filter(Boolean);
+            if (!chords.length) return;
+
+            const rootNames = chords.map(c => c.rootNoteName).join('_');
+            const fileName = `Armonia_${currentKey}_(${rootNames}).mid`.replace(/[#]/g, 's');
+
+            const header = [0x4d, 0x54, 0x68, 0x64, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x01, 0x00, 0x80];
+            let events = [0x00, 0xFF, 0x51, 0x03, 0x07, 0xA1, 0x20]; 
+            chords.forEach(c => {
+                c.midiNotes.forEach(n => events.push(0x00, 0x90, n, 0x60));
+                c.midiNotes.forEach((n, j) => {
+                    const delta = (j === 0) ? writeVarLen(512) : [0x00]; 
+                    events.push(...delta, 0x80, n, 0x00);
+                });
+            });
+            events.push(0x00, 0xFF, 0x2F, 0x00);
+            const mtrk = [0x4d, 0x54, 0x72, 0x6b, ...[(events.length >> 24) & 0xFF, (events.length >> 16) & 0xFF, (events.length >> 8) & 0xFF, events.length & 0xFF], ...events];
+            const blob = new Blob([new Uint8Array([...header, ...mtrk])], { type: 'audio/midi' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName; a.click();
+        }
+
+        // --- RENDERIZADO DE TARJETAS ---
+        function renderCards(data) {
+            const grid = document.getElementById('cardsGrid');
+            grid.innerHTML = '';
+            document.getElementById('resultsCount').textContent = data.length;
+            
+            data.forEach(item => {
+                const d = document.createElement('div');
+                const progText = item.progression || item.p || "";
+                d.className = "chord-card bg-white border border-slate-200 rounded-xl p-5 flex flex-col";
+                d.innerHTML = `
+                    <span class="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-500 rounded uppercase self-start">${item.mode || 'Jónico'}</span>
+                    <h3 class="text-xl font-black text-slate-800 mono-font my-2">${progText}</h3>
+                    <p class="text-xs text-slate-400">${item.type || 'Progresión'}</p>
+                `;
+                d.onclick = () => { 
+                    const inp = document.getElementById('progInput'); 
+                    inp.value = inp.value ? inp.value + ' ' + progText : progText; 
+                    updateVisualizer(); 
+                };
+                grid.appendChild(d);
+            });
         }
 
         // --- INICIALIZACIÓN ---
-        function init() {
+        document.addEventListener('DOMContentLoaded', () => {
             const ks = document.getElementById('keySelector');
-            KEYS.forEach(k => {
+            KEYS.forEach((k, i) => {
                 const b = document.createElement('button');
                 b.textContent = k;
-                b.className = `text-xs font-bold py-2 border rounded-xl transition-all ${k === currentKey ? 'active-key' : 'bg-slate-50 hover:bg-slate-100 text-slate-600'}`;
-                b.onclick = () => {
-                    document.querySelectorAll('#keySelector button').forEach(el => {
-                        el.classList.remove('active-key');
-                        el.classList.add('bg-slate-50', 'text-slate-600');
-                    });
-                    b.classList.add('active-key');
-                    b.classList.remove('bg-slate-50', 'text-slate-600');
-                    currentKey = k;
+                b.className = `min-w-[42px] py-1.5 text-xs font-bold rounded border ${k === currentKey ? 'bg-blue-600 text-white' : 'text-slate-400 border-transparent hover:bg-slate-800'}`;
+                b.onclick = () => { 
+                    currentKey = k; 
+                    currentKeyIndex = i; 
+                    Array.from(ks.children).forEach(btn => btn.className = btn.textContent === k ? 'min-w-[42px] py-1.5 text-xs font-bold rounded border bg-blue-600 text-white' : 'min-w-[42px] py-1.5 text-xs font-bold rounded border text-slate-400 border-transparent hover:bg-slate-800'); 
+                    updateVisualizer(); 
                 };
                 ks.appendChild(b);
             });
 
-            document.getElementById('searchInput').oninput = (e) => {
-                const v = e.target.value.toLowerCase();
-                render(dataStore.filter(d => 
-                    (d.p || d.progression || "").toLowerCase().includes(v) || 
-                    (d.m || d.mode || "").toLowerCase().includes(v)
-                ));
-            };
+            // Carga de JSON
+            fetch('progresionesMayoresMenores148.json')
+                .then(r => r.json())
+                .then(data => {
+                    dbProgressions = data; 
+                    renderCards(dbProgressions);
+                })
+                .catch(() => { 
+                    document.getElementById('cardsGrid').innerHTML = "<p class='col-span-full text-slate-400 text-center py-10'>Archivo JSON no detectado.</p>"; 
+                });
 
-            loadData();
-        }
+            // Eventos del buscador
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                const filtered = dbProgressions.filter(item => {
+                    const p = (item.progression || item.p || "").toLowerCase();
+                    const m = (item.mode || "").toLowerCase();
+                    const t = (item.type || "").toLowerCase();
+                    return p.includes(query) || m.includes(query) || t.includes(query);
+                });
+                renderCards(filtered);
+            });
 
-        init();
+            document.getElementById('progInput').oninput = updateVisualizer;
+            document.getElementById('btnPlay').onclick = playProgression;
+            document.getElementById('btnExportMidi').onclick = exportMIDI;
+            document.getElementById('btnClear').onclick = () => { document.getElementById('progInput').value = ''; updateVisualizer(); };
+        });
     </script>
 </body>
 </html>
