@@ -64,18 +64,9 @@
             </div>
         </section>
 
-        <!-- Sección de Historial (Oculta si está vacía) -->
-        <section id="historySection" class="mb-12 hidden">
-            <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                Recientes
-            </h2>
-            <div id="historyContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
-        </section>
-
         <!-- Canvas de Resultados -->
         <main>
-            <h2 class="text-xl font-bold text-slate-800 mb-6">Todas las Progresiones</h2>
+            <h2 class="text-xl font-bold text-slate-800 mb-6 tracking-tight">Catálogo de Progresiones</h2>
             <div id="progContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Cargando... -->
                 <div class="col-span-full py-20 text-center">
@@ -119,12 +110,10 @@
         // --- ESTADO ---
         let currentKey = "C";
         let dataStore = [];
-        let history = JSON.parse(localStorage.getItem('harmonia_history') || '[]');
         const TICKS_PER_BEAT = 480;
 
         // --- AUDIO ENGINE (Web Audio API) ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let activeOscillators = [];
 
         function playChord(notes, durationMs) {
             const gainNode = audioCtx.createGain();
@@ -136,7 +125,7 @@
 
             notes.forEach(midi => {
                 const osc = audioCtx.createOscillator();
-                osc.type = 'triangle'; // Sonido suave tipo piano eléctrico
+                osc.type = 'triangle'; 
                 osc.frequency.setValueAtTime(440 * Math.pow(2, (midi - 69) / 12), audioCtx.currentTime);
                 osc.connect(gainNode);
                 osc.start();
@@ -144,7 +133,7 @@
             });
         }
 
-        async function previewProgression(progStr, btn) {
+        async function previewProgression(progStr, cardElement) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             
             const bpm = parseInt(document.getElementById('bpmInput').value) || 120;
@@ -152,18 +141,18 @@
             const tokens = progStr.split(/\s+/);
             const offset = KEY_OFFSETS[currentKey] || 0;
 
-            btn.classList.add('playing');
+            cardElement.classList.add('playing');
             
             for (let i = 0; i < tokens.length; i++) {
                 const match = ROMAN_MAP[tokens[i]];
                 if (match) {
                     const midiNotes = CHORD_INTERVALS[match[1]].map(v => 48 + match[0] + v + offset);
-                    playChord(midiNotes, beatDuration * 2); // Dura 2 pulsos la preescucha
+                    playChord(midiNotes, beatDuration * 2); 
                     await new Promise(r => setTimeout(r, beatDuration * 1.5));
                 }
             }
             
-            btn.classList.remove('playing');
+            cardElement.classList.remove('playing');
         }
 
         // --- MANEJO DE DATOS ---
@@ -173,7 +162,6 @@
                 if (!response.ok) throw new Error();
                 dataStore = await response.json();
                 render(dataStore);
-                renderHistory();
             } catch (err) {
                 document.getElementById('progContainer').innerHTML = `
                     <div class="col-span-full text-center p-10 bg-red-50 text-red-700 rounded-2xl border border-red-100">
@@ -182,28 +170,7 @@
             }
         }
 
-        function addToHistory(item) {
-            // Evitar duplicados recientes
-            history = history.filter(h => h.id !== item.id);
-            history.unshift(item);
-            if (history.length > 4) history.pop();
-            localStorage.setItem('harmonia_history', JSON.stringify(history));
-            renderHistory();
-        }
-
-        function renderHistory() {
-            const container = document.getElementById('historyContainer');
-            const section = document.getElementById('historySection');
-            if (history.length === 0) {
-                section.classList.add('hidden');
-                return;
-            }
-            section.classList.remove('hidden');
-            container.innerHTML = '';
-            history.forEach(item => container.appendChild(createCard(item, true)));
-        }
-
-        function createCard(item, isSmall = false) {
+        function createCard(item) {
             const prog = item.p || item.progression || "";
             const mode = (item.m || item.mode || "jonico").toLowerCase();
             const colorClass = MODE_COLORS[mode] || 'bg-white border-slate-200';
@@ -217,7 +184,7 @@
                         <span class="text-[10px] font-black uppercase opacity-60 tracking-tighter">ID: ${item.id}</span>
                         <span class="text-[10px] font-bold uppercase">${mode}</span>
                     </div>
-                    <h3 class="${isSmall ? 'text-lg' : 'text-xl'} font-mono font-bold mb-1 tracking-tight">${prog}</h3>
+                    <h3 class="text-xl font-mono font-bold mb-1 tracking-tight">${prog}</h3>
                     <p class="text-[11px] opacity-70 mb-4 italic leading-tight">${item.t || item.type || ""}</p>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
@@ -239,7 +206,6 @@
             const item = dataStore.find(d => d.id == id);
             if (!item) return;
             
-            addToHistory(item);
             const bpm = parseInt(document.getElementById('bpmInput').value) || 120;
             const customBars = parseInt(document.getElementById('barsInput').value) || 0;
             const offset = KEY_OFFSETS[currentKey] || 0;
@@ -279,7 +245,7 @@
             const blob = new Blob([new Uint8Array(bytes)], { type: 'audio/midi' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `armonia_${currentKey}_${bpm}bpm.mid`;
+            a.download = `armonia_${currentKey}.mid`;
             a.click();
         }
 
@@ -311,8 +277,8 @@
             document.getElementById('searchInput').oninput = (e) => {
                 const v = e.target.value.toLowerCase();
                 render(dataStore.filter(d => 
-                    (d.p || d.progression).toLowerCase().includes(v) || 
-                    (d.m || d.mode).toLowerCase().includes(v)
+                    (d.p || d.progression || "").toLowerCase().includes(v) || 
+                    (d.m || d.mode || "").toLowerCase().includes(v)
                 ));
             };
 
