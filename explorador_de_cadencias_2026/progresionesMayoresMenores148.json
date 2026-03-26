@@ -1,0 +1,1038 @@
+[
+  {
+    "progression": "I V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "1"
+  },
+  {
+    "progression": "I IV I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "2"
+  },
+  {
+    "progression": "I IV V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "3"
+  },
+  {
+    "progression": "I vim iim V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "4"
+  },
+  {
+    "progression": "I idim7 V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "5"
+  },
+  {
+    "progression": "I vdim7 V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "6"
+  },
+  {
+    "progression": "I i#dim7 iim V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "7"
+  },
+  {
+    "progression": "I vim II7 V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "8"
+  },
+  {
+    "progression": "I idim7 iim7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "9"
+  },
+  {
+    "progression": "I VII I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "10"
+  },
+  {
+    "progression": "I Vaug I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "11"
+  },
+  {
+    "progression": "I idim7 I II7 iim7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "12"
+  },
+  {
+    "progression": "I VI7 II7 V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "13"
+  },
+  {
+    "progression": "I II7 VI7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "14"
+  },
+  {
+    "progression": "I IV I V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "15"
+  },
+  {
+    "progression": "I I7 IV ivm I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "16"
+  },
+  {
+    "progression": "I ivm V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "17"
+  },
+  {
+    "progression": "I IV7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "18"
+  },
+  {
+    "progression": "I VIIb7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "19"
+  },
+  {
+    "progression": "I vm VI7 II7 V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "20"
+  },
+  {
+    "progression": "I VII7 iim V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "21"
+  },
+  {
+    "progression": "I VI7 iim VII7 iiim Iaug IV",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "22"
+  },
+  {
+    "progression": "I Iaug vim i#dim7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "23"
+  },
+  {
+    "progression": "I III7 VI7 iim",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "24"
+  },
+  {
+    "progression": "I IIIb7 iim7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "25"
+  },
+  {
+    "progression": "I VII7 III7 VI7 iim V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "26"
+  },
+  {
+    "progression": "I iiim vim I7 ivm",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "27"
+  },
+  {
+    "progression": "I Iaug vim I7 ivm",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "28"
+  },
+  {
+    "progression": "I vim VIb7 V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "29"
+  },
+  {
+    "progression": "I iim iiim iim I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "30"
+  },
+  {
+    "progression": "I I7 IV7 I VIb V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "31"
+  },
+  {
+    "progression": "I iim III7 VI7 im II7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "32"
+  },
+  {
+    "progression": "I I7 VII7 VIIb7 VI7  II7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "33"
+  },
+  {
+    "progression": "I iiibm iim IIb7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "34"
+  },
+  {
+    "progression": "I IIIb7 II7 IIb7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "35"
+  },
+  {
+    "progression": "I VIb7 V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "36"
+  },
+  {
+    "progression": "I iiim vim i#dim7 iim7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "37"
+  },
+  {
+    "progression": "I VIb7 iim V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "38"
+  },
+  {
+    "progression": "I VIb7 I idim7 iim7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "39"
+  },
+  {
+    "progression": "I im vm VI7 ivm V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "40"
+  },
+  {
+    "progression": "I7 IV II7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "41"
+  },
+  {
+    "progression": "I7 idim7 I7 II7 ivm V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "42"
+  },
+  {
+    "progression": "I7 IV ivm V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "43"
+  },
+  {
+    "progression": "II7 ivm G7 C",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "44"
+  },
+  {
+    "progression": "iim7 V7 iim7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "45"
+  },
+  {
+    "progression": "iim7 IIb7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "46"
+  },
+  {
+    "progression": "II7 ivm iiim VI7 iim7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "47"
+  },
+  {
+    "progression": "iim VI7 VIIb7 VI7 iim ivm V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "48"
+  },
+  {
+    "progression": "iiim VII7 iiim V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "49"
+  },
+  {
+    "progression": "iiim VII7 iim7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "50"
+  },
+  {
+    "progression": "iiim VI7 II7 V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "51"
+  },
+  {
+    "progression": "iiim vim iim V+ I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "52"
+  },
+  {
+    "progression": "iiim7 iiibm7 iim7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "53"
+  },
+  {
+    "progression": "III7 VI7 II7 V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "54"
+  },
+  {
+    "progression": "III7 vim II7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "55"
+  },
+  {
+    "progression": "III7 IIIb7 II7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "56"
+  },
+  {
+    "progression": "III iv#m VII7 III",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "57"
+  },
+  {
+    "progression": "IV III7 vi",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "58"
+  },
+  {
+    "progression": "IV VII7 I VI7 ivm V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "59"
+  },
+  {
+    "progression": "IV ivm I vim II7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "60"
+  },
+  {
+    "progression": "IV ivm I VI7 iim V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "61"
+  },
+  {
+    "progression": "ivm V7 iiim7 vim7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "62"
+  },
+  {
+    "progression": "IV III7 vim idim7 V7 i#dim7 iim ",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "63"
+  },
+  {
+    "progression": "ivm V7 Vdim7 V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "64"
+  },
+  {
+    "progression": "IV7 I VIb7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "65"
+  },
+  {
+    "progression": "ivm I iiim vim",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "66"
+  },
+  {
+    "progression": "V vim II7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "67"
+  },
+  {
+    "progression": "vm VI7 ivm V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "68"
+  },
+  {
+    "progression": "V7 iiibdim7 V7 Vaug I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "69"
+  },
+  {
+    "progression": "vm7 I7 vm7 I7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "70"
+  },
+  {
+    "progression": "vim VII7 III V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "71"
+  },
+  {
+    "progression": "vim iiim iim I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "72"
+  },
+  {
+    "progression": "vim VII iiim VI iim",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "73"
+  },
+  {
+    "progression": "vim III7 vm VI7 ivm V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "74"
+  },
+  {
+    "progression": "vim Iaug I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "75"
+  },
+  {
+    "progression": "VIb V7 iiim vim",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "76"
+  },
+  {
+    "progression": "VIb viibm IIIb7 VIb V7 I",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "77"
+  },
+  {
+    "progression": "VII7 iiim II7 V7",
+    "type": "comun mayor",
+    "interest": "interestante",
+    "mode": "jonico",
+    "id": "78"
+  },
+  {
+    "progression": "im V7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "1"
+  },
+  {
+    "progression": "im ivm im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "2"
+  },
+  {
+    "progression": "im ivm V7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "3"
+  },
+  {
+    "progression": "im VIb  ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "4"
+  },
+  {
+    "progression": "im idim7 V7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "5"
+  },
+  {
+    "progression": "im vdim7 V7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "6"
+  },
+  {
+    "progression": "im  i#dim7 ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "7"
+  },
+  {
+    "progression": "im VIb II7 V7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "8"
+  },
+  {
+    "progression": "im idirn7 ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "9"
+  },
+  {
+    "progression": "im Vaug im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "10"
+  },
+  {
+    "progression": "im idim7 im II7 ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "11"
+  },
+  {
+    "progression": "im II7 V7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "12"
+  },
+  {
+    "progression": "im ivm im V7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "13"
+  },
+  {
+    "progression": "im i7 ivm im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "14"
+  },
+  {
+    "progression": "im IV7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "15"
+  },
+  {
+    "progression": "im VIIb7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "16"
+  },
+  {
+    "progression": "im Vm VIb7 V7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "17"
+  },
+  {
+    "progression": "im VIIb7 ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "18"
+  },
+  {
+    "progression": "im VIb7 ivm VIIb7 IIIb Iaug ivm",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "19"
+  },
+  {
+    "progression": "im VIb i#dim7 V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "20"
+  },
+  {
+    "progression": "im IIIb7 VIb ivm",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "21"
+  },
+  {
+    "progression": "im IIIb7 ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "22"
+  },
+  {
+    "progression": "im VIIb7 IIIb7 VIb7 ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "23"
+  },
+  {
+    "progression": "im IIIb VIb I7 ivm",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "24"
+  },
+  {
+    "progression": "im VIb I7 ivm",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "25"
+  },
+  {
+    "progression": "im VIb7 V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "26"
+  },
+  {
+    "progression": "im ivm IIIb ivm im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "27"
+  },
+  {
+    "progression": "im I7 IV7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "28"
+  },
+  {
+    "progression": "im ivm IIIb7 VIb7 im II7 V7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "29"
+  },
+  {
+    "progression": "im I7 VII7 VIIb7 VI7 II7 V7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "30"
+  },
+  {
+    "progression": "im iiibm iim IIb7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "31"
+  },
+  {
+    "progression": "im IIIb7 II7 IIb7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "32"
+  },
+  {
+    "progression": "im VIb7 im idim7 ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "33"
+  },
+  {
+    "progression": "im vm VIb7 ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "34"
+  },
+  {
+    "progression": "I7 ivm II7 V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "35"
+  },
+  {
+    "progression": "I7 idim7 I7 II7 ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "36"
+  },
+  {
+    "progression": "I7 ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "37"
+  },
+  {
+    "progression": "II7 ivm V7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "38"
+  },
+  {
+    "progression": "ivm V7 ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "39"
+  },
+  {
+    "progression": "ivm IIb7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "40"
+  },
+  {
+    "progression": "II7 ivm IIIb VIb7 ivm im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "41"
+  },
+  {
+    "progression": "ivm VIb VIIb7 VI7 ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "42"
+  },
+  {
+    "progression": "IIIb VIIb7 IIIb",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "43"
+  },
+  {
+    "progression": "IIIb VIIb7 ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "44"
+  },
+  {
+    "progression": "IIIb VIb7 II7 V7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "45"
+  },
+  {
+    "progression": "IIIb VIb ivm Vaug im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "46"
+  },
+  {
+    "progression": "I7 IIIbm ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "47"
+  },
+  {
+    "progression": "IIIb7 VIb II7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "48"
+  },
+  {
+    "progression": "IIIb ivm VIIb7 IIIb",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "49"
+  },
+  {
+    "progression": "IIIb im ivm VIIb7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "50"
+  },
+  {
+    "progression": "IIIb VIb VIIb7 IIIb I7 ivm V7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "51"
+  },
+  {
+    "progression": "ivm VIIb7 VIb",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "52"
+  },
+  {
+    "progression": "ivm im VIb7 ivm V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "53"
+  },
+  {
+    "progression": "ivm V7 IIIb ivm",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "54"
+  },
+  {
+    "progression": "ivm IIIb7 VIb idim7 V7 i#dim7 ivm",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "55"
+  },
+  {
+    "progression": "ivm V7 vdim7 V7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "56"
+  },
+  {
+    "progression": "IV7 im VIb7 V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "57"
+  },
+  {
+    "progression": "ivm im iiibm VIb",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "58"
+  },
+  {
+    "progression": "vm VIb D7 V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "59"
+  },
+  {
+    "progression": "vm VIb7 ivm",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "60"
+  },
+  {
+    "progression": "V7 iiibdim7 V7 Vaug im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "61"
+  },
+  {
+    "progression": "vm7 I7 vm7 I7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "62"
+  },
+  {
+    "progression": "VIb VIIb7 IIIb V7 im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "63"
+  },
+  {
+    "progression": "VIb IIIb ivm I",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "64"
+  },
+  {
+    "progression": "VIb VIIb iiibm VIb im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "65"
+  },
+  {
+    "progression": "VIb IIIb7 vm VIb7 V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "66"
+  },
+  {
+    "progression": "VIb Vaug im",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "67"
+  },
+  {
+    "progression": "VIb V7 IIIb VIb",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "68"
+  },
+  {
+    "progression": "VIb viibm IIIb7 VIb",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "69"
+  },
+  {
+    "progression": "VIIb7 IIIb D7 V7",
+    "type": "comun menor",
+    "interest": "interestante",
+    "mode": "eolico",
+    "id": "70"
+  }
+]
