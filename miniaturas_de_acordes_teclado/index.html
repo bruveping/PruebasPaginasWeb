@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Piano Diagram</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0c0c0e;
+            --panel: #16161a;
+            --panel2: #1e1e24;
+            --border: #2c2c38;
+            --text: #e8e8f0;
+            --muted: #5a5a72;
+            --accent: #e8a020;
+            --accent2: #c4841a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 36px 20px 60px;
+            gap: 0;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 2rem;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #fff 30%, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 0.7rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .workspace {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 18px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-label {
+            font-size: 0.62rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-right: 2px;
+        }
+
+        /* Role chips */
+        .roles-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .role-chip {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 12px 7px 9px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border);
+            background: var(--panel2);
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+            user-select: none;
+        }
+
+        .role-chip:hover { border-color: #44446a; }
+
+        .role-chip.active {
+            border-color: var(--accent);
+            background: rgba(232,160,32,0.1);
+        }
+
+        .role-swatch-wrap {
+            position: relative;
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
+        .role-swatch {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(255,255,255,0.18);
+            display: block;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .role-swatch:hover { transform: scale(1.25); }
+
+        .role-color-input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+            border: none;
+            padding: 0;
+        }
+
+        .role-name {
+            font-size: 0.73rem;
+            white-space: nowrap;
+        }
+
+        .divider {
+            width: 1px;
+            height: 30px;
+            background: var(--border);
+            margin: 0 6px;
+            flex-shrink: 0;
+        }
+
+        /* Mode buttons */
+        .mode-btn {
+            padding: 7px 13px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border);
+            background: var(--panel2);
+            color: var(--muted);
+            font-family: 'DM Mono', monospace;
+            font-size: 0.72rem;
+            cursor: pointer;
+            letter-spacing: 0.04em;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .mode-btn:hover { border-color: #44446a; color: var(--text); }
+
+        .mode-btn.erase-active {
+            border-color: #ff5566;
+            color: #ff5566;
+            background: rgba(255,85,102,0.1);
+        }
+
+        .mode-btn.clear:hover { border-color: #ff5566; color: #ff5566; }
+
+        /* Octave selector */
+        .oct-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+        }
+
+        .oct-btns { display: flex; gap: 3px; }
+
+        .oct-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 7px;
+            border: 1.5px solid var(--border);
+            background: var(--panel2);
+            color: var(--muted);
+            font-family: 'DM Mono', monospace;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.12s;
+        }
+
+        .oct-btn:hover { border-color: #44446a; color: var(--text); }
+
+        .oct-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #000;
+            font-weight: 700;
+        }
+
+        /* Canvas wrapper */
+        .canvas-outer {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+        }
+
+        canvas {
+            display: block;
+            border-radius: 6px;
+            cursor: crosshair;
+            max-width: 100%;
+        }
+
+        /* Bottom bar */
+        .bottom-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hint { font-size: 0.68rem; color: var(--muted); }
+        .hint span { color: var(--accent); }
+
+        .dl-btn {
+            padding: 10px 26px;
+            background: var(--accent);
+            border: none;
+            border-radius: 9px;
+            color: #1a0d00;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            letter-spacing: 0.01em;
+            transition: all 0.15s;
+        }
+
+        .dl-btn:hover {
+            background: #f5b840;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(232,160,32,0.35);
+        }
+
+        .dl-btn:active { transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Piano Diagram</h1>
+    <p class="subtitle">Generador de Esquemas Armónicos</p>
+</div>
+
+<div class="workspace">
+    <div class="toolbar" id="toolbar"></div>
+
+    <div class="canvas-outer">
+        <canvas id="piano-canvas"></canvas>
+    </div>
+
+    <div class="bottom-bar">
+        <p class="hint">Click en tecla para marcar · <span>Click nuevamente</span> para borrar</p>
+        <button class="dl-btn" onclick="downloadPNG()">↓ Descargar PNG</button>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('piano-canvas');
+    const ctx    = canvas.getContext('2d');
+
+    // ── State ──────────────────────────────────────────────────────────────
+    let numOctaves = 3;
+    let activeRole = 'tonic';
+    let eraseMode  = false;
+    let keyColors  = {};  // keyId → color string
+
+    const roles = [
+        { id: 'tonic',   label: 'Tónica',  color: '#ff4455' },
+        { id: 'third',   label: '3ra',      color: '#3399ff' },
+        { id: 'fifth',   label: '5ta',      color: '#33cc88' },
+        { id: 'seventh', label: '7ma',      color: '#bb44ff' },
+        { id: 'tension', label: 'Tensión',  color: '#ffcc00' },
+    ];
+
+    // ── Geometry ───────────────────────────────────────────────────────────
+    const WKW  = 38;   // white key width
+    const WKH  = 140;  // white key height
+    const BKW  = 24;   // black key width
+    const BKH  = 90;   // black key height
+    const PAD  = 18;   // canvas padding
+    const RAD  = 5;    // key bottom radius
+
+    // Black key x-offset within octave: after white key index N
+    // C(0) C#(after 1) D(1) D#(after 2) E(2) F(3) F#(after 4) G(4) G#(after 5) A(5) A#(after 6) B(6)
+    const blackPositions = [1, 2, 4, 5, 6];
+
+    let keys = [];
+
+    function buildKeys() {
+        keys = [];
+        const cw = numOctaves * 7 * WKW + PAD * 2;
+        const ch = WKH + PAD * 2;
+        canvas.width  = cw;
+        canvas.height = ch;
+
+        // White keys
+        for (let i = 0; i < numOctaves * 7; i++) {
+            keys.push({ id: 'w' + i, type: 'white',
+                x: PAD + i * WKW, y: PAD, w: WKW, h: WKH });
+        }
+
+        // Black keys
+        for (let oct = 0; oct < numOctaves; oct++) {
+            blackPositions.forEach((pos, idx) => {
+                const cx = PAD + (oct * 7 + pos) * WKW - BKW / 2;
+                keys.push({ id: 'b' + (oct * 5 + idx), type: 'black',
+                    x: cx, y: PAD, w: BKW, h: BKH });
+            });
+        }
+    }
+
+    // ── Drawing ────────────────────────────────────────────────────────────
+    function rr(x, y, w, h, tl, tr, br, bl) {
+        ctx.beginPath();
+        ctx.moveTo(x + tl, y);
+        ctx.lineTo(x + w - tr, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + tr);
+        ctx.lineTo(x + w, y + h - br);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+        ctx.lineTo(x + bl, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - bl);
+        ctx.lineTo(x, y + tl);
+        ctx.quadraticCurveTo(x, y, x + tl, y);
+        ctx.closePath();
+    }
+
+    function hexToRgba(hex, a) {
+        const r = parseInt(hex.slice(1,3),16);
+        const g = parseInt(hex.slice(3,5),16);
+        const b = parseInt(hex.slice(5,7),16);
+        return `rgba(${r},${g},${b},${a})`;
+    }
+
+    function drawPiano() {
+        // Background
+        ctx.fillStyle = '#111118';
+        ctx.beginPath();
+        ctx.roundRect(0, 0, canvas.width, canvas.height, 6);
+        ctx.fill();
+
+        // Subtle wood strip at top
+        const woodGrad = ctx.createLinearGradient(0, 0, 0, PAD);
+        woodGrad.addColorStop(0, '#2a1e12');
+        woodGrad.addColorStop(1, '#1a1410');
+        ctx.fillStyle = woodGrad;
+        ctx.fillRect(0, 0, canvas.width, PAD);
+
+        // ── White keys ──────────────────────────────────────────────────────
+        const whiteKeys = keys.filter(k => k.type === 'white');
+        whiteKeys.forEach((k, i) => {
+            const col = keyColors[k.id];
+
+            // Shadow between keys (right edge)
+            if (i < whiteKeys.length - 1) {
+                ctx.fillStyle = 'rgba(0,0,0,0.35)';
+                ctx.fillRect(k.x + k.w - 1, k.y, 1, k.h);
+            }
+
+            // Key fill
+            if (col) {
+                ctx.fillStyle = col;
+            } else {
+                const g = ctx.createLinearGradient(k.x, k.y, k.x, k.y + k.h);
+                g.addColorStop(0,   '#f8f4ee');
+                g.addColorStop(0.7, '#ede8e0');
+                g.addColorStop(1,   '#d4cfc8');
+                ctx.fillStyle = g;
+            }
+            rr(k.x + 1, k.y, k.w - 2, k.h, 0, 0, RAD, RAD);
+            ctx.fill();
+
+            // Sheen overlay for colored keys
+            if (col) {
+                const sg = ctx.createLinearGradient(k.x, k.y, k.x, k.y + k.h * 0.5);
+                sg.addColorStop(0, 'rgba(255,255,255,0.30)');
+                sg.addColorStop(1, 'rgba(255,255,255,0)');
+                ctx.fillStyle = sg;
+                rr(k.x + 1, k.y, k.w - 2, k.h, 0, 0, RAD, RAD);
+                ctx.fill();
+            }
+
+            // Bottom border line
+            ctx.strokeStyle = col ? hexToRgba(col, 0.7) : '#bbb8b0';
+            ctx.lineWidth = 1;
+            rr(k.x + 1, k.y, k.w - 2, k.h, 0, 0, RAD, RAD);
+            ctx.stroke();
+        });
+
+        // ── Black keys ──────────────────────────────────────────────────────
+        keys.filter(k => k.type === 'black').forEach(k => {
+            const col = keyColors[k.id];
+
+            // Drop shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            rr(k.x + 2, k.y + 2, k.w, k.h + 3, 0, 0, 5, 5);
+            ctx.fill();
+
+            // Key body
+            if (col) {
+                ctx.fillStyle = col;
+            } else {
+                const g = ctx.createLinearGradient(k.x, k.y, k.x, k.y + k.h);
+                g.addColorStop(0,   '#2c2c36');
+                g.addColorStop(0.4, '#1e1e26');
+                g.addColorStop(1,   '#0e0e14');
+                ctx.fillStyle = g;
+            }
+            rr(k.x, k.y, k.w, k.h, 0, 0, 4, 4);
+            ctx.fill();
+
+            // Top sheen
+            if (col) {
+                const sg = ctx.createLinearGradient(k.x, k.y, k.x, k.y + k.h * 0.55);
+                sg.addColorStop(0, 'rgba(255,255,255,0.28)');
+                sg.addColorStop(1, 'rgba(255,255,255,0)');
+                ctx.fillStyle = sg;
+                rr(k.x + 2, k.y + 2, k.w - 4, k.h - 2, 2, 2, 0, 0);
+                ctx.fill();
+            } else {
+                ctx.fillStyle = 'rgba(255,255,255,0.055)';
+                rr(k.x + 3, k.y + 3, k.w - 6, k.h * 0.28, 2, 2, 0, 0);
+                ctx.fill();
+            }
+
+            // Border
+            ctx.strokeStyle = col ? hexToRgba(col, 0.5) : '#111';
+            ctx.lineWidth = 0.8;
+            rr(k.x, k.y, k.w, k.h, 0, 0, 4, 4);
+            ctx.stroke();
+        });
+    }
+
+    // ── Hit detection ──────────────────────────────────────────────────────
+    function getKeyAt(mx, my) {
+        // Black keys first (on top visually)
+        for (let i = keys.length - 1; i >= 0; i--) {
+            const k = keys[i];
+            if (k.type === 'black' &&
+                mx >= k.x && mx <= k.x + k.w &&
+                my >= k.y && my <= k.y + k.h) return k;
+        }
+        for (const k of keys) {
+            if (k.type === 'white' &&
+                mx >= k.x && mx <= k.x + k.w &&
+                my >= k.y && my <= k.y + k.h) return k;
+        }
+        return null;
+    }
+
+    canvas.addEventListener('click', e => {
+        const rect   = canvas.getBoundingClientRect();
+        const scaleX = canvas.width  / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const mx = (e.clientX - rect.left) * scaleX;
+        const my = (e.clientY - rect.top)  * scaleY;
+
+        const key = getKeyAt(mx, my);
+        if (!key) return;
+
+        if (eraseMode) {
+            delete keyColors[key.id];
+        } else {
+            const col = roles.find(r => r.id === activeRole).color;
+            // Toggle: same color → remove, else → apply
+            if (keyColors[key.id] === col) {
+                delete keyColors[key.id];
+            } else {
+                keyColors[key.id] = col;
+            }
+        }
+        drawPiano();
+    });
+
+    // ── Toolbar ────────────────────────────────────────────────────────────
+    function buildToolbar() {
+        const tb = document.getElementById('toolbar');
+        tb.innerHTML = '';
+
+        const rolesLabel = document.createElement('span');
+        rolesLabel.className = 'section-label';
+        rolesLabel.textContent = 'Notas';
+        tb.appendChild(rolesLabel);
+
+        const rolesRow = document.createElement('div');
+        rolesRow.className = 'roles-row';
+
+        roles.forEach(role => {
+            const chip = document.createElement('div');
+            chip.className = 'role-chip' + (!eraseMode && activeRole === role.id ? ' active' : '');
+
+            // Swatch + color input
+            const swatchWrap = document.createElement('div');
+            swatchWrap.className = 'role-swatch-wrap';
+
+            const swatch = document.createElement('div');
+            swatch.className = 'role-swatch';
+            swatch.style.background = role.color;
+
+            const colorIn = document.createElement('input');
+            colorIn.type = 'color';
+            colorIn.value = role.color;
+            colorIn.className = 'role-color-input';
+            colorIn.title = 'Cambiar color';
+            colorIn.addEventListener('input', e => {
+                e.stopPropagation();
+                role.color = e.target.value;
+                swatch.style.background = role.color;
+                drawPiano();
+            });
+            colorIn.addEventListener('click', e => e.stopPropagation());
+
+            swatchWrap.appendChild(swatch);
+            swatchWrap.appendChild(colorIn);
+
+            const name = document.createElement('span');
+            name.className = 'role-name';
+            name.textContent = role.label;
+
+            chip.appendChild(swatchWrap);
+            chip.appendChild(name);
+
+            chip.addEventListener('click', () => {
+                activeRole = role.id;
+                eraseMode  = false;
+                buildToolbar();
+            });
+
+            rolesRow.appendChild(chip);
+        });
+
+        tb.appendChild(rolesRow);
+
+        // Divider
+        const d1 = document.createElement('div');
+        d1.className = 'divider';
+        tb.appendChild(d1);
+
+        // Erase toggle
+        const eraseBtn = document.createElement('button');
+        eraseBtn.className = 'mode-btn' + (eraseMode ? ' erase-active' : '');
+        eraseBtn.textContent = eraseMode ? '✕ Borrando' : '✕ Borrar';
+        eraseBtn.addEventListener('click', () => {
+            eraseMode = !eraseMode;
+            buildToolbar();
+        });
+        tb.appendChild(eraseBtn);
+
+        // Clear all
+        const clearBtn = document.createElement('button');
+        clearBtn.className = 'mode-btn clear';
+        clearBtn.textContent = 'Limpiar todo';
+        clearBtn.addEventListener('click', () => {
+            keyColors = {};
+            drawPiano();
+        });
+        tb.appendChild(clearBtn);
+
+        // Divider
+        const d2 = document.createElement('div');
+        d2.className = 'divider';
+        tb.appendChild(d2);
+
+        // Octave selector
+        const octGrp = document.createElement('div');
+        octGrp.className = 'oct-group';
+
+        const octLabel = document.createElement('span');
+        octLabel.className = 'section-label';
+        octLabel.textContent = 'octavas';
+
+        const octBtns = document.createElement('div');
+        octBtns.className = 'oct-btns';
+
+        [1, 2, 3, 4, 5].forEach(n => {
+            const btn = document.createElement('button');
+            btn.className = 'oct-btn' + (numOctaves === n ? ' active' : '');
+            btn.textContent = n;
+            btn.addEventListener('click', () => {
+                numOctaves = n;
+                keyColors  = {};
+                buildKeys();
+                drawPiano();
+                buildToolbar();
+            });
+            octBtns.appendChild(btn);
+        });
+
+        octGrp.appendChild(octLabel);
+        octGrp.appendChild(octBtns);
+        tb.appendChild(octGrp);
+    }
+
+    // ── Download ───────────────────────────────────────────────────────────
+    function downloadPNG() {
+        // Redraw once to ensure latest state, then export
+        drawPiano();
+        const link = document.createElement('a');
+        link.download = 'piano_diagram.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }
+
+    // ── Init ───────────────────────────────────────────────────────────────
+    buildKeys();
+    drawPiano();
+    buildToolbar();
+</script>
+</body>
+</html>

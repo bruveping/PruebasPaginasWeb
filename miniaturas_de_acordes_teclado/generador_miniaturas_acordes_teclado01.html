@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Generador de Esquemas de Piano</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background: #f0f0f0; }
+        .controls { margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .control-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 0.8em; font-weight: bold; color: #555; }
+        #piano-container { background: white; padding: 20px; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        svg { border: 1px solid #000; }
+        .white-key { fill: white; stroke: black; cursor: pointer; transition: fill 0.1s; }
+        .black-key { fill: black; stroke: black; cursor: pointer; transition: fill 0.1s; }
+        .key:hover { opacity: 0.7; }
+        button { margin-top: 20px; padding: 12px 24px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; }
+        button:hover { background: #218838; }
+    </style>
+</head>
+<body>
+
+    <h2>Esquemas de Piano (3 Octavas)</h2>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>Tónica</label>
+            <input type="color" id="color-tonic" value="#ff4d4d">
+        </div>
+        <div class="control-group">
+            <label>3ra, 5ta, 7ma</label>
+            <input type="color" id="color-chord" value="#4da3ff">
+        </div>
+        <div class="control-group">
+            <label>Tensiones</label>
+            <input type="color" id="color-tension" value="#ffca28">
+        </div>
+        <div class="control-group">
+            <label>Modo de Marcado</label>
+            <select id="mode-select">
+                <option value="tonic">Pintar Tónica</option>
+                <option value="chord">Pintar Acorde</option>
+                <option value="tension">Pintar Tensión</option>
+                <option value="clear">Borrar Tecla</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="piano-container">
+        <svg id="piano-svg" width="630" height="120" viewBox="0 0 630 120"></svg>
+    </div>
+
+    <button onclick="downloadPNG()">Descargar Diagrama (.PNG)</button>
+
+    <script>
+        const svg = document.getElementById('piano-svg');
+        const whiteKeyWidth = 30;
+        const whiteKeyHeight = 120;
+        const blackKeyWidth = 18;
+        const blackKeyHeight = 80;
+        const numOctaves = 3;
+        const blackNoteOffsets = [1, 2, 4, 5, 6];
+
+        function drawPiano() {
+            // Dibujar Teclas Blancas
+            for (let i = 0; i < numOctaves * 7; i++) {
+                createKey(i * whiteKeyWidth, 0, whiteKeyWidth, whiteKeyHeight, "key white-key", "white");
+            }
+            // Dibujar Teclas Negras
+            for (let oct = 0; oct < numOctaves; oct++) {
+                blackNoteOffsets.forEach(pos => {
+                    const offset = (oct * 7 * whiteKeyWidth) + (pos * whiteKeyWidth) - (blackKeyWidth / 2);
+                    createKey(offset, 0, blackKeyWidth, blackKeyHeight, "key black-key", "black");
+                });
+            }
+        }
+
+        function createKey(x, y, w, h, className, defaultColor) {
+            const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            rect.setAttribute("x", x);
+            rect.setAttribute("y", y);
+            rect.setAttribute("width", w);
+            rect.setAttribute("height", h);
+            rect.setAttribute("class", className);
+            rect.setAttribute("data-default", defaultColor);
+            rect.onclick = (e) => toggleKey(e.target);
+            svg.appendChild(rect);
+        }
+
+        function toggleKey(el) {
+            const mode = document.getElementById('mode-select').value;
+            if (mode === 'clear') {
+                el.style.fill = el.getAttribute("data-default");
+            } else {
+                const color = document.getElementById('color-' + mode).value;
+                el.style.fill = color;
+            }
+        }
+
+        function downloadPNG() {
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const img = new Image();
+            
+            const svgBlob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
+            const url = URL.createObjectURL(svgBlob);
+
+            img.onload = function() {
+                canvas.width = svg.getAttribute('width');
+                canvas.height = svg.getAttribute('height');
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+                
+                const link = document.createElement("a");
+                link.download = "esquema_piano.png";
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+                URL.revokeObjectURL(url);
+            };
+            img.src = url;
+        }
+
+        drawPiano();
+    </script>
+</body>
+</html>
