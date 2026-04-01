@@ -35,6 +35,9 @@ midi_a_cifrado [midi_a_cifrado](https://bruveping.github.io/PruebasPaginasWeb/mi
 
 explorador_de_cadencias_2026 [explorador_de_cadencias_2026](https://bruveping.github.io/PruebasPaginasWeb/explorador_de_cadencias_2026/)
 
+miniaturas_de_acordes_teclado [miniaturas_de_acordes_teclado](https://bruveping.github.io/PruebasPaginasWeb/miniaturas_de_acordes_teclado/)
+
+
 
 
 
