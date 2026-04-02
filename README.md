@@ -39,6 +39,16 @@ miniaturas_de_acordes_teclado [miniaturas_de_acordes_teclado](https://bruveping.
 
 sintetizador_modular [sintetizador_modular](https://bruveping.github.io/PruebasPaginasWeb/sintetizador_modular/)
 
+tocar_con_teclado_002 [tocar_con_teclado_002](https://bruveping.github.io/PruebasPaginasWeb/tocar_con_teclado_002/)
+
+tocar_con_teclado_midi [tocar_con_teclado_midi](https://bruveping.github.io/PruebasPaginasWeb/tocar_con_teclado_midi/)
+
+
+
+
+
+
+
 
 
 
