@@ -37,6 +37,8 @@ explorador_de_cadencias_2026 [explorador_de_cadencias_2026](https://bruveping.gi
 
 miniaturas_de_acordes_teclado [miniaturas_de_acordes_teclado](https://bruveping.github.io/PruebasPaginasWeb/miniaturas_de_acordes_teclado/)
 
+sintetizador_modular [sintetizador_modular](https://bruveping.github.io/PruebasPaginasWeb/sintetizador_modular/)
+
 
 
 
