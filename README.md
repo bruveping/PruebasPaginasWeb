@@ -45,6 +45,8 @@ tocar_con_teclado_002 [tocar_con_teclado_002](https://bruveping.github.io/Prueba
 
 tocar_con_teclado_midi [tocar_con_teclado_midi](https://bruveping.github.io/PruebasPaginasWeb/tocar_con_teclado_midi/tocar_con_teclado_midi.html)
 
+tocar_con_poly_HardBass [tocar_con_poly_HardBass](https://bruveping.github.io/PruebasPaginasWeb/tocar_con_poly_HardBass)
+
 
 
 
