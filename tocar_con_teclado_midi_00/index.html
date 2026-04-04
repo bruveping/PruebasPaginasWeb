@@ -252,13 +252,20 @@
             this.voices = new Map();
             this.lfoPhase = 0;
             this.port.onmessage = (e) => {
-                if(e.data.type === 'on') this.noteOn(e.data.note, e.data.freq);
+                if(e.data.type === 'on') this.noteOn(e.data.note, e.data.freq, e.data.velocity);
                 if(e.data.type === 'off') this.noteOff(e.data.note);
             };
         }
 
-        noteOn(note, freq) {
-            this.voices.set(note, { freq, phases: new Float32Array(6), startTime: currentFrame / 44100, releaseTime: -1, filterZ: 0 });
+        noteOn(note, freq, velocity) {
+            this.voices.set(note, { 
+                freq, 
+                velocity: velocity || 0.8,
+                phases: new Float32Array(6), 
+                startTime: currentFrame / 44100, 
+                releaseTime: -1, 
+                filterZ: 0 
+            });
         }
         noteOff(note) {
             const v = this.voices.get(note);
@@ -291,7 +298,7 @@
                         ops[op] = Math.sin(v.phases[op-1] * 2 * Math.PI + mod) * parameters[`op${op}gain`][0] * env;
                         v.phases[op-1] = (v.phases[op-1] + (v.freq * (1.0 + lfo_p * 0.02) * parameters[`op${op}ratio`][0]) / 44100) % 1.0;
                     }
-                    mixed += ops[1];
+                    mixed += ops[1] * v.velocity; // Aplicación de sensibilidad de velocidad
                     if (v.releaseTime > 0 && t - v.releaseTime > 2.0) this.voices.delete(note);
                 }
                 out[i] = mixed * 0.3;
@@ -336,19 +343,17 @@
         const k = document.createElement('div');
         k.className = `key ${isBlack?'black':''}`;
         k.dataset.note = n;
-        k.onmousedown = () => noteOn(n);
+        k.onmousedown = () => noteOn(n, 0.8);
         k.onmouseup = k.onmouseleave = () => noteOff(n);
         piano.appendChild(k);
     }
 
     // TECLADO QWERTY Mapping (2 Octavas)
-    // Octava Inferior: zxcvbnm, (Blancas) / sd ghj (Negras)
-    // Octava Superior: qwertyui (Blancas) / 23 567 (Negras)
     const kMap = {
         'z':48, 's':49, 'x':50, 'd':51, 'c':52, 'v':53, 'g':54, 'b':55, 'h':56, 'n':57, 'j':58, 'm':59, ',':60,
         'q':60, '2':61, 'w':62, '3':63, 'e':64, 'r':65, '5':66, 't':67, '6':68, 'y':69, '7':70, 'u':71, 'i':72
     };
-    window.onkeydown = e => { if(!e.repeat && kMap[e.key.toLowerCase()]) noteOn(kMap[e.key.toLowerCase()]); };
+    window.onkeydown = e => { if(!e.repeat && kMap[e.key.toLowerCase()]) noteOn(kMap[e.key.toLowerCase()], 0.8); };
     window.onkeyup = e => { if(kMap[e.key.toLowerCase()]) noteOff(kMap[e.key.toLowerCase()]); };
 
     async function initAudio() {
@@ -366,8 +371,8 @@
             input.oninput = (e) => applyParam(e.target.id, parseFloat(e.target.value));
         });
         
-        initPatch(); // Arranca inicializado
-        initMIDI(); // Re-activar MIDI
+        initPatch();
+        initMIDI();
         drawScope();
     }
 
@@ -379,7 +384,7 @@
                 input.onmidimessage = (m) => {
                     const [cmd, n, v] = m.data;
                     const type = cmd & 0xf0;
-                    if(type === 0x90 && v > 0) noteOn(n);
+                    if(type === 0x90 && v > 0) noteOn(n, v / 127); // Escalar velocidad MIDI a 0.0 - 1.0
                     else if(type === 0x80 || (type === 0x90 && v === 0)) noteOff(n);
                 };
             }
@@ -407,7 +412,7 @@
         const p = currentBank[e.target.value];
         if(p) {
             document.getElementById('current-preset-display').innerText = `Preset: ${p.name}`;
-            document.getElementById('new-preset-name').value = p.name; // Autocompletar por si quiere sobreescribir/modificar nombre
+            document.getElementById('new-preset-name').value = p.name;
             for(let key in p.params) {
                 const el = document.getElementById(key);
                 if(el) { el.value = p.params[key]; applyParam(key, p.params[key]); }
@@ -421,8 +426,6 @@
         document.querySelectorAll('input[type=range]').forEach(i => params[i.id] = parseFloat(i.value));
         currentBank.push({ name, params });
         updatePresetList();
-        
-        // Seleccionar automáticamente el que acabamos de guardar
         document.getElementById('preset-select').value = currentBank.length - 1;
         document.getElementById('current-preset-display').innerText = `Preset: ${name}`;
         document.getElementById('new-preset-name').value = "";
@@ -463,8 +466,6 @@
             'cutoff': 20000, 'f_a': 0.1, 'f_d': 0.5, 'f_s': 1.0, 'f_r': 0.5,
             'lfo_p_amt': 0, 'lfo_p_freq': 5
         };
-        
-        // Inicializar a cero, exceptuando la ganancia de la portadora base (op1) para que emita sonido.
         for(let i=1; i<=6; i++) {
             defaults[`op${i}gain`] = (i === 1) ? 0.8 : 0.0;
             defaults[`op${i}ratio`] = 1.0;
@@ -473,24 +474,24 @@
             defaults[`op${i}s`] = (i === 1) ? 0.8 : 0.0;
             defaults[`op${i}r`] = 0.5;
         }
-
         for(let key in defaults) {
             const el = document.getElementById(key);
-            if(el) { 
-                el.value = defaults[key]; 
-                applyParam(key, defaults[key]); 
-            }
+            if(el) { el.value = defaults[key]; applyParam(key, defaults[key]); }
         }
-        
         document.getElementById('preset-select').value = "";
         document.getElementById('new-preset-name').value = "";
         document.getElementById('current-preset-display').innerText = "Preset: Init Patch";
     }
 
-    function noteOn(n) {
+    function noteOn(n, vel) {
         if(!fmNode) return;
         if(audioCtx.state === 'suspended') audioCtx.resume();
-        fmNode.port.postMessage({type:'on', note:n, freq: 440 * Math.pow(2,(n-69)/12)});
+        fmNode.port.postMessage({
+            type:'on', 
+            note:n, 
+            freq: 440 * Math.pow(2,(n-69)/12),
+            velocity: vel || 0.8 // Velocidad por defecto si no viene de MIDI
+        });
         document.querySelector(`[data-note="${n}"]`)?.classList.add('active');
     }
 
