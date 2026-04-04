@@ -341,6 +341,7 @@
         
         initMIDI(); // Re-activar MIDI
         drawScope();
+	loadDefaultPresets();
     }
 
     async function initMIDI() {
@@ -400,6 +401,26 @@
         a.href = URL.createObjectURL(blob);
         a.download = "banco_fm6_completo.json";
         a.click();
+    }
+
+    async function loadDefaultPresets() {
+	try {
+		const response = await fetch('presets01.json');
+		if (!response.ok) throw new Error('No se pudo encontrar presets01.json');
+		
+		const data = await response.json();
+		
+		// Formatear los datos según la estructura de tu JSON
+		const newPresets = data.presets || (Array.isArray(data) ? data : []);
+		
+		// Cargar en el banco actual y actualizar la interfaz
+		currentBank = [...currentBank, ...newPresets];
+		updatePresetList();
+		
+		console.log("Presets iniciales cargados con éxito");
+		    } catch (err) {
+				    console.warn("Aviso: No se cargaron presets automáticos.", err.message);
+				}
     }
 
     function importBank(e) {
