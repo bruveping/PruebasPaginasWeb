@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FM6 Matrix Ultra — Gestión de Presets</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --panel: #121212;
+            --module: #1a1a1a;
+            --border: #333;
+            --text: #e0e0e0;
+            --accent: #00e676;
+            --sky: #00d4ff;
+            --lava: #ff5252;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            user-select: none;
+            overflow-x: hidden;
+        }
+        header {
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+        .preset-manager {
+            width: 100%;
+            max-width: 1400px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .main-container {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 15px;
+            width: 100%;
+            max-width: 1400px;
+        }
+        .operators-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .card {
+            background: var(--module);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+        }
+        .card-header {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            color: var(--sky);
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #222;
+            padding-bottom: 5px;
+        }
+        .control-group { margin-bottom: 8px; }
+        .adsr-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+        }
+        label { display: flex; justify-content: space-between; font-size: 9px; color: #aaa; margin-bottom: 2px; }
+        input[type=range] {
+            width: 100%;
+            appearance: none;
+            background: #222;
+            height: 3px;
+            border-radius: 2px;
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            appearance: none;
+            width: 10px;
+            height: 10px;
+            background: var(--sky);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        select, .btn-action {
+            background: #222;
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-action:hover { background: #333; border-color: var(--sky); }
+        .btn-save { background: #1b3a1b; color: var(--accent); border-color: var(--accent); }
+        .keyboard {
+            margin: 20px 0;
+            display: flex;
+            gap: 2px;
+            background: #000;
+            padding: 5px;
+            border-radius: 6px;
+        }
+        .key {
+            width: 32px;
+            height: 100px;
+            background: #f0f0f0;
+            border-radius: 0 0 4px 4px;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .key.black {
+            background: #1a1a1a;
+            height: 65px;
+            width: 22px;
+            margin-left: -11px;
+            margin-right: -11px;
+            z-index: 2;
+        }
+        .key.active { background: var(--accent) !important; }
+        #oscilloscope { width: 180px; height: 45px; background: #050505; border-radius: 4px; border: 1px solid #222; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1 style="font-size: 20px; color: #fff;">FM6 <span style="color: var(--sky);">ULTRA</span></h1>
+        <p style="font-size: 9px; color: #666; font-weight: bold;">MIDI & PRESETS READY</p>
+    </div>
+    <canvas id="oscilloscope"></canvas>
+    <button id="btn-start" class="btn-action" style="background: var(--accent); color: #000;">Inicializar Motor</button>
+</header>
+
+<div class="preset-manager">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 11px; font-weight: 800; color: #555;">BANCO:</span>
+        <select id="preset-select">
+            <option value="">-- Seleccionar --</option>
+        </select>
+    </div>
+    <div style="flex-grow: 1; display: flex; gap: 8px; justify-content: flex-end;">
+        <input type="text" id="new-preset-name" placeholder="Nombre de preset..." class="btn-action" style="cursor: text; text-align: left; width: 150px;">
+        <button class="btn-action btn-save" onclick="saveCurrentToBank()">Añadir a Lista</button>
+        <button class="btn-action" onclick="exportBank()">Descargar Banco (.json)</button>
+        <button class="btn-action" onclick="document.getElementById('import-file').click()">Cargar Banco</button>
+        <input type="file" id="import-file" style="display:none" accept=".json" onchange="importBank(event)">
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="operators-grid" id="matrix"></div>
+    <div class="sidebar">
+        <!-- FILTRO -->
+        <div class="card">
+            <div class="card-header" style="color: var(--accent);"><span>Filtro Global</span></div>
+            <div class="control-group">
+                <label>Frecuencia <span id="val-cutoff">20000Hz</span></label>
+                <input type="range" id="cutoff" min="20" max="20000" value="20000">
+            </div>
+            <div class="adsr-grid">
+                <div class="control-group"><label>F-A</label><input type="range" id="f_a" min="0" max="5" step="0.01" value="0.1"></div>
+                <div class="control-group"><label>F-D</label><input type="range" id="f_d" min="0" max="5" step="0.01" value="0.5"></div>
+                <div class="control-group"><label>F-S</label><input type="range" id="f_s" min="0" max="1" step="0.01" value="0.5"></div>
+                <div class="control-group"><label>F-R</label><input type="range" id="f_r" min="0" max="5" step="0.01" value="1.0"></div>
+            </div>
+        </div>
+        <!-- LFO -->
+        <div class="card">
+            <div class="card-header" style="color: var(--lava);"><span>LFO Vibrato</span></div>
+            <div class="control-group">
+                <label>Amt <span id="val-lfo_p_amt">0%</span></label>
+                <input type="range" id="lfo_p_amt" min="0" max="1" step="0.01" value="0">
+                <label>Freq <span id="val-lfo_p_freq">5Hz</span></label>
+                <input type="range" id="lfo_p_freq" min="0.1" max="20" step="0.1" value="5">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="keyboard" id="piano"></div>
+
+<script id="dsp-code" type="text/worklet">
+    class FM6Engine extends AudioWorkletProcessor {
+        static get parameterDescriptors() {
+            const params = [];
+            params.push({ name: 'lfo_p_amt', defaultValue: 0, minValue: 0, maxValue: 1 });
+            params.push({ name: 'lfo_p_freq', defaultValue: 5, minValue: 0.1, maxValue: 20 });
+            params.push({ name: 'cutoff', defaultValue: 20000, minValue: 20, maxValue: 20000 });
+            ['a', 'd', 's', 'r'].forEach(p => params.push({ name: `f_${p}`, defaultValue: 0.5, minValue: 0, maxValue: 5 }));
+            for (let i = 1; i <= 6; i++) {
+                params.push({ name: `op${i}gain`, defaultValue: i === 1 ? 0.8 : 0, minValue: 0, maxValue: 1 });
+                params.push({ name: `op${i}ratio`, defaultValue: 1, minValue: 0.25, maxValue: 32 });
+                ['a','d','s','r'].forEach(p => params.push({ name: `op${i}${p}`, defaultValue: 0.1, minValue: 0, maxValue: 5 }));
+            }
+            return params;
+        }
+
+        constructor() {
+            super();
+            this.voices = new Map();
+            this.lfoPhase = 0;
+            this.port.onmessage = (e) => {
+                if(e.data.type === 'on') this.noteOn(e.data.note, e.data.freq);
+                if(e.data.type === 'off') this.noteOff(e.data.note);
+            };
+        }
+
+        noteOn(note, freq) {
+            this.voices.set(note, { freq, phases: new Float32Array(6), startTime: currentFrame / 44100, releaseTime: -1, filterZ: 0 });
+        }
+        noteOff(note) {
+            const v = this.voices.get(note);
+            if(v && v.releaseTime < 0) v.releaseTime = currentFrame / 44100;
+        }
+
+        getADSR(t, start, rel, a, d, s, r) {
+            if (rel < 0) {
+                const e = t - start;
+                if (e < a) return e / (a || 0.001);
+                if (e < a + d) return 1.0 - (1.0 - s) * ((e - a) / (d || 0.001));
+                return s;
+            }
+            return s * Math.max(0, 1.0 - (t - rel) / (r || 0.001));
+        }
+
+        process(inputs, outputs, parameters) {
+            const out = outputs[0][0];
+            const t = currentFrame / 44100;
+            const lfo_p = Math.sin(this.lfoPhase * 2 * Math.PI) * parameters.lfo_p_amt[0];
+            this.lfoPhase = (this.lfoPhase + parameters.lfo_p_freq[0] / 44100) % 1.0;
+
+            for (let i = 0; i < out.length; i++) {
+                let mixed = 0;
+                for (let [note, v] of this.voices) {
+                    let ops = new Float32Array(7);
+                    for(let op = 6; op >= 1; op--) {
+                        const env = this.getADSR(t, v.startTime, v.releaseTime, parameters[`op${op}a`][0], parameters[`op${op}d`][0], parameters[`op${op}s`][0], parameters[`op${op}r`][0]);
+                        let mod = (op < 6) ? ops[op+1] * 2.0 : 0;
+                        ops[op] = Math.sin(v.phases[op-1] * 2 * Math.PI + mod) * parameters[`op${op}gain`][0] * env;
+                        v.phases[op-1] = (v.phases[op-1] + (v.freq * (1.0 + lfo_p * 0.02) * parameters[`op${op}ratio`][0]) / 44100) % 1.0;
+                    }
+                    mixed += ops[1];
+                    if (v.releaseTime > 0 && t - v.releaseTime > 2.0) this.voices.delete(note);
+                }
+                out[i] = mixed * 0.3;
+            }
+            return true;
+        }
+    }
+    registerProcessor('fm6-engine', FM6Engine);
+</script>
+
+<script>
+    let audioCtx, fmNode, analyser;
+    let currentBank = [];
+
+    // Generar UI Operadores
+    const matrix = document.getElementById('matrix');
+    for(let i=1; i<=6; i++) {
+        const d = document.createElement('div');
+        d.className = 'card';
+        d.innerHTML = `
+            <div class="card-header"><span>Operador ${i}</span><span id="val-op${i}gain">0%</span></div>
+            <div class="control-group">
+                <label>Ratio <span id="val-op${i}ratio">1.0</span></label>
+                <input type="range" id="op${i}ratio" min="0.5" max="16" step="0.5" value="1">
+                <label>Nivel</label>
+                <input type="range" id="op${i}gain" min="0" max="1" step="0.01" value="${i===1?0.8:0}">
+            </div>
+            <div class="adsr-grid">
+                <div class="control-group"><label>A</label><input type="range" id="op${i}a" min="0" max="4" step="0.01" value="0.1"></div>
+                <div class="control-group"><label>D</label><input type="range" id="op${i}d" min="0" max="4" step="0.01" value="0.2"></div>
+                <div class="control-group"><label>S</label><input type="range" id="op${i}s" min="0" max="1" step="0.01" value="0.7"></div>
+                <div class="control-group"><label>R</label><input type="range" id="op${i}r" min="0" max="4" step="0.01" value="0.5"></div>
+            </div>
+        `;
+        matrix.appendChild(d);
+    }
+
+    // Teclado Visual
+    const piano = document.getElementById('piano');
+    for(let n=48; n<=72; n++) {
+        const isBlack = [1,3,6,8,10].includes(n%12);
+        const k = document.createElement('div');
+        k.className = `key ${isBlack?'black':''}`;
+        k.dataset.note = n;
+        k.onmousedown = () => noteOn(n);
+        k.onmouseup = k.onmouseleave = () => noteOff(n);
+        piano.appendChild(k);
+    }
+
+    // TECLADO QWERTY Mapping
+    const kMap = {'a':60,'w':61,'s':62,'e':63,'d':64,'f':65,'t':66,'g':67,'y':68,'h':69,'u':70,'j':71,'k':72};
+    window.onkeydown = e => { if(!e.repeat && kMap[e.key.toLowerCase()]) noteOn(kMap[e.key.toLowerCase()]); };
+    window.onkeyup = e => { if(kMap[e.key.toLowerCase()]) noteOff(kMap[e.key.toLowerCase()]); };
+
+    async function initAudio() {
+        if(audioCtx) return;
+        audioCtx = new AudioContext();
+        const blob = new Blob([document.getElementById('dsp-code').textContent], {type:'application/javascript'});
+        await audioCtx.audioWorklet.addModule(URL.createObjectURL(blob));
+        fmNode = new AudioWorkletNode(audioCtx, 'fm6-engine');
+        analyser = audioCtx.createAnalyser();
+        fmNode.connect(analyser).connect(audioCtx.destination);
+        document.getElementById('btn-start').style.display = 'none';
+        
+        document.querySelectorAll('input[type=range]').forEach(input => {
+            applyParam(input.id, parseFloat(input.value));
+            input.oninput = (e) => applyParam(e.target.id, parseFloat(e.target.value));
+        });
+        
+        initMIDI(); // Re-activar MIDI
+        drawScope();
+    }
+
+    async function initMIDI() {
+        if(!navigator.requestMIDIAccess) return;
+        try {
+            const midi = await navigator.requestMIDIAccess();
+            for (let input of midi.inputs.values()) {
+                input.onmidimessage = (m) => {
+                    const [cmd, n, v] = m.data;
+                    const type = cmd & 0xf0;
+                    if(type === 0x90 && v > 0) noteOn(n);
+                    else if(type === 0x80 || (type === 0x90 && v === 0)) noteOff(n);
+                };
+            }
+        } catch(e) { console.warn("MIDI no disponible", e); }
+    }
+
+    function applyParam(id, val) {
+        if(fmNode) fmNode.parameters.get(id)?.setTargetAtTime(val, audioCtx.currentTime, 0.02);
+        const label = document.getElementById(`val-${id}`);
+        if(label) label.innerText = id==='cutoff'?val+'Hz':id.includes('ratio')?val.toFixed(1):Math.round(val*100)+'%';
+    }
+
+    function updatePresetList() {
+        const select = document.getElementById('preset-select');
+        select.innerHTML = '<option value="">-- Seleccionar --</option>';
+        currentBank.forEach((p, index) => {
+            const opt = document.createElement('option');
+            opt.value = index;
+            opt.textContent = p.name;
+            select.appendChild(opt);
+        });
+    }
+
+    document.getElementById('preset-select').onchange = (e) => {
+        const p = currentBank[e.target.value];
+        if(p) {
+            for(let key in p.params) {
+                const el = document.getElementById(key);
+                if(el) { el.value = p.params[key]; applyParam(key, p.params[key]); }
+            }
+        }
+    };
+
+    function saveCurrentToBank() {
+        const name = document.getElementById('new-preset-name').value || `Preset ${currentBank.length + 1}`;
+        const params = {};
+        document.querySelectorAll('input[type=range]').forEach(i => params[i.id] = parseFloat(i.value));
+        currentBank.push({ name, params });
+        updatePresetList();
+        document.getElementById('new-preset-name').value = "";
+    }
+
+    function exportBank() {
+        const blob = new Blob([JSON.stringify({ presets: currentBank }, null, 2)], {type:'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "banco_fm6_completo.json";
+        a.click();
+    }
+
+    function importBank(e) {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                const newPresets = data.presets || (Array.isArray(data) ? data : []);
+                currentBank = [...currentBank, ...newPresets];
+                updatePresetList();
+            } catch(err) { console.error("Error al cargar banco", err); }
+        };
+        reader.readAsText(file);
+    }
+
+    function noteOn(n) {
+        if(!fmNode) return;
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        fmNode.port.postMessage({type:'on', note:n, freq: 440 * Math.pow(2,(n-69)/12)});
+        document.querySelector(`[data-note="${n}"]`)?.classList.add('active');
+    }
+
+    function noteOff(n) { 
+        fmNode?.port.postMessage({type:'off', note:n}); 
+        document.querySelector(`[data-note="${n}"]`)?.classList.remove('active');
+    }
+
+    function drawScope() {
+        requestAnimationFrame(drawScope);
+        const canvas = document.getElementById('oscilloscope');
+        const ctx = canvas.getContext('2d');
+        const data = new Float32Array(analyser.frequencyBinCount);
+        analyser.getFloatTimeDomainData(data);
+        ctx.fillStyle = '#050505'; ctx.fillRect(0,0,canvas.width, canvas.height);
+        ctx.strokeStyle = '#00d4ff'; ctx.lineWidth = 2; ctx.beginPath();
+        for(let i=0; i<data.length; i++) {
+            const x = (i/data.length)*canvas.width;
+            const y = (data[i]*0.5+0.5)*canvas.height;
+            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+    }
+    document.getElementById('btn-start').onclick = initAudio;
+</script>
+</body>
+</html>
