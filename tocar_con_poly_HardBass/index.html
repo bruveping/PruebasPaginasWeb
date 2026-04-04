@@ -3,48 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Polymoog D - Vintage Emulation</title>
+<title>Polymoog D - Pro Edition</title>
 <style>
 :root {
-  --bg: #1a1a1a;
-  --panel: #2c2c2c;
-  --wood: #5d3a24;
-  --border: #444;
-  --text: #eee;
-  --accent: #ffcc00; /* Moog Yellow */
+  --bg: #121212;
+  --panel: #222;
+  --wood: #4d2d18;
+  --border: #333;
+  --text: #d4d4d4;
+  --accent: #ffcc00; 
   --knob: #111;
 }
 body {
-  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: var(--bg);
   color: var(--text);
+  margin: 0;
   padding: 20px;
   display: flex; flex-direction: column; align-items: center;
+  user-select: none;
 }
 .synth-case {
   background: var(--wood);
-  padding: 10px;
-  border-radius: 4px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+  padding: 12px;
+  border-radius: 6px;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.9);
+  border-bottom: 8px solid #3a2212;
 }
 .main-panel {
   background: var(--panel);
   border: 2px solid #000;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
   gap: 1px;
+  flex-wrap: wrap;
 }
 .module {
-  background: #222;
+  background: #1a1a1a;
   padding: 15px;
-  border: 1px solid #333;
+  border: 1px solid #2a2a2a;
+  min-width: 180px;
 }
 .module h2 {
   font-size: 10px;
   letter-spacing: 2px;
-  color: #888;
+  color: #666;
   text-transform: uppercase;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid #333;
   margin-bottom: 15px;
   text-align: center;
 }
@@ -52,104 +56,146 @@ body {
   display: flex; flex-direction: column;
   margin-bottom: 12px; font-size: 11px;
 }
-.ctrl label { margin-bottom: 5px; color: #aaa; text-transform: uppercase; font-size: 9px; }
-input[type=range] { accent-color: var(--accent); cursor: pointer; }
+.ctrl label { margin-bottom: 5px; color: #888; text-transform: uppercase; font-size: 9px; }
+input[type=range] { accent-color: var(--accent); cursor: pointer; background: #333; height: 4px; border-radius: 2px; appearance: none; }
+input[type=range]::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; }
+
 .val { color: var(--accent); font-family: monospace; font-size: 10px; align-self: flex-end; }
 
-/* Keyboard styling */
-.kb-section { width: 100%; max-width: 1000px; margin-top: 20px; background: #000; padding: 10px; }
-.kb-wrap { position: relative; height: 120px; border: 2px solid #000; }
+select {
+  background: #000; color: var(--accent); border: 1px solid #444; 
+  font-size: 10px; padding: 4px; border-radius: 3px; outline: none;
+}
+
+.switch-group {
+  display: flex; align-items: center; justify-content: space-between; margin-top: 10px;
+}
+.switch-label { font-size: 9px; color: #888; }
+
+/* Keyboard */
+.kb-section { width: 100%; max-width: 1000px; margin-top: 25px; }
+.kb-wrap { position: relative; height: 140px; background: #000; border-radius: 4px; overflow: hidden; }
 .white-key {
-  position: absolute; background: #fff; border: 1px solid #ccc;
-  height: 100%; width: 3.33%; box-sizing: border-box; z-index: 1;
+  position: absolute; background: linear-gradient(to bottom, #eee 0%, #fff 100%);
+  border: 1px solid #bbb; height: 100%; width: 3.33%; box-sizing: border-box; z-index: 1;
+  border-radius: 0 0 3px 3px;
 }
 .black-key {
-  position: absolute; background: #000; height: 60%; width: 2.2%;
-  z-index: 2; border: 1px solid #333;
+  position: absolute; background: linear-gradient(to bottom, #444 0%, #000 100%);
+  height: 60%; width: 2.1%; z-index: 2; border: 1px solid #222;
+  border-radius: 0 0 2px 2px;
 }
-.white-key.active, .black-key.active { background: var(--accent) !important; }
+.white-key.active { background: var(--accent) !important; }
+.black-key.active { background: #b38f00 !important; }
 
 .status-bar {
-  width: 100%; max-width: 1000px; background: #111; 
-  padding: 10px; margin-top: 10px; display: flex; justify-content: space-between;
-  font-size: 10px; border: 1px solid #333;
+  width: 100%; max-width: 1000px; background: #0a0a0a; 
+  padding: 8px 15px; margin-top: 15px; display: flex; justify-content: space-between;
+  font-size: 10px; border: 1px solid #222; border-radius: 4px; color: #555;
 }
 </style>
 </head>
 <body>
 
-<h1 style="margin-bottom:20px; letter-spacing:10px; font-weight:300;">POLYMOOG <span style="color:var(--accent)">D</span></h1>
+<h1 style="margin-bottom:20px; letter-spacing:8px; font-weight:300; color: #fff;">POLYMOOG <span style="color:var(--accent)">D</span> <small style="font-size: 12px; letter-spacing: 2px; opacity: 0.5;">PRO</small></h1>
 
 <div class="synth-case">
   <div class="main-panel">
-    <div class="module">
-      <h2>Oscillator Bank</h2>
+    
+    <!-- LFO MODULE -->
+    <div class="module" style="border-left: 4px solid var(--accent);">
+      <h2>Filter LFO</h2>
       <div class="ctrl">
-        <label>Osc 1 (Sierra/Square)</label>
+        <label>Waveform</label>
+        <select id="lfo-type">
+          <option value="triangle">TRIANGULAR</option>
+          <option value="sine">SENOIDAL</option>
+          <option value="sawtooth">SIERRA</option>
+          <option value="square">CUADRADA</option>
+        </select>
+      </div>
+      <div class="ctrl">
+        <label>Rate (Velocidad)</label>
+        <input type="range" id="lfo-rate" min="0.1" max="20" step="0.1" value="5">
+        <span class="val" id="vv-lfo-rate">5.0 Hz</span>
+      </div>
+      <div class="ctrl">
+        <label>Depth (Intensidad)</label>
+        <input type="range" id="lfo-depth" min="0" max="2000" step="10" value="0">
+        <span class="val" id="vv-lfo-depth">0</span>
+      </div>
+    </div>
+
+    <!-- OSCILLATORS -->
+    <div class="module">
+      <h2>Oscillators</h2>
+      <div class="ctrl">
+        <label>Osc 1 Mix</label>
         <input type="range" id="osc1-mix" min="0" max="1" step="0.01" value="0.7">
-        <span class="val" id="vv-osc1-mix">0.70</span>
       </div>
       <div class="ctrl">
-        <label>Osc 2 (Detune/Fat)</label>
+        <label>Osc 2 Mix & Detune</label>
         <input type="range" id="osc2-mix" min="0" max="1" step="0.01" value="0.5">
-        <input type="range" id="osc2-detune" min="-30" max="30" step="1" value="7">
-        <span class="val">Detune: <span id="vv-osc2-detune">7</span>c</span>
+        <input type="range" id="osc2-detune" min="-50" max="50" step="1" value="8">
+        <span class="val">Detune: <span id="vv-osc2-detune">8</span>c</span>
       </div>
       <div class="ctrl">
-        <label>Osc 3 (Sub/Noise)</label>
-        <input type="range" id="osc3-mix" min="0" max="1" step="0.01" value="0.2">
-        <span class="val" id="vv-osc3-mix">0.20</span>
+        <label>Osc 3 (Sub -1oct)</label>
+        <input type="range" id="osc3-mix" min="0" max="1" step="0.01" value="0.3">
       </div>
     </div>
 
+    <!-- LADDER FILTER -->
     <div class="module">
-      <h2>Ladder Filter</h2>
+      <h2>Filter</h2>
       <div class="ctrl">
-        <label>Cutoff Frequency</label>
-        <input type="range" id="filter-cutoff" min="20" max="12000" step="1" value="1500">
-        <span class="val" id="vv-filter-cutoff">1500 Hz</span>
+        <label>Cutoff</label>
+        <input type="range" id="filter-cutoff" min="20" max="15000" step="1" value="1200">
+        <span class="val" id="vv-filter-cutoff">1200 Hz</span>
       </div>
       <div class="ctrl">
-        <label>Emphasis (Resonance)</label>
-        <input type="range" id="filter-q" min="0.1" max="20" step="0.1" value="4">
-        <span class="val" id="vv-filter-q">4.0</span>
+        <label>Emphasis (Q)</label>
+        <input type="range" id="filter-q" min="0.1" max="25" step="0.1" value="3">
       </div>
       <div class="ctrl">
-        <label>Contour (Env Amount)</label>
-        <input type="range" id="filter-env" min="0" max="10000" step="10" value="3000">
-        <span class="val" id="vv-filter-env">3000</span>
+        <label>Env Contour</label>
+        <input type="range" id="filter-env" min="0" max="10000" step="10" value="4000">
       </div>
     </div>
 
+    <!-- ENVELOPES -->
     <div class="module">
       <h2>Envelopes</h2>
-      <div class="ctrl"><label>Attack</label><input type="range" id="env-attack" min="0.001" max="2" step="0.001" value="0.005"></div>
-      <div class="ctrl"><label>Decay</label><input type="range" id="env-decay" min="0.01" max="4" step="0.01" value="0.6"></div>
+      <div class="ctrl"><label>Attack</label><input type="range" id="env-attack" min="0.001" max="2" step="0.001" value="0.01"></div>
+      <div class="ctrl"><label>Decay</label><input type="range" id="env-decay" min="0.01" max="4" step="0.01" value="0.5"></div>
       <div class="ctrl"><label>Sustain</label><input type="range" id="env-sustain" min="0" max="1" step="0.01" value="0.4"></div>
-      <div class="ctrl"><label>Release</label><input type="range" id="env-release" min="0.01" max="5" step="0.01" value="0.8"></div>
+      <div class="ctrl"><label>Release</label><input type="range" id="env-release" min="0.01" max="5" step="0.01" value="0.6"></div>
     </div>
 
+    <!-- CONFIG / MASTER -->
     <div class="module">
-      <h2>Output</h2>
-      <div class="ctrl">
-        <label>Overload (Saturación)</label>
-        <input type="range" id="drive" min="1" max="10" step="0.1" value="2">
+      <h2>Settings</h2>
+      <div class="switch-group">
+        <span class="switch-label">VELOCITY SENSOR</span>
+        <input type="checkbox" id="velocity-toggle" checked>
+      </div>
+      <div class="ctrl" style="margin-top: 15px;">
+        <label>Drive (Overload)</label>
+        <input type="range" id="drive" min="0" max="50" step="1" value="15">
       </div>
       <div class="ctrl">
         <label>Master Volume</label>
         <input type="range" id="master-gain" min="0" max="1" step="0.01" value="0.5">
       </div>
-      <div style="text-align:center; margin-top:20px;">
-        <div id="midi-led" style="width:10px; height:10px; border-radius:50%; background:#333; display:inline-block;"></div>
-        <div style="font-size:8px; color:var(--accent); margin-top:5px;">MIDI ACTIVE</div>
-      </div>
     </div>
+
   </div>
 </div>
 
 <div class="status-bar">
-  <span id="device-name">MINIMOOG EMULATION MODE</span>
+  <span id="midi-info">MIDI: DISCONNECTED</span>
   <span id="voice-count">VOICES: 0</span>
+  <span style="color: var(--accent)">LFO ROUTED TO CUTOFF</span>
 </div>
 
 <div class="kb-section">
@@ -158,27 +204,31 @@ input[type=range] { accent-color: var(--accent); cursor: pointer; }
 
 <script>
 let ctx = null;
-let masterGain, driveNode, filterNode;
+let masterGain, driveNode, filterNode, lfoNode, lfoGain;
 const voices = new Map();
 
 function ensureAudio() {
   if (ctx) return;
   ctx = new (window.AudioContext || window.webkitAudioContext)();
   
-  // Saturación tipo Moog
+  // Saturación
   driveNode = ctx.createWaveShaper();
-  function makeDistortionCurve(amount) {
-    let k = amount, n_samples = 44100, curve = new Float32Array(n_samples);
-    for (let i = 0; i < n_samples; ++i ) {
-      let x = i * 2 / n_samples - 1;
-      curve[i] = (3 + k) * x * 20 * (Math.PI / 180) / (Math.PI + k * Math.abs(x));
-    }
-    return curve;
-  }
-  driveNode.curve = makeDistortionCurve(50);
+  updateDriveCurve(+document.getElementById('drive').value);
   
+  // Filtro
   filterNode = ctx.createBiquadFilter();
   filterNode.type = 'lowpass';
+  
+  // LFO Setup
+  lfoNode = ctx.createOscillator();
+  lfoGain = ctx.createGain();
+  lfoNode.type = document.getElementById('lfo-type').value;
+  lfoNode.frequency.value = +document.getElementById('lfo-rate').value;
+  lfoGain.gain.value = +document.getElementById('lfo-depth').value;
+  
+  lfoNode.connect(lfoGain);
+  lfoGain.connect(filterNode.frequency); // Conexión directa al parámetro del filtro
+  lfoNode.start();
   
   masterGain = ctx.createGain();
   
@@ -189,54 +239,86 @@ function ensureAudio() {
   syncParams();
 }
 
-function P(id) { return document.getElementById(id).value; }
+function updateDriveCurve(amount) {
+  if(!driveNode) return;
+  const k = amount;
+  const n_samples = 44100;
+  const curve = new Float32Array(n_samples);
+  const deg = Math.PI / 180;
+  for (let i = 0; i < n_samples; ++i ) {
+    let x = i * 2 / n_samples - 1;
+    curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x) );
+  }
+  driveNode.curve = curve;
+}
+
+function P(id) { 
+  const el = document.getElementById(id);
+  return el.type === 'checkbox' ? el.checked : el.value; 
+}
 
 function syncParams() {
   if (!ctx) return;
   const t = ctx.currentTime;
-  filterNode.frequency.setTargetAtTime(+P('filter-cutoff'), t, 0.02);
-  filterNode.Q.setTargetAtTime(+P('filter-q'), t, 0.02);
-  masterGain.gain.setTargetAtTime(+P('master-gain'), t, 0.02);
+  filterNode.frequency.setTargetAtTime(+P('filter-cutoff'), t, 0.05);
+  filterNode.Q.setTargetAtTime(+P('filter-q'), t, 0.05);
+  masterGain.gain.setTargetAtTime(+P('master-gain'), t, 0.05);
+  
+  lfoNode.type = P('lfo-type');
+  lfoNode.frequency.setTargetAtTime(+P('lfo-rate'), t, 0.1);
+  lfoGain.gain.setTargetAtTime(+P('lfo-depth'), t, 0.1);
+  
+  updateDriveCurve(+P('drive'));
 }
 
-// Escuchar cambios en los sliders
-document.querySelectorAll('input').forEach(input => {
-  input.addEventListener('input', (e) => {
+document.querySelectorAll('input, select').forEach(el => {
+  el.addEventListener('input', (e) => {
     syncParams();
     const valEl = document.getElementById('vv-' + e.target.id);
-    if(valEl) valEl.textContent = e.target.value;
+    if(valEl) {
+      const suffix = e.target.id === 'filter-cutoff' ? ' Hz' : (e.target.id === 'lfo-rate' ? ' Hz' : '');
+      valEl.textContent = e.target.value + suffix;
+    }
   });
 });
 
-function noteOn(note, vel = 100) {
+function noteOn(note, velocity = 100) {
   ensureAudio();
   if (voices.has(note)) noteOff(note);
 
   const now = ctx.currentTime;
   const freq = 440 * Math.pow(2, (note - 69) / 12);
   
-  // Voice Master Gain (Envolvente de Volumen)
+  // Velocity Logic
+  const isVelEnabled = P('velocity-toggle');
+  const velFactor = isVelEnabled ? (velocity / 127) : 1.0;
+  const velGain = 0.4 * velFactor;
+  
+  // Envelope Gain
   const vGain = ctx.createGain();
   vGain.gain.setValueAtTime(0, now);
-  vGain.gain.linearRampToValueAtTime(0.5, now + +P('env-attack'));
-  vGain.gain.exponentialRampToValueAtTime(Math.max(0.001, +P('env-sustain') * 0.5), now + +P('env-attack') + +P('env-decay'));
+  vGain.gain.linearRampToValueAtTime(velGain, now + +P('env-attack'));
+  vGain.gain.exponentialRampToValueAtTime(Math.max(0.001, +P('env-sustain') * velGain), now + +P('env-attack') + +P('env-decay'));
 
-  // Envolvente de Filtro (Característica Moog)
-  const filterEnvAmount = +P('filter-env');
+  // Filter Envelope
   const baseCutoff = +P('filter-cutoff');
+  const envDepth = +P('filter-env') * (isVelEnabled ? (0.5 + (velocity/127)*0.5) : 1.0);
+  
+  // Nota: El LFO ya está conectado al filterNode.frequency en el setup
+  // Aquí manejamos solo la envolvente adicional por nota
   filterNode.frequency.cancelScheduledValues(now);
-  filterNode.frequency.setValueAtTime(baseCutoff, now);
-  filterNode.frequency.exponentialRampToValueAtTime(Math.min(20000, baseCutoff + filterEnvAmount), now + +P('env-attack'));
+  filterNode.frequency.setTargetAtTime(baseCutoff, now, 0.001);
+  filterNode.frequency.exponentialRampToValueAtTime(Math.min(20000, baseCutoff + envDepth), now + +P('env-attack'));
 
-  // 3 Osciladores
+  // 3 Oscillators
   const oscs = [];
-  const configs = [
+  const oscConfigs = [
     { type: 'sawtooth', mix: +P('osc1-mix'), detune: 0 },
     { type: 'sawtooth', mix: +P('osc2-mix'), detune: +P('osc2-detune') },
-    { type: 'square',   mix: +P('osc3-mix'), detune: -1200 } // Sub osc
+    { type: 'square',   mix: +P('osc3-mix'), detune: -1200 }
   ];
 
-  configs.forEach(conf => {
+  oscConfigs.forEach(conf => {
     if (conf.mix <= 0) return;
     const osc = ctx.createOscillator();
     const oGain = ctx.createGain();
@@ -253,10 +335,7 @@ function noteOn(note, vel = 100) {
   vGain.connect(filterNode);
   voices.set(note, { oscs, vGain });
   
-  // UI
-  document.getElementById('voice-count').textContent = `VOICES: ${voices.size}`;
-  const key = document.querySelector(`[data-note="${note}"]`);
-  if(key) key.classList.add('active');
+  updateUI(note, true);
 }
 
 function noteOff(note) {
@@ -272,14 +351,18 @@ function noteOff(note) {
   v.oscs.forEach(o => o.stop(now + rel + 0.1));
   voices.delete(note);
   
-  setTimeout(() => {
-    document.getElementById('voice-count').textContent = `VOICES: ${voices.size}`;
-    const key = document.querySelector(`[data-note="${note}"]`);
-    if(key) key.classList.remove('active');
-  }, rel * 1000);
+  updateUI(note, false, rel);
 }
 
-// --- TECLADO VISUAL ---
+function updateUI(note, isActive, delay = 0) {
+  document.getElementById('voice-count').textContent = `VOICES: ${voices.size}`;
+  const key = document.querySelector(`[data-note="${note}"]`);
+  if(!key) return;
+  if(isActive) key.classList.add('active');
+  else setTimeout(() => key.classList.remove('active'), delay * 1000);
+}
+
+// Teclado
 function initKb() {
   const wrap = document.getElementById('kb-wrap');
   const isBlack = [1,3,6,8,10];
@@ -289,36 +372,40 @@ function initKb() {
     key.dataset.note = n;
     if(isBlack.includes(n%12)) {
       key.className = 'black-key';
-      key.style.left = ((whiteIdx - 0.6) * 3.33) + '%';
+      key.style.left = ((whiteIdx - 0.65) * 3.33) + '%';
     } else {
       key.className = 'white-key';
       key.style.left = (whiteIdx * 3.33) + '%';
       whiteIdx++;
     }
-    key.onmousedown = () => noteOn(n);
+    key.onmousedown = (e) => noteOn(n, 100);
     key.onmouseup = () => noteOff(n);
+    key.onmouseenter = (e) => { if(e.buttons === 1) noteOn(n, 100); };
+    key.onmouseleave = () => { noteOff(n); };
     wrap.appendChild(key);
   }
 }
 initKb();
 
-// Mapeo teclado PC
-const PC_KEYS = {'a':60,'w':61,'s':62,'e':63,'d':64,'f':65,'t':66,'g':67,'y':68,'h':69,'u':70,'j':71,'k':72};
-window.onkeydown = (e) => { if(PC_KEYS[e.key] && !e.repeat) noteOn(PC_KEYS[e.key]); };
-window.onkeyup = (e) => { if(PC_KEYS[e.key]) noteOff(PC_KEYS[e.key]); };
-
 // MIDI
-navigator.requestMIDIAccess?.().then(midi => {
-  for (let input of midi.inputs.values()) {
-    input.onmidimessage = (msg) => {
-      const [s, d1, d2] = msg.data;
-      if((s & 0xf0) === 0x90 && d2 > 0) noteOn(d1, d2);
-      else if((s & 0xf0) === 0x80 || ((s & 0xf0) === 0x90 && d2 === 0)) noteOff(d1);
-      document.getElementById('midi-led').style.background = '#ffcc00';
-      setTimeout(() => document.getElementById('midi-led').style.background = '#333', 100);
-    };
-  }
-});
+if (navigator.requestMIDIAccess) {
+  navigator.requestMIDIAccess().then(midi => {
+    document.getElementById('midi-info').textContent = "MIDI: READY";
+    for (let input of midi.inputs.values()) {
+      input.onmidimessage = (msg) => {
+        const [s, d1, d2] = msg.data;
+        const type = s & 0xf0;
+        if(type === 0x90 && d2 > 0) noteOn(d1, d2);
+        else if(type === 0x80 || (type === 0x90 && d2 === 0)) noteOff(d1);
+      };
+    }
+  });
+}
+
+// PC Keyboard
+const KMAP = {'a':60,'w':61,'s':62,'e':63,'d':64,'f':65,'t':66,'g':67,'y':68,'h':69,'u':70,'j':71,'k':72};
+window.onkeydown = (e) => { if(KMAP[e.key] && !e.repeat) noteOn(KMAP[e.key], 100); };
+window.onkeyup = (e) => { if(KMAP[e.key]) noteOff(KMAP[e.key]); };
 </script>
 </body>
 </html>
