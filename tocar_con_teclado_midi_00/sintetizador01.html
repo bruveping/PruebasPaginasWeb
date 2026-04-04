@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FM6 Matrix Ultra — Edición Profesional</title>
+    <title>FM6 Matrix Ultra — Gestión de Presets</title>
     <style>
         :root {
             --bg: #0a0a0a;
@@ -48,21 +48,9 @@
             padding: 12px 20px;
             margin-bottom: 15px;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .preset-manager-top {
-            display: flex;
-            justify-content: space-between;
+            gap: 15px;
             align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 10px;
-        }
-        .preset-manager-bottom {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            align-items: center;
+            flex-wrap: wrap;
         }
         .main-container {
             display: grid;
@@ -134,8 +122,6 @@
         }
         .btn-action:hover { background: #333; border-color: var(--sky); }
         .btn-save { background: #1b3a1b; color: var(--accent); border-color: var(--accent); }
-        .btn-danger { color: var(--lava); border-color: #442222; }
-        .btn-danger:hover { background: #331111; border-color: var(--lava); }
         .keyboard {
             margin: 20px 0;
             display: flex;
@@ -162,7 +148,6 @@
         }
         .key.active { background: var(--accent) !important; }
         #oscilloscope { width: 180px; height: 45px; background: #050505; border-radius: 4px; border: 1px solid #222; }
-        #current-preset-display { font-size: 13px; font-weight: bold; color: var(--sky); letter-spacing: 1px; }
     </style>
 </head>
 <body>
@@ -173,24 +158,17 @@
         <p style="font-size: 9px; color: #666; font-weight: bold;">MIDI & PRESETS READY</p>
     </div>
     <canvas id="oscilloscope"></canvas>
-    <button id="btn-start" class="btn-action" style="background: var(--accent); color: #000;">Activar Audio</button>
+    <button id="btn-start" class="btn-action" style="background: var(--accent); color: #000;">Inicializar Motor</button>
 </header>
 
 <div class="preset-manager">
-    <div class="preset-manager-top">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 11px; font-weight: 800; color: #555;">BANCO:</span>
-            <select id="preset-select">
-                <option value="">-- Seleccionar --</option>
-            </select>
-            <button class="btn-action btn-danger" onclick="clearBank()">Vaciar Banco</button>
-        </div>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <span id="current-preset-display">Preset: Init Patch</span>
-            <button class="btn-action" onclick="initPatch()" style="background: #333; color: white;">Init Patch</button>
-        </div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 11px; font-weight: 800; color: #555;">BANCO:</span>
+        <select id="preset-select">
+            <option value="">-- Seleccionar --</option>
+        </select>
     </div>
-    <div class="preset-manager-bottom">
+    <div style="flex-grow: 1; display: flex; gap: 8px; justify-content: flex-end;">
         <input type="text" id="new-preset-name" placeholder="Nombre de preset..." class="btn-action" style="cursor: text; text-align: left; width: 150px;">
         <button class="btn-action btn-save" onclick="saveCurrentToBank()">Añadir a Lista</button>
         <button class="btn-action" onclick="exportBank()">Descargar Banco (.json)</button>
@@ -341,13 +319,8 @@
         piano.appendChild(k);
     }
 
-    // TECLADO QWERTY Mapping (2 Octavas)
-    // Octava Inferior: zxcvbnm, (Blancas) / sd ghj (Negras)
-    // Octava Superior: qwertyui (Blancas) / 23 567 (Negras)
-    const kMap = {
-        'z':48, 's':49, 'x':50, 'd':51, 'c':52, 'v':53, 'g':54, 'b':55, 'h':56, 'n':57, 'j':58, 'm':59, ',':60,
-        'q':60, '2':61, 'w':62, '3':63, 'e':64, 'r':65, '5':66, 't':67, '6':68, 'y':69, '7':70, 'u':71, 'i':72
-    };
+    // TECLADO QWERTY Mapping
+    const kMap = {'a':60,'w':61,'s':62,'e':63,'d':64,'f':65,'t':66,'g':67,'y':68,'h':69,'u':70,'j':71,'k':72};
     window.onkeydown = e => { if(!e.repeat && kMap[e.key.toLowerCase()]) noteOn(kMap[e.key.toLowerCase()]); };
     window.onkeyup = e => { if(kMap[e.key.toLowerCase()]) noteOff(kMap[e.key.toLowerCase()]); };
 
@@ -366,9 +339,9 @@
             input.oninput = (e) => applyParam(e.target.id, parseFloat(e.target.value));
         });
         
-        initPatch(); // Arranca inicializado
         initMIDI(); // Re-activar MIDI
         drawScope();
+	loadDefaultPresets();
     }
 
     async function initMIDI() {
@@ -406,8 +379,6 @@
     document.getElementById('preset-select').onchange = (e) => {
         const p = currentBank[e.target.value];
         if(p) {
-            document.getElementById('current-preset-display').innerText = `Preset: ${p.name}`;
-            document.getElementById('new-preset-name').value = p.name; // Autocompletar por si quiere sobreescribir/modificar nombre
             for(let key in p.params) {
                 const el = document.getElementById(key);
                 if(el) { el.value = p.params[key]; applyParam(key, p.params[key]); }
@@ -421,10 +392,6 @@
         document.querySelectorAll('input[type=range]').forEach(i => params[i.id] = parseFloat(i.value));
         currentBank.push({ name, params });
         updatePresetList();
-        
-        // Seleccionar automáticamente el que acabamos de guardar
-        document.getElementById('preset-select').value = currentBank.length - 1;
-        document.getElementById('current-preset-display').innerText = `Preset: ${name}`;
         document.getElementById('new-preset-name').value = "";
     }
 
@@ -434,6 +401,26 @@
         a.href = URL.createObjectURL(blob);
         a.download = "banco_fm6_completo.json";
         a.click();
+    }
+
+    async function loadDefaultPresets() {
+	try {
+		const response = await fetch('presets01.json');
+		if (!response.ok) throw new Error('No se pudo encontrar presets01.json');
+		
+		const data = await response.json();
+		
+		// Formatear los datos según la estructura de tu JSON
+		const newPresets = data.presets || (Array.isArray(data) ? data : []);
+		
+		// Cargar en el banco actual y actualizar la interfaz
+		currentBank = [...currentBank, ...newPresets];
+		updatePresetList();
+		
+		console.log("Presets iniciales cargados con éxito");
+		    } catch (err) {
+				    console.warn("Aviso: No se cargaron presets automáticos.", err.message);
+				}
     }
 
     function importBank(e) {
@@ -449,42 +436,6 @@
             } catch(err) { console.error("Error al cargar banco", err); }
         };
         reader.readAsText(file);
-    }
-
-    function clearBank() {
-        currentBank = [];
-        updatePresetList();
-        document.getElementById('preset-select').value = "";
-        document.getElementById('current-preset-display').innerText = "Preset: Ninguno";
-    }
-
-    function initPatch() {
-        const defaults = {
-            'cutoff': 20000, 'f_a': 0.1, 'f_d': 0.5, 'f_s': 1.0, 'f_r': 0.5,
-            'lfo_p_amt': 0, 'lfo_p_freq': 5
-        };
-        
-        // Inicializar a cero, exceptuando la ganancia de la portadora base (op1) para que emita sonido.
-        for(let i=1; i<=6; i++) {
-            defaults[`op${i}gain`] = (i === 1) ? 0.8 : 0.0;
-            defaults[`op${i}ratio`] = 1.0;
-            defaults[`op${i}a`] = 0.05;
-            defaults[`op${i}d`] = 0.2;
-            defaults[`op${i}s`] = (i === 1) ? 0.8 : 0.0;
-            defaults[`op${i}r`] = 0.5;
-        }
-
-        for(let key in defaults) {
-            const el = document.getElementById(key);
-            if(el) { 
-                el.value = defaults[key]; 
-                applyParam(key, defaults[key]); 
-            }
-        }
-        
-        document.getElementById('preset-select').value = "";
-        document.getElementById('new-preset-name').value = "";
-        document.getElementById('current-preset-display').innerText = "Preset: Init Patch";
     }
 
     function noteOn(n) {
