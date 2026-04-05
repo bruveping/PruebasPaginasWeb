@@ -3,153 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Métrica Poética - Contador de Sílabas</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
+    <title>Contador de Sílabas Simplificado</title>
     <style>
-        :root {
-            --bg-color: #fcfbf9;
-            --text-color: #333;
-            --accent-color: #8c5a4c;
-        }
-        
         body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
             font-family: 'Georgia', serif;
+            background-color: #fcfbf9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .panel {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            height: 100vh;
         }
 
-        header {
-            padding: 20px 40px;
-            text-align: center;
-            border-bottom: 1px solid #e0ddd5;
+        h2 {
+            font-size: 18px;
+            color: #8c5a4c;
+            margin-top: 0;
         }
 
-        h1 {
-            margin: 0;
-            font-size: 24px;
-            color: var(--accent-color);
-            font-weight: normal;
-            letter-spacing: 1px;
-        }
-
-        p.subtitle {
-            margin: 5px 0 0 0;
-            font-size: 14px;
-            color: #777;
-            font-style: italic;
-        }
-
-        #workspace {
-            display: flex;
+        textarea {
             flex: 1;
-            overflow: hidden;
-            padding: 20px 40px;
-            gap: 10px;
-        }
-
-        .editor-container {
-            position: relative;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            border: 1px solid #e0ddd5;
-            border-radius: 4px;
-            background: #fff;
-        }
-
-        #text-editor-container {
-            flex: 1;
-        }
-
-        #counter-editor-container {
-            width: 80px;
-            background: #f5f4f1;
-        }
-
-        /* Estilos base para los divs de Ace */
-        #text-editor, #counter-editor {
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            font-family: 'Courier New', Courier, monospace;
+            padding: 15px;
+            font-family: 'Georgia', serif;
             font-size: 16px;
             line-height: 1.6;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+            outline: none;
         }
 
-        .ace_gutter {
-            background: #fcfbf9 !important;
-            border-right: 1px solid #e0ddd5;
+        #resultado {
+            flex: 1;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+
+        /* Estilo para los párrafos de salida */
+        #resultado p {
+            margin: 0;
+            line-height: 1.6;
+            font-size: 16px;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .conteo {
+            color: #8c5a4c;
+            font-weight: bold;
+            display: inline-block;
+            width: 40px;
+        }
+
+        .etiqueta {
+            color: #888;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Taller de Métrica Poética</h1>
-        <p class="subtitle">Escribe tus versos. Ignora las etiquetas entre corchetes como [coro] o [verso].</p>
-    </header>
+    <div class="panel">
+        <h2>1. Escribe aquí tu poema</h2>
+        <textarea id="poema" placeholder="Escribe tus versos aquí...&#10;[verso]&#10;La luna brillante me mira..."></textarea>
+    </div>
 
-    <div id="workspace">
-        <div id="text-editor-container" class="editor-container">
-            <div id="text-editor">[titulo]
-Mi poema en la noche
-
-[verso]
-La luna brillante me mira
-y el viento suspira en el mar
-siento que mi alma respira
-queriendo poderte cantar</div>
-        </div>
-        
-        <div id="counter-editor-container" class="editor-container">
-            <div id="counter-editor"></div>
-        </div>
+    <div class="panel">
+        <h2>2. Conteo de sílabas</h2>
+        <div id="resultado">
+            </div>
     </div>
 
     <script>
-        // Inicializar editores
-        const textEditor = ace.edit("text-editor");
-        textEditor.setTheme("ace/theme/chrome");
-        textEditor.session.setMode("ace/mode/text");
-        textEditor.setShowPrintMargin(false);
-
-        const counterEditor = ace.edit("counter-editor");
-        counterEditor.setTheme("ace/theme/chrome");
-        counterEditor.session.setMode("ace/mode/text");
-        counterEditor.setReadOnly(true);
-        counterEditor.renderer.setShowGutter(false);
-        counterEditor.setHighlightActiveLine(false);
-        counterEditor.setShowPrintMargin(false);
-        counterEditor.renderer.$cursorLayer.element.style.display = "none";
-        counterEditor.container.style.textAlign = "center";
-        counterEditor.container.style.color = "#8c5a4c";
-        counterEditor.container.style.fontWeight = "bold";
-
-        // Sincronizar el scroll para que las líneas siempre coincidan
-        textEditor.session.on('changeScrollTop', function(scroll) {
-            counterEditor.session.setScrollTop(scroll);
-        });
-
-        // --- LÓGICA DE MÉTRICA POÉTICA ---
+        const textarea = document.getElementById('poema');
+        const resultadoDiv = document.getElementById('resultado');
 
         function esVocal(c) {
             return /[aeiouáéíóúü]/i.test(c);
         }
 
         function ajusteMetrico(palabra) {
-            // Limpiar puntuación
             palabra = palabra.replace(/[^a-záéíóúüñ]/gi, '').toLowerCase();
             if (!palabra) return 0;
 
             let indexAcento = -1;
-            let vocales = "aeiouáéíóúü";
-            
-            // Buscar si hay tilde escrita
             for (let i = palabra.length - 1; i >= 0; i--) {
                 if ("áéíóú".includes(palabra[i])) {
                     indexAcento = i;
@@ -160,7 +107,7 @@ queriendo poderte cantar</div>
             let silabasMatch = palabra.match(/[aeiouáéíóúü]+/g);
             let numSilabas = silabasMatch ? silabasMatch.length : 0;
             
-            if (numSilabas <= 1) return 1; // Monosílabos suman 1 (agudas)
+            if (numSilabas <= 1) return 1; // Monosílabos suman 1
 
             if (indexAcento !== -1) {
                 let textoDespues = palabra.substring(indexAcento + 1);
@@ -181,17 +128,13 @@ queriendo poderte cantar</div>
             return 0;
         }
 
-        function contarSilabasPoeticas(linea) {
-            linea = linea.trim().toLowerCase();
-            if (!linea) return "";
+        function contarSilabas(linea) {
+            let limpia = linea.trim().toLowerCase();
             
-            // Ignorar corchetes
-            if (/^\[.*\]$/.test(linea)) return "—";
-
-            // Limpiar puntuación excepto letras y espacios
-            linea = linea.replace(/[.,:;?!¡¿"()\-]/g, ' ');
-            let palabras = linea.split(/\s+/).filter(p => p.length > 0);
-            if (palabras.length === 0) return "";
+            // Limpiar puntuación
+            limpia = limpia.replace(/[.,:;?!¡¿"()\-]/g, ' ');
+            let palabras = limpia.split(/\s+/).filter(p => p.length > 0);
+            if (palabras.length === 0) return 0;
 
             let totalSilabas = 0;
 
@@ -199,12 +142,10 @@ queriendo poderte cantar</div>
                 let palabra = palabras[i];
                 let silabasPalabra = 0;
 
-                // Contar grupos vocálicos (diptongos/triptongos simples)
                 let gruposVocales = palabra.match(/[aeiouáéíóúü]+/g);
                 if (gruposVocales) {
                     for (let v of gruposVocales) {
                         let silabasGrupo = 1;
-                        // Separar hiatos simples (fuerte + fuerte) ej: ae, ao, ea
                         for (let j = 0; j < v.length - 1; j++) {
                             if (/[aeoáéíóú]/.test(v[j]) && /[aeoáéíóú]/.test(v[j+1])) {
                                 silabasGrupo++;
@@ -215,44 +156,50 @@ queriendo poderte cantar</div>
                 }
                 totalSilabas += silabasPalabra;
 
-                // Chequeo de Sinalefa con la palabra anterior
                 if (i > 0) {
                     let palabraAnterior = palabras[i-1];
                     let ultimaLetraAnt = palabraAnterior[palabraAnterior.length - 1];
-                    
-                    // Manejar la 'h' muda
                     let primeraLetraAct = (palabra[0] === 'h' && palabra.length > 1) ? palabra[1] : palabra[0];
                     let esYVocalica = (palabra === 'y');
 
                     if (esVocal(ultimaLetraAnt) && (esVocal(primeraLetraAct) || esYVocalica)) {
-                        totalSilabas--; // Restar una sílaba por la unión de la sinalefa
+                        totalSilabas--; 
                     }
                 }
             }
 
-            // Aplicar ley del acento final
             totalSilabas += ajusteMetrico(palabras[palabras.length - 1]);
-
-            return totalSilabas.toString();
+            return totalSilabas;
         }
 
-        // Actualizar el contador
-        function updateCounter() {
-            let lines = textEditor.session.getDocument().getAllLines();
-            let counts = lines.map(line => contarSilabasPoeticas(line));
-            
-            // Guardar posición del scroll antes de actualizar
-            let scrollTop = counterEditor.session.getScrollTop();
-            counterEditor.session.setValue(counts.join("\n"));
-            counterEditor.session.setScrollTop(scrollTop);
-        }
+        // Actualizar el HTML en tiempo real
+        textarea.addEventListener('input', () => {
+            const lineas = textarea.value.split('\n');
+            let htmlSalida = '';
 
-        // Escuchar cambios
-        textEditor.session.on('change', updateCounter);
-        
-        // Ejecución inicial
-        updateCounter();
+            lineas.forEach(linea => {
+                let lineaTrim = linea.trim();
+                
+                // Si está vacía, ponemos un salto de línea invisible para mantener la estructura
+                if (lineaTrim === '') {
+                    htmlSalida += `<p><br></p>`;
+                } 
+                // Si es una etiqueta entre corchetes, la ignoramos en el conteo
+                else if (/^\[.*\]$/.test(lineaTrim)) {
+                    htmlSalida += `<p><span class="conteo">—</span> <span class="etiqueta">${linea}</span></p>`;
+                } 
+                // Si es un verso normal, lo contamos
+                else {
+                    let conteo = contarSilabas(linea);
+                    htmlSalida += `<p><span class="conteo">${conteo}</span> ${linea}</p>`;
+                }
+            });
 
+            resultadoDiv.innerHTML = htmlSalida;
+        });
+
+        // Disparar evento inicial para que no esté vacío si recargas la página
+        textarea.dispatchEvent(new Event('input'));
     </script>
 </body>
 </html>
