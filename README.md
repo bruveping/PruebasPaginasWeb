@@ -48,6 +48,9 @@ tocar_con_teclado_midi [tocar_con_teclado_midi](https://bruveping.github.io/Prue
 tocar_con_poly_HardBass [tocar_con_poly_HardBass](https://bruveping.github.io/PruebasPaginasWeb/tocar_con_poly_HardBass)
 
 
+Metrica_de_versos [Metrica_de_versos](https://bruveping.github.io/PruebasPaginasWeb/Metrica_de_versos/)
+
+
 
 
 
