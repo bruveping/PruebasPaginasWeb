@@ -515,7 +515,7 @@
             }
         }
 
-        /* --- MOTOR DE AUDIO (Mantenido intacto) --- */
+       /* --- MOTOR DE AUDIO (Mantenido intacto) --- */
         let audioCtx, masterGain, filter, lfo, lfoDepthGain;
 
         function initAudio() {
@@ -529,4 +529,156 @@
             filter = audioCtx.createBiquadFilter(); 
             filter.type = 'lowpass';
             
-      
+            lfo = audioCtx.createOscillator(); 
+            lfoDepthGain = audioCtx.createGain();
+            lfo.connect(lfoDepthGain); 
+            lfoDepthGain.connect(filter.detune);
+            
+            filter.connect(masterGain); 
+            masterGain.connect(audioCtx.destination);
+            
+            lfo.start();
+            updateSynthParams();
+        }
+
+        function updateSynthParams() {
+            if (!audioCtx) return;
+            filter.frequency.setTargetAtTime(document.getElementById('filter-cutoff').value, audioCtx.currentTime, 0.01);
+            filter.Q.setTargetAtTime(document.getElementById('filter-q').value, audioCtx.currentTime, 0.01);
+            lfo.frequency.setTargetAtTime(document.getElementById('lfo-rate').value, audioCtx.currentTime, 0.01);
+            lfoDepthGain.gain.setTargetAtTime(document.getElementById('lfo-depth').value, audioCtx.currentTime, 0.01);
+            masterGain.gain.setTargetAtTime(document.getElementById('master-gain').value, audioCtx.currentTime, 0.01);
+        }
+
+        ['filter-cutoff', 'filter-q', 'lfo-rate', 'lfo-depth', 'master-gain'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateSynthParams);
+        });
+
+        function playSynthVoice(midi, time, dur) {
+            const freq = 440 * Math.pow(2, (midi - 69) / 12);
+            const decay = parseFloat(document.getElementById('env-decay').value);
+            const fmRatio = parseFloat(document.getElementById('fm-ratio').value);
+            const fmIdx = parseFloat(document.getElementById('fm-depth').value);
+            const fmDests = Array.from(document.querySelectorAll('.fm-dest:checked')).map(cb => cb.value);
+
+            const voiceGain = audioCtx.createGain();
+            voiceGain.connect(filter);
+            voiceGain.gain.setValueAtTime(0, time);
+            voiceGain.gain.linearRampToValueAtTime(0.8, time + 0.005);
+            voiceGain.gain.exponentialRampToValueAtTime(0.001, time + dur + decay);
+
+            const mod = audioCtx.createOscillator();
+            const modGain = audioCtx.createGain();
+            mod.frequency.value = freq * fmRatio;
+            modGain.gain.value = fmIdx;
+            mod.connect(modGain);
+            mod.start(time); mod.stop(time + dur + decay);
+
+            ['sine', 'triangle', 'sawtooth', 'square'].forEach(type => {
+                const vol = parseFloat(document.getElementById(`mix-${type}`).value);
+                if (vol > 0) {
+                    const osc = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    osc.type = type;
+                    osc.frequency.value = freq;
+                    if (fmDests.includes(type)) modGain.connect(osc.frequency);
+                    g.gain.value = vol;
+                    osc.connect(g); g.connect(voiceGain);
+                    osc.start(time); osc.stop(time + dur + decay);
+                }
+            });
+        }
+
+        /* --- SECUENCIADOR --- */
+        let isPlaying = false;
+        let currentStep = 0;
+        let nextTime = 0;
+        let timerID;
+        const playhead = document.getElementById('playhead');
+        const viewport = document.getElementById('viewport');
+
+        function scheduler() {
+            while (nextTime < audioCtx.currentTime + 0.1) {
+                const bpm = document.getElementById('bpm-input').value;
+                const stepDur = (60/bpm) * 0.25; 
+                
+                // Actualizar interfaz (Playhead)
+                const uiStep = currentStep; 
+                requestAnimationFrame(() => {
+                    playhead.style.display = 'block';
+                    // var(--cell-width) es 30px
+                    playhead.style.left = (uiStep * 30) + 'px';
+                    
+                    // Auto-scroll si el cabezal sale de la vista
+                    const playheadPos = uiStep * 30;
+                    if (playheadPos > viewport.scrollLeft + viewport.clientWidth - 100) {
+                        viewport.scrollLeft = playheadPos - 100;
+                    } else if (playheadPos < viewport.scrollLeft) {
+                        viewport.scrollLeft = playheadPos;
+                    }
+                });
+
+                // Disparar notas
+                for (let n = startNote; n <= endNote; n++) {
+                    if (gridState[n][currentStep] > 0) {
+                        playSynthVoice(n, nextTime, stepDur * gridState[n][currentStep]);
+                    }
+                }
+                nextTime += stepDur;
+                currentStep = (currentStep + 1) % loopSteps;
+            }
+            timerID = setTimeout(scheduler, 25);
+        }
+
+        /* --- EVENTOS DE INTERFAZ --- */
+        document.getElementById('btn-play').addEventListener('click', () => {
+            initAudio(); 
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (isPlaying) return;
+            isPlaying = true; 
+            currentStep = 0; 
+            nextTime = audioCtx.currentTime + 0.05;
+            document.getElementById('btn-play').classList.add('active');
+            scheduler();
+        });
+
+        document.getElementById('btn-stop').addEventListener('click', () => {
+            isPlaying = false; 
+            clearTimeout(timerID);
+            document.getElementById('btn-play').classList.remove('active');
+            playhead.style.display = 'none';
+        });
+
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            for (let n in gridState) { 
+                gridState[n].fill(0); 
+                updateCellVisuals(n); 
+            }
+        });
+
+        document.getElementById('loop-length').addEventListener('change', (e) => {
+            loopSteps = parseInt(e.target.value);
+            for (let note = endNote; note >= startNote; note--) {
+                for (let step = 0; step < totalSteps; step++) {
+                    if (step >= loopSteps) cellElements[note][step].classList.add('out-of-loop');
+                    else cellElements[note][step].classList.remove('out-of-loop');
+                }
+            }
+        });
+
+        document.querySelectorAll('.dur-btn').forEach(b => b.addEventListener('click', e => {
+            document.querySelectorAll('.dur-btn').forEach(x => x.classList.remove('active'));
+            e.target.classList.add('active'); 
+            currentDurationSteps = parseInt(e.target.dataset.steps);
+        }));
+        
+        // Ejecutar un evento change inicial para el loop para oscurecer pasos inactivos
+        document.getElementById('loop-length').dispatchEvent(new Event('change'));
+        
+        // Centrar scroll vertical al inicio (En C3)
+        viewport.scrollTop = (endNote - 48) * 22; // 48 es C3, 22 es la altura de celda
+    });
+</script>
+</body>
+</html>
+        
