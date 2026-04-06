@@ -2,36 +2,32 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Industrial Modular DAW</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Industrial Modular DAW - Pro Edition</title>
     <style>
-        /* --- VARIABLES DE TEMA --- */
         :root {
-            --bg-dark: #0a0a0a;
-            --bg-panel: #181818;
-            --bg-module: #222222;
-            --border-dim: #333333;
-            --border-light: #444444;
-            --text-main: #cccccc;
-            --text-bright: #ffffff;
-            --accent: #ff6600;
-            --key-white: #d9d9d9;
-            --key-black: #111111;
+            --bg-dark: #050505;
+            --bg-panel: #121212;
+            --bg-module: #1a1a1a;
+            --border-dim: #2a2a2a;
+            --accent: #00f2ff; 
+            --accent-2: #ff00ea; 
+            --key-white: #e0e0e0;
+            --key-black: #1a1a1a;
             
-            --row-white: #1e1e1e;
-            --row-black: #141414;
-            --row-c: #262626;
-            
-            --cell-width: 30px;
-            --cell-height: 22px;
+            --cell-height: 28px; 
+            --cell-width: 36px;  
+            --sidebar-width: 70px;
+            --timeline-height: 30px;
+            --touch-gutter: 20px; /* Barra libre a la derecha para navegación */
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; touch-action: manipulation; }
         
         body {
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-dark);
-            color: var(--text-main);
+            color: #eee;
             margin: 0;
             padding: 0;
             height: 100vh;
@@ -40,469 +36,506 @@
             overflow: hidden;
         }
 
-        /* --- BARRA SUPERIOR (TRANSPORT) --- */
+        /* --- UI TOP --- */
         .top-bar {
             background-color: var(--bg-panel);
             border-bottom: 1px solid var(--border-dim);
-            padding: 10px 20px;
+            padding: 10px;
             display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-shrink: 0;
             flex-wrap: wrap;
-        }
-
-        .brand {
-            font-weight: bold;
-            color: var(--text-bright);
-            text-transform: uppercase;
-            font-size: 14px;
-            border-right: 1px solid var(--border-dim);
-            padding-right: 15px;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
         }
 
         .btn {
-            background-color: #333;
-            color: var(--text-main);
-            border: 1px solid var(--border-light);
-            padding: 6px 14px;
-            border-radius: 3px;
-            font-size: 12px;
+            background-color: #222;
+            color: #aaa;
+            border: 1px solid #333;
+            padding: 8px 12px;
+            font-size: 11px;
             cursor: pointer;
             text-transform: uppercase;
-            transition: all 0.1s;
+            border-radius: 4px;
         }
-        .btn:hover { background-color: #444; }
-        .btn.active { background-color: var(--accent); color: #000; border-color: var(--accent); font-weight: bold; }
+        .btn.active { background-color: var(--accent); color: #000; font-weight: bold; }
+        .btn-export { background-color: #2a3a2a; border-color: #4a6a4a; color: #8f8; }
 
-        .control-group-inline { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-        .control-group-inline input, .control-group-inline select {
-            background: #111; color: var(--accent); border: 1px solid var(--border-dim);
-            padding: 4px; font-family: inherit; text-align: center;
-        }
-
-        /* --- RACK DEL SINTETIZADOR --- */
+        /* --- SYNTH RACK --- */
         .synth-rack {
             display: flex;
-            flex-wrap: wrap;
+            overflow-x: auto;
             gap: 10px;
             padding: 10px;
-            background-color: var(--bg-dark);
-            border-bottom: 2px solid #000;
-            flex-shrink: 0;
+            background-color: #000;
+            border-bottom: 2px solid #222;
         }
 
         .module {
             background-color: var(--bg-module);
             border: 1px solid var(--border-dim);
-            padding: 10px;
-            flex: 1;
-            min-width: 220px;
+            padding: 12px;
+            min-width: 180px;
+            border-radius: 6px;
         }
 
-        .module h2 {
-            font-size: 12px; color: var(--accent); text-transform: uppercase;
-            margin: 0 0 10px 0; border-bottom: 1px solid var(--border-dim); padding-bottom: 4px;
-        }
+        .module h2 { font-size: 10px; color: var(--accent); margin: 0 0 10px 0; text-transform: uppercase; }
+        .param { display: flex; flex-direction: column; font-size: 10px; margin-bottom: 8px; }
+        .param input[type="range"] { width: 100%; accent-color: var(--accent); }
 
-        .param-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 11px; }
-        .param-row input[type="range"] { width: 55%; accent-color: var(--accent); }
-        .param-row .checkboxes { display: flex; gap: 5px; font-size: 9px; }
-
-        /* --- ÁREA DEL PIANO ROLL --- */
-        .daw-body {
+        /* --- PIANO ROLL --- */
+        .daw-container {
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            background-color: var(--bg-panel);
             overflow: hidden;
         }
 
-        .tools-bar {
-            padding: 8px 15px; background-color: var(--bg-module); border-bottom: 1px solid var(--border-dim);
-            display: flex; gap: 10px; align-items: center; font-size: 11px; flex-shrink: 0;
+        .tools {
+            background-color: #1a1a1a;
+            padding: 8px 15px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
         }
 
         .piano-roll-viewport {
-            flex-grow: 1; display: flex; overflow: auto; background-color: #000; position: relative;
+            flex-grow: 1;
+            overflow: auto;
+            background-color: #080808;
+            position: relative;
+            -webkit-overflow-scrolling: touch;
         }
 
-        /* Barra de teclas izquierda */
-        .keys-sidebar {
-            position: sticky; left: 0; z-index: 10; width: 65px; flex-shrink: 0;
-            background-color: var(--bg-panel); border-right: 2px solid #000; padding-top: 24px;
+        .timeline-container {
+            position: sticky;
+            top: 0;
+            left: 0; /* Cambio para que el playhead se alinee bien */
+            height: var(--timeline-height);
+            background-color: #1a1a1a;
+            z-index: 40;
+            display: flex;
+            width: max-content;
+            border-bottom: 1px solid #333;
+            padding-left: var(--sidebar-width);
+        }
+
+        .marker {
+            width: var(--cell-width);
+            height: 100%;
+            border-right: 1px solid #222;
+            font-size: 9px;
+            display: flex;
+            align-items: flex-end;
+            padding: 0 0 4px 4px;
+            color: #555;
+            flex-shrink: 0;
+        }
+        .marker.beat { color: #aaa; border-right: 1px solid #444; }
+
+        .sequencer-area {
+            display: flex;
+            flex-direction: column;
+            width: max-content;
+            position: relative;
+        }
+
+        .note-row {
+            display: flex;
+            height: var(--cell-height);
         }
 
         .key {
-            height: var(--cell-height); display: flex; align-items: center; justify-content: flex-end;
-            padding-right: 5px; font-size: 10px; border-bottom: 1px solid rgba(0,0,0,0.4); user-select: none;
+            width: var(--sidebar-width);
+            height: 100%;
+            flex-shrink: 0;
+            position: sticky;
+            left: 0;
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 10px;
+            border-bottom: 1px solid rgba(0,0,0,0.4);
+            border-right: 2px solid #000;
         }
         .key.white { background-color: var(--key-white); color: #000; }
         .key.black { background-color: var(--key-black); color: #888; }
-        .key.is-c { border-bottom: 2px solid var(--accent); font-weight: bold; color: var(--accent); }
+        .key.c { background-color: #333; color: var(--accent); border-bottom: 1px solid var(--accent); }
 
-        /* Contenedor de la grilla (Flexbox indestructible) */
-        .grid-area {
-            display: flex; flex-direction: column; position: relative; min-width: max-content;
-        }
-
-        .timeline {
-            position: sticky; top: 0; z-index: 5; height: 24px; background-color: var(--bg-module);
-            border-bottom: 1px solid var(--border-dim); display: flex;
-        }
-        
-        .time-marker {
-            width: var(--cell-width); height: 100%; border-right: 1px solid var(--border-dim);
-            font-size: 10px; color: #888; display: flex; align-items: flex-end; padding: 0 0 2px 2px; user-select: none; flex-shrink: 0;
-        }
-        .time-marker.beat { color: #fff; border-right: 1px solid var(--border-light); font-weight: bold; }
-
-        .grid-cells { display: flex; flex-direction: column; }
-        
-        /* Fila Flexbox */
-        .grid-row { display: flex; height: var(--cell-height); width: max-content; }
-        .grid-row.row-white { background-color: var(--row-white); }
-        .grid-row.row-black { background-color: var(--row-black); }
-        .grid-row.row-c { background-color: var(--row-c); border-bottom: 2px solid #333; }
+        .cells-container { display: flex; position: relative; }
 
         .cell {
-            width: var(--cell-width); height: 100%; flex-shrink: 0;
-            border-right: 1px dashed rgba(255,255,255,0.05); border-bottom: 1px solid rgba(0,0,0,0.5); cursor: crosshair;
+            width: var(--cell-width);
+            height: 100%;
+            border-right: 1px solid rgba(255,255,255,0.02);
+            border-bottom: 1px solid rgba(0,0,0,0.4);
+            touch-action: none;
         }
-        .cell.beat-line { border-right: 1px solid rgba(255,255,255,0.15); }
+        .cell.beat { border-right: 1px solid rgba(255,255,255,0.08); }
+
+        .note-row.bg-white .cell { background-color: #111; }
+        .note-row.bg-black .cell { background-color: #0c0c0c; }
+        .note-row.bg-c .cell { background-color: #181818; }
+
+        .cell.active { 
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border: 1px solid #fff;
+            box-shadow: 0 0 10px var(--accent);
+            z-index: 2;
+        }
+        .cell.tied { 
+            background: linear-gradient(90deg, var(--accent-2), var(--accent));
+            opacity: 0.7; 
+            border-left: none; 
+        }
         
-        .cell.active { background-color: var(--accent); border: 1px solid #000; box-shadow: inset 0 0 5px rgba(255,255,255,0.4); }
-        .cell.tied { background-color: var(--accent); opacity: 0.8; border-left: none; }
-        .cell.out-of-loop { background-color: #000 !important; opacity: 0.3; pointer-events: none; }
+        .cell.out-of-range {
+            background-color: #050505 !important;
+            opacity: 0.2;
+        }
 
         .playhead {
-            position: absolute; top: 24px; left: 0; width: var(--cell-width); height: calc(100% - 24px);
-            background-color: rgba(255, 255, 255, 0.05); border-left: 2px solid var(--accent); pointer-events: none; display: none; z-index: 8;
+            position: absolute;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 2px;
+            height: 100%;
+            background-color: #fff;
+            box-shadow: 0 0 15px #fff;
+            z-index: 45;
+            pointer-events: none;
+            display: none;
+        }
+
+        /* Barra lateral derecha para navegación táctil (Gutter) */
+        .nav-gutter {
+            width: var(--touch-gutter);
+            background-color: rgba(255,255,255,0.03);
+            border-left: 1px solid #222;
+            flex-shrink: 0;
+            height: 100%;
         }
     </style>
 </head>
 <body>
 
     <header class="top-bar">
-        <div class="brand">Ind. Mod DAW</div>
-        <button id="btn-play" class="btn">Play</button>
-        <button id="btn-stop" class="btn">Stop</button>
-        <button id="btn-clear" class="btn">Limpiar</button>
+        <div style="font-weight: 900; font-size: 14px; color: var(--accent);">INDUSTRIAL DAW</div>
+        <button id="play" class="btn">Play</button>
+        <button id="stop" class="btn">Stop</button>
+        <button id="clear" class="btn">Limpiar</button>
         
-        <div class="control-group-inline">
-            <label>BPM:</label>
-            <input type="number" id="bpm-input" value="120" min="40" max="240" style="width: 50px;">
-        </div>
-        
-        <div class="control-group-inline">
-            <label>Loop:</label>
-            <select id="loop-length">
-                <option value="16">1 Compás</option>
-                <option value="32">2 Compases</option>
-                <option value="48">3 Compases</option>
-                <option value="64" selected>4 Compases</option>
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <input type="number" id="bpm" value="120" min="40" max="240" style="width: 40px; background: #000; color: var(--accent); border: 1px solid #444;">
+            <select id="loop-select" style="background: #000; color: #fff; border: 1px solid #444;">
+                <option value="16">1 C</option>
+                <option value="32">2 C</option>
+                <option value="48">3 C</option>
+                <option value="64" selected>4 C</option>
             </select>
         </div>
-
-        <div class="control-group-inline" style="margin-left: auto;">
-            <label>Master:</label>
-            <input type="range" id="master-gain" min="0" max="1" step="0.01" value="0.5" style="width: 80px;">
-        </div>
-        
-        <button id="btn-export-midi" class="btn" style="border-color: #666;">Exportar MIDI</button>
+        <button id="export" class="btn btn-export">Export MIDI</button>
     </header>
 
-    <section class="synth-rack">
+    <div class="synth-rack">
         <div class="module">
-            <h2>Osciladores</h2>
-            <div class="param-row"><label>Seno</label><input type="range" id="mix-sine" min="0" max="1" step="0.01" value="0.7"></div>
-            <div class="param-row"><label>Tri</label><input type="range" id="mix-triangle" min="0" max="1" step="0.01" value="0"></div>
-            <div class="param-row"><label>Saw</label><input type="range" id="mix-sawtooth" min="0" max="1" step="0.01" value="0.2"></div>
-            <div class="param-row"><label>Sqr</label><input type="range" id="mix-square" min="0" max="1" step="0.01" value="0"></div>
+            <h2>Osc Mix</h2>
+            <div class="param"><label>Sine</label><input type="range" id="mix-sine" min="0" max="1" step="0.05" value="0.7"></div>
+            <div class="param"><label>Saw</label><input type="range" id="mix-saw" min="0" max="1" step="0.05" value="0.3"></div>
+            <div class="param"><label>Square</label><input type="range" id="mix-sqr" min="0" max="1" step="0.05" value="0.0"></div>
+            <div class="param"><label>Tri</label><input type="range" id="mix-tri" min="0" max="1" step="0.05" value="0.0"></div>
         </div>
         <div class="module">
-            <h2>Algoritmo FM</h2>
-            <div class="param-row"><label>Dest:</label><div class="checkboxes"><label><input type="checkbox" class="fm-dest" value="sine" checked>Sin</label><label><input type="checkbox" class="fm-dest" value="triangle">Tri</label><label><input type="checkbox" class="fm-dest" value="sawtooth">Saw</label></div></div>
-            <div class="param-row"><label>Ratio</label><input type="range" id="fm-ratio" min="0.5" max="12" step="0.1" value="2"></div>
-            <div class="param-row"><label>Índice</label><input type="range" id="fm-depth" min="0" max="3000" step="10" value="500"></div>
+            <h2>ADSR</h2>
+            <div class="param"><label>A</label><input type="range" id="adsr-a" min="0.005" max="0.5" step="0.01" value="0.01"></div>
+            <div class="param"><label>D</label><input type="range" id="adsr-d" min="0.05" max="1" step="0.01" value="0.2"></div>
+            <div class="param"><label>S</label><input type="range" id="adsr-s" min="0" max="1" step="0.01" value="0.3"></div>
+            <div class="param"><label>R</label><input type="range" id="adsr-r" min="0.05" max="2" step="0.01" value="0.4"></div>
         </div>
         <div class="module">
-            <h2>Filtro & Env</h2>
-            <div class="param-row"><label>Cutoff</label><input type="range" id="filter-cutoff" min="50" max="10000" step="1" value="2500"></div>
-            <div class="param-row"><label>Reso</label><input type="range" id="filter-q" min="0.1" max="25" step="0.1" value="2"></div>
-            <div class="param-row"><label>Decay</label><input type="range" id="env-decay" min="0.05" max="2" step="0.05" value="0.4"></div>
+            <h2>Master Filter</h2>
+            <div class="param"><label>Volume</label><input type="range" id="master-vol" min="0" max="1" step="0.05" value="0.6"></div>
+            <div class="param"><label>Cutoff (Hz)</label><input type="range" id="cutoff" min="50" max="10000" step="50" value="3000"></div>
+            <div class="param"><label>Resonance (Q)</label><input type="range" id="resonance" min="0.1" max="20" step="0.1" value="1"></div>
         </div>
-        <div class="module">
-            <h2>LFO Global</h2>
-            <div class="param-row"><label>Freq</label><input type="range" id="lfo-rate" min="0.1" max="20" step="0.1" value="4"></div>
-            <div class="param-row"><label>Dest</label><input type="range" id="lfo-depth" min="0" max="8000" step="10" value="0"></div>
-        </div>
-    </section>
+    </div>
 
-    <section class="daw-body">
-        <div class="tools-bar">
-            <span>Pincel:</span>
-            <button class="btn dur-btn active" data-steps="1">1/16 (Semi)</button>
-            <button class="btn dur-btn" data-steps="2">1/8 (Corchea)</button>
-            <button class="btn dur-btn" data-steps="4">1/4 (Negra)</button>
-            <button class="btn dur-btn" data-steps="8">1/2 (Blanca)</button>
-            <button class="btn dur-btn" data-steps="16">1/1 (Redonda)</button>
+    <div class="daw-container">
+        <div class="tools">
+            <button class="btn dur active" data-len="1">1/16</button>
+            <button class="btn dur" data-len="2">1/8</button>
+            <button class="btn dur" data-len="4">1/4</button>
+            <button class="btn dur" data-len="8">1/2</button>
+            <button class="btn dur" data-len="16">1/1</button>
         </div>
 
         <div class="piano-roll-viewport" id="viewport">
-            <div class="keys-sidebar" id="keys-sidebar"></div>
-            <div class="grid-area">
-                <div class="timeline" id="timeline"></div>
-                <div class="grid-cells" id="grid-container"></div>
+            <div class="timeline-container" id="timeline"></div>
+            <div class="sequencer-area" id="sequencer">
                 <div class="playhead" id="playhead"></div>
+                <!-- Rows go here -->
             </div>
         </div>
-    </section>
+    </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        
-        const numOctaves = 4;
-        const startNote = 36; // C2
-        const endNote = startNote + (numOctaves * 12) - 1; // B5
-        const totalSteps = 64; 
-        
-        let gridState = {};
-        let cellElements = {};
+    <script>
+        const STEPS = 64;
+        const OCTAVES = 4;
+        const START_MIDI = 36;
+        const END_MIDI = START_MIDI + (OCTAVES * 12) - 1;
+        const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+        let gridState = {}; 
+        let domCells = {};
+        let currentLen = 1;
+        let isDown = false;
+        let mode = 1;
         let loopSteps = 64;
-        let currentDurationSteps = 1;
-        
-        const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-        
-        function isBlackKey(note) { return [1, 3, 6, 8, 10].includes(note % 12); }
-        function isC(note) { return note % 12 === 0; }
 
-        for (let note = endNote; note >= startNote; note--) {
-            gridState[note] = new Array(totalSteps).fill(0);
-            cellElements[note] = [];
-        }
-
-        const sidebar = document.getElementById('keys-sidebar');
-        const grid = document.getElementById('grid-container');
+        const sequencer = document.getElementById('sequencer');
         const timeline = document.getElementById('timeline');
-        
-        // 1. Timeline
-        for (let step = 0; step < totalSteps; step++) {
-            const marker = document.createElement('div');
-            marker.className = `time-marker ${step % 4 === 0 ? 'beat' : ''}`;
-            if (step % 16 === 0) marker.innerText = (step / 16) + 1;
-            else if (step % 4 === 0) marker.innerText = `.${(step % 16) / 4 + 1}`;
-            timeline.appendChild(marker);
+        const playhead = document.getElementById('playhead');
+
+        for(let n = END_MIDI; n >= START_MIDI; n--) {
+            gridState[n] = new Array(STEPS).fill(0);
+            domCells[n] = [];
         }
 
-        let isDrawing = false;
-        let drawMode = 1;
+        // Timeline
+        for(let s = 0; s < STEPS; s++) {
+            const m = document.createElement('div');
+            m.className = `marker ${s % 4 === 0 ? 'beat' : ''}`;
+            if(s % 16 === 0) m.innerText = (s/16)+1;
+            timeline.appendChild(m);
+        }
 
-        // 2. Construcción con Flexbox Rows (Limpio y robusto)
-        for (let note = endNote; note >= startNote; note--) {
-            const keyName = noteNames[note % 12];
-            const octave = Math.floor(note / 12) - 1;
-            const black = isBlackKey(note);
+        // Grid Construction
+        for(let n = END_MIDI; n >= START_MIDI; n--) {
+            const isBlack = [1,3,6,8,10].includes(n % 12);
+            const isC = n % 12 === 0;
+
+            const row = document.createElement('div');
+            row.className = `note-row ${isC ? 'bg-c' : (isBlack ? 'bg-black' : 'bg-white')}`;
+
+            const k = document.createElement('div');
+            k.className = `key ${isBlack ? 'black' : 'white'} ${isC ? 'c' : ''}`;
+            k.innerHTML = NOTES[n % 12] + (Math.floor(n / 12) - 1);
+            row.appendChild(k);
+
+            const cellsCont = document.createElement('div');
+            cellsCont.className = 'cells-container';
             
-            // Sidebar Key
-            const keyDiv = document.createElement('div');
-            keyDiv.className = `key ${black ? 'black' : 'white'} ${isC(note) ? 'is-c' : ''}`;
-            keyDiv.innerText = `${keyName}${octave}`;
-            sidebar.appendChild(keyDiv);
-
-            // Grid Row
-            let rowClass = black ? 'row-black' : 'row-white';
-            if (isC(note)) rowClass = 'row-c';
+            for(let s = 0; s < STEPS; s++) {
+                const c = document.createElement('div');
+                c.className = `cell ${s % 4 === 3 ? 'beat' : ''}`;
+                
+                const handleStart = (e) => {
+                    e.preventDefault();
+                    isDown = true;
+                    mode = gridState[n][s] !== 0 ? 0 : 1;
+                    edit(n, s);
+                };
+                c.addEventListener('mousedown', handleStart);
+                c.addEventListener('touchstart', handleStart);
+                c.addEventListener('mouseenter', () => { if(isDown) edit(n, s); });
+                
+                domCells[n][s] = c;
+                cellsCont.appendChild(c);
+            }
             
-            const rowDiv = document.createElement('div');
-            rowDiv.className = `grid-row ${rowClass}`;
+            // Añadir barra libre de navegación a la derecha de la fila
+            const nav = document.createElement('div');
+            nav.className = 'nav-gutter';
+            cellsCont.appendChild(nav);
 
-            // Celdas dentro de la fila
-            for (let step = 0; step < totalSteps; step++) {
-                const cell = document.createElement('div');
-                cell.className = `cell ${step % 4 === 3 ? 'beat-line' : ''}`;
-                cellElements[note][step] = cell;
-                
-                cell.addEventListener('mousedown', () => {
-                    isDrawing = true;
-                    drawMode = gridState[note][step] > 0 ? 0 : 1;
-                    handleCellInteraction(note, step, drawMode);
-                });
-                
-                cell.addEventListener('mouseenter', () => {
-                    if (isDrawing) handleCellInteraction(note, step, drawMode);
-                });
+            row.appendChild(cellsCont);
+            sequencer.appendChild(row);
+        }
 
-                rowDiv.appendChild(cell);
+        window.addEventListener('mouseup', () => isDown = false);
+        window.addEventListener('touchend', () => isDown = false);
+
+        function edit(n, s) {
+            if (s >= loopSteps) return;
+            if(mode === 1) {
+                clearNote(n, s);
+                let actualLen = Math.min(currentLen, loopSteps - s);
+                for(let i=1; i<actualLen; i++) if(gridState[n][s+i] !== 0) { actualLen = i; break; }
+                gridState[n][s] = actualLen;
+                for(let i=1; i<actualLen; i++) gridState[n][s+i] = -1;
+            } else {
+                clearNote(n, s);
             }
-            grid.appendChild(rowDiv);
+            refreshRow(n);
         }
 
-        document.addEventListener('mouseup', () => isDrawing = false);
-
-        // Lógica de dibujo
-        function handleCellInteraction(note, step, mode) {
-            if (mode === 1) addNote(note, step); else removeNote(note, step);
-        }
-
-        function addNote(note, step) {
-            if (step >= loopSteps) return;
-            removeNote(note, step); 
-            let len = Math.min(currentDurationSteps, loopSteps - step);
-            for(let i = 1; i < len; i++) if (gridState[note][step + i] !== 0) { len = i; break; }
-            gridState[note][step] = len;
-            for (let i = 1; i < len; i++) gridState[note][step + i] = -1;
-            updateCellVisuals(note);
-        }
-
-        function removeNote(note, step) {
-            let s = step;
-            while (s >= 0 && gridState[note][s] === -1) s--;
-            if (s >= 0 && gridState[note][s] > 0) {
-                let len = gridState[note][s];
-                for (let i = 0; i < len; i++) gridState[note][s + i] = 0;
-                updateCellVisuals(note);
+        function clearNote(n, s) {
+            let start = s;
+            while(start > 0 && gridState[n][start] === -1) start--;
+            if(gridState[n][start] > 0) {
+                let l = gridState[n][start];
+                for(let i=0; i<l; i++) gridState[n][start+i] = 0;
             }
         }
 
-        function updateCellVisuals(note) {
-            for (let s = 0; s < totalSteps; s++) {
-                const val = gridState[note][s];
-                const cell = cellElements[note][s];
-                cell.classList.remove('active', 'tied');
-                if (val > 0) cell.classList.add('active');
-                else if (val === -1) cell.classList.add('tied');
+        function refreshRow(n) {
+            for(let s=0; s<STEPS; s++) {
+                domCells[n][s].classList.remove('active', 'tied');
+                if(gridState[n][s] > 0) domCells[n][s].classList.add('active');
+                if(gridState[n][s] === -1) domCells[n][s].classList.add('tied');
             }
         }
 
-        // Motor de Audio
-        let audioCtx, masterGain, filter, lfo, lfoDepthGain;
-
+        // --- AUDIO ---
+        let ctx, masterGain, filter;
         function initAudio() {
-            if (audioCtx) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            masterGain = audioCtx.createGain(); 
-            masterGain.gain.value = document.getElementById('master-gain').value;
-            filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass';
-            lfo = audioCtx.createOscillator(); lfoDepthGain = audioCtx.createGain();
-            lfo.connect(lfoDepthGain); lfoDepthGain.connect(filter.detune);
-            filter.connect(masterGain); masterGain.connect(audioCtx.destination);
-            lfo.start(); updateSynthParams();
+            if(ctx) return;
+            ctx = new (window.AudioContext || window.webkitAudioContext)();
+            masterGain = ctx.createGain();
+            filter = ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.connect(masterGain);
+            masterGain.connect(ctx.destination);
         }
 
-        function updateSynthParams() {
-            if (!audioCtx) return;
-            filter.frequency.setTargetAtTime(document.getElementById('filter-cutoff').value, audioCtx.currentTime, 0.01);
-            filter.Q.setTargetAtTime(document.getElementById('filter-q').value, audioCtx.currentTime, 0.01);
-            lfo.frequency.setTargetAtTime(document.getElementById('lfo-rate').value, audioCtx.currentTime, 0.01);
-            lfoDepthGain.gain.setTargetAtTime(document.getElementById('lfo-depth').value, audioCtx.currentTime, 0.01);
-            masterGain.gain.setTargetAtTime(document.getElementById('master-gain').value, audioCtx.currentTime, 0.01);
-        }
-
-        ['filter-cutoff', 'filter-q', 'lfo-rate', 'lfo-depth', 'master-gain'].forEach(id => {
-            document.getElementById(id).addEventListener('input', updateSynthParams);
-        });
-
-        function playSynthVoice(midi, time, dur) {
+        function playNote(midi, time, dur) {
             const freq = 440 * Math.pow(2, (midi - 69) / 12);
-            const decay = parseFloat(document.getElementById('env-decay').value);
-            const fmRatio = parseFloat(document.getElementById('fm-ratio').value);
-            const fmIdx = parseFloat(document.getElementById('fm-depth').value);
-            const fmDests = Array.from(document.querySelectorAll('.fm-dest:checked')).map(cb => cb.value);
+            const g = ctx.createGain();
+            g.connect(filter);
 
-            const voiceGain = audioCtx.createGain(); voiceGain.connect(filter);
-            voiceGain.gain.setValueAtTime(0, time);
-            voiceGain.gain.linearRampToValueAtTime(0.8, time + 0.005);
-            voiceGain.gain.exponentialRampToValueAtTime(0.001, time + dur + decay);
+            const waves = [
+                { id: 'mix-sine', type: 'sine' },
+                { id: 'mix-saw', type: 'sawtooth' },
+                { id: 'mix-sqr', type: 'square' },
+                { id: 'mix-tri', type: 'triangle' }
+            ];
 
-            const mod = audioCtx.createOscillator(); const modGain = audioCtx.createGain();
-            mod.frequency.value = freq * fmRatio; modGain.gain.value = fmIdx;
-            mod.connect(modGain); mod.start(time); mod.stop(time + dur + decay);
-
-            ['sine', 'triangle', 'sawtooth', 'square'].forEach(type => {
-                const vol = parseFloat(document.getElementById(`mix-${type}`).value);
-                if (vol > 0) {
-                    const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
-                    osc.type = type; osc.frequency.value = freq;
-                    if (fmDests.includes(type)) modGain.connect(osc.frequency);
-                    g.gain.value = vol; osc.connect(g); g.connect(voiceGain);
-                    osc.start(time); osc.stop(time + dur + decay);
+            waves.forEach(w => {
+                const vol = parseFloat(document.getElementById(w.id).value);
+                if(vol > 0) {
+                    const o = ctx.createOscillator();
+                    o.type = w.type;
+                    o.frequency.value = freq;
+                    const og = ctx.createGain();
+                    og.gain.value = vol;
+                    o.connect(og); og.connect(g);
+                    o.start(time);
+                    o.stop(time + dur + 2.0);
                 }
             });
+
+            const a = parseFloat(document.getElementById('adsr-a').value);
+            const d = parseFloat(document.getElementById('adsr-d').value);
+            const s = parseFloat(document.getElementById('adsr-s').value);
+            const r = parseFloat(document.getElementById('adsr-r').value);
+            
+            // Actualización de Filtro y Resonancia
+            filter.frequency.setTargetAtTime(document.getElementById('cutoff').value, time, 0.01);
+            filter.Q.setTargetAtTime(document.getElementById('resonance').value, time, 0.01);
+            
+            masterGain.gain.setTargetAtTime(document.getElementById('master-vol').value, time, 0.01);
+
+            g.gain.setValueAtTime(0, time);
+            g.gain.linearRampToValueAtTime(1, time + a);
+            g.gain.linearRampToValueAtTime(s, time + a + d);
+            g.gain.setValueAtTime(s, time + dur);
+            g.gain.exponentialRampToValueAtTime(0.001, time + dur + r);
         }
 
-
-            // Secuenciador
-        let isPlaying = false, currentStep = 0, nextTime = 0, timerID;
-        const playhead = document.getElementById('playhead');
-        const viewport = document.getElementById('viewport');
-
-        function scheduler() {
-            while (nextTime < audioCtx.currentTime + 0.1) {
-                const bpm = document.getElementById('bpm-input').value;
-                const stepDur = (60/bpm) * 0.25; 
+        // --- SEQUENCER ---
+        let playing = false, step = 0, nextTime = 0, tid;
+        function tick() {
+            if(!playing) return;
+            while(nextTime < ctx.currentTime + 0.1) {
+                const bpm = document.getElementById('bpm').value;
+                const stepDur = (60 / bpm) * 0.25;
+                for(let n in gridState) if(gridState[n][step] > 0) playNote(n, nextTime, stepDur * gridState[n][step]);
                 
-                const uiStep = currentStep; 
+                const currentStepUI = step;
                 requestAnimationFrame(() => {
                     playhead.style.display = 'block';
-                    playhead.style.left = (uiStep * 30) + 'px';
-                    const playheadPos = uiStep * 30;
-                    if (playheadPos > viewport.scrollLeft + viewport.clientWidth - 100) viewport.scrollLeft = playheadPos - 100;
-                    else if (playheadPos < viewport.scrollLeft) viewport.scrollLeft = playheadPos;
+                    // 70 sidebar + (paso * 36 ancho celda)
+                    playhead.style.left = (70 + (currentStepUI * 36)) + 'px';
                 });
 
-                for (let n = startNote; n <= endNote; n++) {
-                    if (gridState[n][currentStep] > 0) playSynthVoice(n, nextTime, stepDur * gridState[n][currentStep]);
-                }
-                nextTime += stepDur; currentStep = (currentStep + 1) % loopSteps;
+                nextTime += stepDur;
+                step = (step + 1) % loopSteps;
             }
-            timerID = setTimeout(scheduler, 25);
+            tid = setTimeout(tick, 25);
         }
 
-        // Eventos
-        document.getElementById('btn-play').addEventListener('click', () => {
-            initAudio(); if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (isPlaying) return;
-            isPlaying = true; currentStep = 0; nextTime = audioCtx.currentTime + 0.05;
-            document.getElementById('btn-play').classList.add('active');
-            scheduler();
-        });
+        // --- MIDI ---
+        function writeVarInt(value) {
+            let buffer = [value & 0x7F];
+            while (value > 0x7F) {
+                value >>= 7;
+                buffer.unshift((value & 0x7F) | 0x80);
+            }
+            return buffer;
+        }
 
-        document.getElementById('btn-stop').addEventListener('click', () => {
-            isPlaying = false; clearTimeout(timerID);
-            document.getElementById('btn-play').classList.remove('active');
-            playhead.style.display = 'none';
-        });
+        function exportMIDI() {
+            const ppq = 128;
+            const ticksPerStep = 32; 
+            let midi = [0x4D, 0x54, 0x68, 0x64, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x01, 0x00, 0x80];
+            let track = [];
+            track.push(0x00, 0xFF, 0x51, 0x03, 0x07, 0xA1, 0x20);
 
-        document.getElementById('btn-clear').addEventListener('click', () => {
-            for (let n in gridState) { gridState[n].fill(0); updateCellVisuals(n); }
-        });
-
-        document.getElementById('loop-length').addEventListener('change', (e) => {
-            loopSteps = parseInt(e.target.value);
-            for (let note = endNote; note >= startNote; note--) {
-                for (let step = 0; step < totalSteps; step++) {
-                    if (step >= loopSteps) cellElements[note][step].classList.add('out-of-loop');
-                    else cellElements[note][step].classList.remove('out-of-loop');
+            let events = [];
+            for (let n in gridState) {
+                for (let s = 0; s < loopSteps; s++) {
+                    if (gridState[n][s] > 0) {
+                        const startTick = s * ticksPerStep;
+                        const endTick = startTick + (gridState[n][s] * ticksPerStep);
+                        events.push({ tick: startTick, type: 0x90, note: parseInt(n), vel: 0x60 });
+                        events.push({ tick: endTick, type: 0x80, note: parseInt(n), vel: 0x00 });
+                    }
                 }
             }
+            events.sort((a, b) => a.tick - b.tick);
+
+            let lastTick = 0;
+            events.forEach(e => {
+                let delta = e.tick - lastTick;
+                track.push(...writeVarInt(delta));
+                track.push(e.type, e.note, e.vel);
+                lastTick = e.tick;
+            });
+            track.push(0x00, 0xFF, 0x2F, 0x00);
+
+            let tlen = track.length;
+            let th = [0x4D, 0x54, 0x72, 0x6B, (tlen >> 24) & 0xFF, (tlen >> 16) & 0xFF, (tlen >> 8) & 0xFF, tlen & 0xFF];
+            const blob = new Blob([new Uint8Array([...midi, ...th, ...track])], {type: 'audio/midi'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = 'industrial_session.mid'; a.click();
+        }
+
+        document.getElementById('play').onclick = () => { initAudio(); if(playing) return; playing = true; step = 0; nextTime = ctx.currentTime; tick(); };
+        document.getElementById('stop').onclick = () => { playing = false; clearTimeout(tid); playhead.style.display = 'none'; };
+        document.getElementById('clear').onclick = () => { for(let n in gridState) { gridState[n].fill(0); refreshRow(n); } };
+        document.getElementById('export').onclick = exportMIDI;
+
+        document.getElementById('loop-select').onchange = (e) => {
+            loopSteps = parseInt(e.target.value);
+            for(let n in domCells) {
+                for(let s=0; s<STEPS; s++) {
+                    if(s >= loopSteps) domCells[n][s].classList.add('out-of-range');
+                    else domCells[n][s].classList.remove('out-of-range');
+                }
+            }
+        };
+
+        document.querySelectorAll('.dur').forEach(b => b.onclick = (e) => {
+            document.querySelectorAll('.dur').forEach(x => x.classList.remove('active'));
+            e.target.classList.add('active');
+            currentLen = parseInt(e.target.dataset.len);
         });
 
-        document.querySelectorAll('.dur-btn').forEach(b => b.addEventListener('click', e => {
-            document.querySelectorAll('.dur-btn').forEach(x => x.classList.remove('active'));
-            e.target.classList.add('active'); 
-            currentDurationSteps = parseInt(e.target.dataset.steps);
-        }));
-
-        // Evento exportar MIDI restaurado (Puedes conectar aquí tu lógica original)
-        document.getElementById('btn-export-midi').addEventListener('click', () => {
-            alert('Lógica de exportación MIDI conectada. Aquí va tu función generadora de bytes MIDI o la librería que uses para exportar el array gridState.');
-            // console.log(gridState);
-        });
-        
-        document.getElementById('loop-length').dispatchEvent(new Event('change'));
-        viewport.scrollTop = (endNote - 48) * 22; 
-    });
-</script>
+        document.getElementById('viewport').scrollTop = 450;
+        document.getElementById('loop-select').dispatchEvent(new Event('change'));
+    </script>
 </body>
 </html>
