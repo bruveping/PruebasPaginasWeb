@@ -253,6 +253,7 @@
                     <span class="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-500 rounded uppercase self-start">${item.mode || 'Jónico'}</span>
                     <h3 class="text-xl font-black text-slate-800 mono-font my-2">${progText}</h3>
                     <p class="text-xs text-slate-400">${item.type || 'Progresión'}</p>
+	            <p class="text-xs text-slate-400">${item.id || 'id'}</p>	    
                 `;
                 d.onclick = () => { 
                     const inp = document.getElementById('progInput'); 
