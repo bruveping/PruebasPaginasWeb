@@ -1,0 +1,212 @@
+[
+  {
+    "progression": "I V7 I",
+    "type": "comun mayor",
+    "interest": "basico",
+    "mode": "jonico",
+    "id": "1"
+  },
+  {
+    "progression": "I IV V I",
+    "type": "comun mayor",
+    "interest": "basico",
+    "mode": "jonico",
+    "id": "2"
+  },
+  {
+    "progression": "I V vi IV",
+    "type": "pop",
+    "interest": "muy usado",
+    "mode": "jonico",
+    "id": "3"
+  },
+  {
+    "progression": "vi IV I V",
+    "type": "pop",
+    "interest": "emocional",
+    "mode": "jonico",
+    "id": "4"
+  },
+  {
+    "progression": "I vi IV V",
+    "type": "pop clasico",
+    "interest": "nostalgico",
+    "mode": "jonico",
+    "id": "5"
+  },
+  {
+    "progression": "IV I V vi",
+    "type": "pop",
+    "interest": "inversion interesante",
+    "mode": "jonico",
+    "id": "6"
+  },
+  {
+    "progression": "I V IV",
+    "type": "rock",
+    "interest": "directo",
+    "mode": "jonico",
+    "id": "7"
+  },
+  {
+    "progression": "I bVII IV",
+    "type": "mixolidio",
+    "interest": "color modal",
+    "mode": "mixolidio",
+    "id": "8"
+  },
+  {
+    "progression": "ii V I",
+    "type": "jazz",
+    "interest": "fundamental",
+    "mode": "jonico",
+    "id": "9"
+  },
+  {
+    "progression": "ii V I vi",
+    "type": "jazz",
+    "interest": "extendido",
+    "mode": "jonico",
+    "id": "10"
+  },
+  {
+    "progression": "I vi ii V",
+    "type": "jazz",
+    "interest": "turnaround",
+    "mode": "jonico",
+    "id": "11"
+  },
+  {
+    "progression": "iii vi ii V",
+    "type": "jazz",
+    "interest": "circular",
+    "mode": "jonico",
+    "id": "12"
+  },
+  {
+    "progression": "ii V i",
+    "type": "jazz menor",
+    "interest": "resolucion menor",
+    "mode": "eolico",
+    "id": "13"
+  },
+  {
+    "progression": "i iv V",
+    "type": "menor",
+    "interest": "clasico",
+    "mode": "eolico",
+    "id": "14"
+  },
+  {
+    "progression": "i VI III VII",
+    "type": "menor pop",
+    "interest": "cinematico",
+    "mode": "eolico",
+    "id": "15"
+  },
+  {
+    "progression": "i VII VI VII",
+    "type": "menor",
+    "interest": "loop hipnotico",
+    "mode": "eolico",
+    "id": "16"
+  },
+  {
+    "progression": "IV V iii vi",
+    "type": "pop",
+    "interest": "movimiento descendente",
+    "mode": "jonico",
+    "id": "17"
+  },
+  {
+    "progression": "I iii IV V",
+    "type": "pop",
+    "interest": "color suave",
+    "mode": "jonico",
+    "id": "18"
+  },
+  {
+    "progression": "I IV I V",
+    "type": "comun mayor",
+    "interest": "repetitivo",
+    "mode": "jonico",
+    "id": "19"
+  },
+  {
+    "progression": "ii IV I V",
+    "type": "pop",
+    "interest": "pre-dominante fuerte",
+    "mode": "jonico",
+    "id": "20"
+  },
+  {
+    "progression": "IV bVII I",
+    "type": "modal",
+    "interest": "backdoor",
+    "mode": "mixolidio",
+    "id": "21"
+  },
+  {
+    "progression": "I bIII IV",
+    "type": "modal",
+    "interest": "intercambio modal",
+    "mode": "jonico",
+    "id": "22"
+  },
+  {
+    "progression": "I V/vi vi IV",
+    "type": "pop",
+    "interest": "dominante secundaria",
+    "mode": "jonico",
+    "id": "23"
+  },
+  {
+    "progression": "ii V/V V I",
+    "type": "jazz",
+    "interest": "cadena de dominantes",
+    "mode": "jonico",
+    "id": "24"
+  },
+  {
+    "progression": "I VI7 ii V7",
+    "type": "jazz",
+    "interest": "turnaround clasico",
+    "mode": "jonico",
+    "id": "25"
+  },
+  {
+    "progression": "i iv i V",
+    "type": "menor",
+    "interest": "cadencia fuerte",
+    "mode": "eolico",
+    "id": "26"
+  },
+  {
+    "progression": "i bVII bVI bVII",
+    "type": "menor",
+    "interest": "oscuro",
+    "mode": "eolico",
+    "id": "27"
+  },
+  {
+    "progression": "I V ii IV",
+    "type": "pop",
+    "interest": "variacion",
+    "mode": "jonico",
+    "id": "28"
+  },
+  {
+    "progression": "vi ii V I",
+    "type": "jazz",
+    "interest": "entrada suave",
+    "mode": "jonico",
+    "id": "29"
+  },
+  {
+    "progression": "I IV V vi",
+    "type": "pop",
+    "interest": "expansivo",
+    "mode": "jonico",
+    "id": "30"
+  }
+]

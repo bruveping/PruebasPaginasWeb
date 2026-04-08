@@ -97,7 +97,7 @@
         function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
 
         // --- PARSER ---
-        function parseChord(romanStr, keyIdx) {
+  /*      function parseChord(romanStr, keyIdx) {
             let str = romanStr.trim();
             if(!str) return null;
 
@@ -131,6 +131,11 @@
             let intervals = (isMinorBase && !suffix.includes('maj')) ? [0, 3, 7] : [0, 4, 7];
             
             if (suffix.includes('dim')) intervals = [0, 3, 6];
+	    if (suffix.includes('b5')) intervals = [0, 3, 6, 10];
+            if (suffix.includes('dim7')) intervals = [0, 3, 6, 9];
+
+
+		
             else if (suffix.includes('aug') || suffix.includes('+')) intervals = [0, 4, 8];
             else if (suffix.includes('m') && !suffix.includes('maj')) intervals = [0, 3, 7];
 
@@ -153,6 +158,129 @@
                 midiNotes: midiNotes.sort((a,b)=>a-b)
             };
         }
+
+	*/
+
+
+	function parseChord(romanStr, keyIdx) {
+		    let str = romanStr.trim();
+		    if(!str) return null;
+
+		    // 1. EXTRAER ALTERACIÓN DE LA RAÍZ (ej. bII, #IV)
+		    // Extraemos todos los 'b' o '#' iniciales de forma segura antes de procesar el número romano
+		    let rootOffset = 0;
+		    const prefixMatch = str.match(/^(b|#)+/);
+		    if (prefixMatch) {
+			            const prefix = prefixMatch[0];
+			            // Truco elegante: contar ocurrencias calculando el tamaño de los splits
+			            rootOffset = prefix.split('#').length - prefix.split('b').length; 
+			            str = str.substring(prefix.length);
+			        }
+
+		    // 2. SEPARAR BASE ROMANA Y SUFIJO
+		    const match = str.match(/^(VIII|III|VII|II|IV|VI|I|V)(.*)$/i);
+		    if (!match) return null;
+
+		    const romanBase = match[1];
+		    const suffix = match[2] || '';
+		    const isMinorBase = romanBase === romanBase.toLowerCase();
+
+		    // 3. CALCULAR RAÍZ ABSOLUTA
+		    const degreeMap = { 'i': 0, 'ii': 2, 'iii': 4, 'iv': 5, 'v': 7, 'vi': 9, 'vii': 11 };
+		    const baseDegreeValue = degreeMap[romanBase.toLowerCase()];
+		    if (baseDegreeValue === undefined) return null;
+
+		    let finalRootVal = (baseDegreeValue + rootOffset) % 12;
+		    if (finalRootVal < 0) finalRootVal += 12;
+		    const absoluteRoot = (keyIdx + finalRootVal) % 12;
+
+		    // 4. SISTEMA DE "SLOTS" POR GRADO (Evita conflictos de sobreescritura)
+		    const degrees = {
+			            1: 0,
+			            3: isMinorBase ? 3 : 4, // 3ra menor (3) o mayor (4) por defecto según el número romano
+			            5: 7,                   // 5ta justa por defecto
+			            7: null, 9: null, 11: null, 13: null
+			        };
+
+		    // --- A. Ajustes en Tríada Base (3ra y 5ta) ---
+		    if (suffix.includes('sus4')) degrees[3] = 5;
+		    else if (suffix.includes('sus2')) degrees[3] = 2;
+		    if (suffix.includes('maj') || suffix.includes('M')) degrees[3] = 4; // Prioriza mayor si es explícito
+		    if (suffix.includes('m') && !suffix.includes('maj')) degrees[3] = 3; // Prioriza menor si tiene 'm'
+
+		    if (suffix.includes('dim') || suffix.includes('b5') || suffix.includes('ø')) degrees[5] = 6;
+		    if (suffix.includes('aug') || suffix.includes('+') || suffix.includes('#5')) degrees[5] = 8;
+
+		    // --- B. Séptimas ---
+		    const has7 = suffix.includes('7');
+		    const has9 = suffix.includes('9');
+		    const has11 = suffix.includes('11');
+		    const has13 = suffix.includes('13');
+		    const implies7 = has7 || has9 || has11 || has13 || suffix.includes('ø') || suffix.includes('dim7');
+
+		    if (implies7) {
+			            if (suffix.includes('dim7')) {
+					                degrees[7] = 9;  // 7ma disminuida
+					            } else if (suffix.includes('maj') || suffix.includes('M')) {
+							                degrees[7] = 11; // 7ma mayor
+							            } else {
+									                degrees[7] = 10; // 7ma menor (Dominante o m7)
+									            }
+			        }
+
+		    // --- C. Sextas ---
+		    if (suffix.includes('6') && !has13) {
+			            degrees[13] = 9; // Se añade en el "slot" de la 13va para el orden, pero vale 9 semitonos
+			        }
+
+		    // --- D. Novenas ---
+		    if (has9 || has11 || has13) degrees[9] = 14; // 9na mayor por defecto si hay extensiones altas
+		    if (suffix.includes('b9')) degrees[9] = 13;
+		    if (suffix.includes('#9')) degrees[9] = 15;
+
+		    // --- E. Oncenas ---
+		    if (has11 || has13) degrees[11] = 17; // 11na justa por defecto
+		    if (suffix.includes('#11')) degrees[11] = 18;
+
+		    // --- F. Treceavas ---
+		    if (has13) degrees[13] = 21; // 13va mayor (Sexta mayor una octava arriba)
+		    if (suffix.includes('b13')) degrees[13] = 20;
+
+		    // 5. CONSTRUCCIÓN FINAL DEL ARREGLO DE INTERVALOS
+		    let intervals = [degrees[1], degrees[3], degrees[5]];
+		    
+		    if (degrees[7] !== null) intervals.push(degrees[7]);
+		    if (degrees[9] !== null) intervals.push(degrees[9]);
+		    
+		    // Evitar el "choque de oncenas": En voicings de jazz, la 11na natural omite chocar con la 3ra mayor
+		    if (degrees[11] !== null) {
+			            if (degrees[3] === 4 && degrees[11] === 17 && !suffix.includes('11')) {
+					                // Omitir 11na natural implícita en acordes dominantes o mayores (e.g. en un I13)
+					            } else {
+							                intervals.push(degrees[11]);
+							            }
+			        }
+		    
+		    if (degrees[13] !== null) intervals.push(degrees[13]);
+
+		    // Limpiar nulos, remover duplicados (por si una 6ta y una dim7 coinciden en 9 semitonos) y ordenar
+		    intervals = [...new Set(intervals)].sort((a, b) => a - b);
+
+		    // 6. MAPEO A NOTAS MIDI (C4 = 60)
+		    let midiNotes = intervals.map(iv => 60 + absoluteRoot + iv);
+
+		    // ATENCIÓN: Se eliminó el "n > 72 ? n - 12 : n" original. 
+		    // Esa línea plegaba las extensiones altas (> C5) hacia la octava base, 
+		    // destruyendo el carácter de las novenas/trecenas al convertirlas en segundas/sextas apelotonadas.
+		    // Conservar el arreglo natural genera "Spread Voicings" hermosos.
+
+		    return {
+			            original: romanStr,
+			            rootNoteName: NOTE_NAMES[absoluteRoot],
+			            midiNotes: midiNotes
+			        };
+	}
+
 
         function updateVisualizer() {
             const raw = document.getElementById('progInput').value;

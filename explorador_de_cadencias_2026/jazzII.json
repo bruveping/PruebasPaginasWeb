@@ -1,0 +1,142 @@
+[
+  {
+    "progression": "IIm7 V7 IMaj7",
+    "type": "jazz",
+    "interest": "II-V-I Mayor",
+    "mode": "jonico",
+    "id": "1"
+  },
+  {
+    "progression": "IIm7b5 V7 Im7",
+    "type": "jazz",
+    "interest": "II-V-I Menor",
+    "mode": "eolico",
+    "id": "2"
+  },
+  {
+    "progression": "IMaj7 VI7 IIm7 V7",
+    "type": "jazz",
+    "interest": "Turnaround Jazz",
+    "mode": "jonico",
+    "id": "3"
+  },
+  {
+    "progression": "IMaj7 VIm7 IIm7 V7",
+    "type": "jazz",
+    "interest": "Rhythm Changes A",
+    "mode": "jonico",
+    "id": "4"
+  },
+  {
+    "progression": "IVMaj7 bVII7 IMaj7",
+    "type": "jazz",
+    "interest": "Backdoor Progression",
+    "mode": "jonico",
+    "id": "5"
+  },
+  {
+    "progression": "Im7 bVI7 IIm7b5 V7",
+    "type": "jazz",
+    "interest": "Minor Turnaround",
+    "mode": "jonico",
+    "id": "6"
+  },
+  {
+    "progression": "IMaj7 bIII7 bVI7 V7",
+    "type": "jazz",
+    "interest": "Coltrane Simplificado",
+    "mode": "jonico",
+    "id": "7"
+  },
+  {
+    "progression": "IVMaj7 IMaj7",
+    "type": "jazz",
+    "interest": "Cadencia Plagal Jazz",
+    "mode": "jonico",
+    "id": "8"
+  },
+  {
+    "progression": "IMaj7 VI7 IIm7 V7",
+    "type": "jazz",
+    "interest": "I-VI-II-V",
+    "mode": "jonico",
+    "id": "9"
+  },
+  {
+    "progression": "IIm7 V7 IMaj7 VI7",
+    "type": "jazz",
+    "interest": "II-V Turnaround extendido",
+    "mode": "jonico",
+    "id": "10"
+  },
+  {
+    "progression": "I V vi IV",
+    "type": "pop",
+    "interest": "I-V-vi-IV",
+    "mode": "jonico",
+    "id": "11"
+  },
+  {
+    "progression": "vi IV I V",
+    "type": "pop",
+    "interest": "vi-IV-I-V",
+    "mode": "eolico",
+    "id": "12"
+  },
+  {
+    "progression": "I IV V",
+    "type": "pop",
+    "interest": "I-IV-V",
+    "mode": "jonico",
+    "id": "13"
+  },
+  {
+    "progression": "I vi IV V",
+    "type": "pop",
+    "interest": "I-vi-IV-V",
+    "mode": "jonico",
+    "id": "14"
+  },
+  {
+    "progression": "IV I V vi",
+    "type": "pop",
+    "interest": "IV-I-V-vi",
+    "mode": "jonico",
+    "id": "15"
+  },
+  {
+    "progression": "I V IV",
+    "type": "pop",
+    "interest": "I-V-IV",
+    "mode": "jonico",
+    "id": "16"
+  },
+  {
+    "progression": "vi V IV",
+    "type": "pop",
+    "interest": "vi-V-IV",
+    "mode": "eolico",
+    "id": "17"
+  },
+  {
+    "progression": "I IV vi V",
+    "type": "pop",
+    "interest": "I-IV-vi-V",
+    "mode": "jonico",
+    "id": "18"
+  },
+  {
+    "progression": "V vi IV I",
+    "type": "pop",
+    "interest": "V-vi-IV-I",
+    "mode": "jonico",
+    "id": "19"
+  },
+  {
+    "progression": "I bVII IV",
+    "type": "pop",
+    "interest": "I-bVII-IV",
+    "mode": "jonico",
+    "id": "20"
+  }
+]
