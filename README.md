@@ -51,7 +51,7 @@ tocar_con_poly_HardBass [tocar_con_poly_HardBass](https://bruveping.github.io/Pr
 
 Metrica_de_versos [Metrica_de_versos](https://bruveping.github.io/PruebasPaginasWeb/Metrica_de_versos/)
 
-metronomo_01 [metronomo_01](https://bruveping.github.io/PruebasPaginasWeb/metronomo_01/)
+temporizador_01 [temporizador_01](https://bruveping.github.io/PruebasPaginasWeb/temporizador_01/)
 
 
 
