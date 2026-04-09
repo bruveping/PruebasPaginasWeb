@@ -101,12 +101,6 @@
 </head>
 <body>
 
-    <!-- Toast de Notificación -->
-    <div id="toast" class="fixed bottom-4 right-4 z-[100] transform translate-y-20 opacity-0 transition-all duration-300 px-4 py-3 rounded-lg shadow-xl text-sm font-bold flex items-center gap-2 pointer-events-none">
-        <span id="toast-icon">✅</span>
-        <span id="toast-msg">Mensaje</span>
-    </div>
-
     <button id="toggle-panel" onclick="togglePanel()" class="bg-blue-600 text-white p-4 rounded-xl shadow-2xl hover:bg-blue-700 transition-all border-2 border-white">
         <span class="text-2xl">🛠️</span>
     </button>
@@ -152,16 +146,10 @@
             </div>
         </div>
         
-        <div class="p-4 bg-slate-50 rounded-b-2xl border-t border-slate-100 flex flex-wrap justify-between items-center gap-2">
-            <div class="flex gap-2 items-center">
-                <button onclick="copyToClipboard()" class="text-xs font-bold text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded-md flex items-center gap-1 transition-all" title="Copiar Imagen">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                    Exportar
-                </button>
-                <button onclick="resetZoom()" class="text-xs font-bold text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-md transition-all">Centrar</button>
-                <button onclick="clearEditor()" class="text-xs font-bold text-red-500 hover:bg-red-100 px-3 py-1.5 rounded-md transition-all">Limpiar</button>
-            </div>
-            <span class="text-[10px] text-slate-400 font-mono">v2.1_SEC_FIX</span>
+        <div class="p-4 bg-slate-50 rounded-b-2xl border-t border-slate-100 flex justify-between items-center">
+            <button onclick="resetZoom()" class="text-xs font-bold text-blue-600 hover:bg-blue-100 px-3 py-1 rounded-md">Centrar</button>
+            <button onclick="clearEditor()" class="text-xs font-bold text-red-500 px-3 py-1 rounded-md">Limpiar</button>
+            <span class="text-[10px] text-slate-400 font-mono">v1.9_STABLE</span>
         </div>
     </aside>
 
@@ -173,113 +161,6 @@
         let panZoomInstance = null;
         let currentTheme = 'default';
         
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-msg').textContent = message;
-            document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '⚠️';
-            
-            toast.className = `fixed bottom-4 right-4 z-[100] transition-all duration-300 px-4 py-3 rounded-lg shadow-xl text-sm font-bold flex items-center gap-2 pointer-events-none ${type === 'success' ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'}`;
-            
-            requestAnimationFrame(() => {
-                toast.classList.remove('translate-y-20', 'opacity-0');
-            });
-
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 4000);
-        }
-
-        async function copyToClipboard() {
-            const svgElement = document.querySelector('#mermaid-output svg');
-            if (!svgElement) {
-                showToast('No hay diagrama para copiar', 'error');
-                return;
-            }
-
-            try {
-                showToast('Procesando imagen...', 'success');
-
-                const clone = svgElement.cloneNode(true);
-                const viewportG = clone.querySelector('.svg-pan-zoom_viewport');
-                if (viewportG) {
-                    viewportG.setAttribute('transform', 'matrix(1,0,0,1,0,0)');
-                }
-
-                const viewBox = clone.getAttribute('viewBox');
-                if (viewBox) {
-                    const [x, y, w, h] = viewBox.split(' ');
-                    clone.setAttribute('width', w);
-                    clone.setAttribute('height', h);
-                }
-
-                const svgData = new XMLSerializer().serializeToString(clone);
-                
-                // Usamos base64 para el origen de la imagen. Esto previene el Tainted Canvas en algunos navegadores.
-                const base64SVG = btoa(unescape(encodeURIComponent(svgData)));
-                const dataUrl = 'data:image/svg+xml;base64,' + base64SVG;
-
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                
-                img.onload = async () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-
-                    const isTopo = document.getElementById('viewport').classList.contains('bg-topo');
-                    ctx.fillStyle = isTopo ? '#483C32' : '#ffffff';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                    ctx.drawImage(img, 0, 0);
-
-                    try {
-                        // Intentamos exportar a PNG. Si el canvas está "tainted", toBlob lanzará un SecurityError.
-                        canvas.toBlob(async (blob) => {
-                            if (!blob) throw new Error("Fallo al crear Blob");
-                            
-                            try {
-                                const item = new ClipboardItem({ 'image/png': blob });
-                                await navigator.clipboard.write([item]);
-                                showToast('¡Imagen copiada al portapapeles!', 'success');
-                            } catch (err) {
-                                // Fallback 1: Descargar PNG si la API de portapapeles falla
-                                const fileUrl = URL.createObjectURL(blob);
-                                const a = document.createElement('a');
-                                a.href = fileUrl;
-                                a.download = 'diagrama.png';
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                                URL.revokeObjectURL(fileUrl);
-                                showToast('Imagen PNG descargada', 'success');
-                            }
-                        }, 'image/png');
-                    } catch (securityError) {
-                        // Fallback 2: Si el Canvas fue marcado como Tainted (SecurityError)
-                        console.warn("Canvas Tainted. Exportando como SVG...", securityError);
-                        const a = document.createElement('a');
-                        a.href = dataUrl;
-                        a.download = 'diagrama-vectorial.svg';
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        showToast('Restricción de seguridad detectada: SVG descargado en su lugar', 'error');
-                    }
-                };
-
-                img.onerror = () => {
-                    showToast('Error al renderizar los gráficos', 'error');
-                };
-
-                img.src = dataUrl;
-
-            } catch (error) {
-                console.error(error);
-                showToast('Error inesperado al copiar', 'error');
-            }
-        }
-
         const initialCode = `
         graph LR
     %% Definición de Estilos
@@ -331,6 +212,7 @@
                 theme: theme,
                 securityLevel: 'loose',
                 fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+                // Configuraciones específicas para evitar bloqueos de dimensiones
                 flowchart: { htmlLabels: true, useMaxWidth: false },
                 mindmap: { useMaxWidth: false },
                 sequence: { useMaxWidth: false },
@@ -341,6 +223,7 @@
         async function renderDiagram(code) {
             const output = document.getElementById('mermaid-output');
             
+            // 1. Limpieza total antes de renderizar (Solución al bug de Mindmap)
             if (panZoomInstance) {
                 panZoomInstance.destroy();
                 panZoomInstance = null;
@@ -349,9 +232,11 @@
             
             try {
                 const id = 'svg-' + Math.random().toString(36).substr(2, 9);
+                // 2. Forzar a Mermaid a generar el SVG
                 const { svg } = await mermaid.render(id, code);
                 output.innerHTML = svg;
                 
+                // 3. Pequeño delay para asegurar que el navegador procesó el SVG inyectado
                 requestAnimationFrame(() => {
                     setTimeout(setupPanZoom, 50);
                 });
