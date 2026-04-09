@@ -11,8 +11,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
-    <!-- Agregamos html2canvas para la captura de pantalla fiable -->
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
     <style>
         :root {
@@ -79,6 +77,7 @@
             align-items: center;
             justify-content: center;
         }
+        /* Importante: Forzar que el SVG ocupe el contenedor para que pan-zoom calcule bien */
         #mermaid-output svg {
             width: 100% !important;
             height: 100% !important;
@@ -98,17 +97,11 @@
             resize: vertical;
             outline: none;
         }
-
-        /* Clase temporal para la captura limpia */
-        .capturing-mode #controls-panel,
-        .capturing-mode #toggle-panel,
-        .capturing-mode #toast {
-            display: none !important;
-        }
     </style>
 </head>
 <body>
 
+    <!-- Toast de Notificación -->
     <div id="toast" class="fixed bottom-4 right-4 z-[100] transform translate-y-20 opacity-0 transition-all duration-300 px-4 py-3 rounded-lg shadow-xl text-sm font-bold flex items-center gap-2 pointer-events-none">
         <span id="toast-icon">✅</span>
         <span id="toast-msg">Mensaje</span>
@@ -161,14 +154,14 @@
         
         <div class="p-4 bg-slate-50 rounded-b-2xl border-t border-slate-100 flex flex-wrap justify-between items-center gap-2">
             <div class="flex gap-2 items-center">
-                <button onclick="copyToClipboard()" class="text-xs font-bold text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded-md flex items-center gap-1 transition-all" title="Capturar Pantalla">
+                <button onclick="copyToClipboard()" class="text-xs font-bold text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded-md flex items-center gap-1 transition-all" title="Copiar Imagen">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                    Capturar
+                    Exportar
                 </button>
                 <button onclick="resetZoom()" class="text-xs font-bold text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-md transition-all">Centrar</button>
                 <button onclick="clearEditor()" class="text-xs font-bold text-red-500 hover:bg-red-100 px-3 py-1.5 rounded-md transition-all">Limpiar</button>
             </div>
-            <span class="text-[10px] text-slate-400 font-mono">v3.0_CAPTURE</span>
+            <span class="text-[10px] text-slate-400 font-mono">v2.1_SEC_FIX</span>
         </div>
     </aside>
 
@@ -197,68 +190,98 @@
         }
 
         async function copyToClipboard() {
-            const viewport = document.getElementById('viewport');
-            
+            const svgElement = document.querySelector('#mermaid-output svg');
+            if (!svgElement) {
+                showToast('No hay diagrama para copiar', 'error');
+                return;
+            }
+
             try {
-                showToast('Tomando captura...', 'success');
-                
-                // 1. Centramos el diagrama para asegurarnos de que se vea bien
-                if (panZoomInstance) {
-                    panZoomInstance.reset();
-                    panZoomInstance.fit();
-                    panZoomInstance.center();
+                showToast('Procesando imagen...', 'success');
+
+                const clone = svgElement.cloneNode(true);
+                const viewportG = clone.querySelector('.svg-pan-zoom_viewport');
+                if (viewportG) {
+                    viewportG.setAttribute('transform', 'matrix(1,0,0,1,0,0)');
                 }
 
-                // 2. Ocultamos temporalmente la UI (menú flotante, toast, etc.)
-                document.body.classList.add('capturing-mode');
+                const viewBox = clone.getAttribute('viewBox');
+                if (viewBox) {
+                    const [x, y, w, h] = viewBox.split(' ');
+                    clone.setAttribute('width', w);
+                    clone.setAttribute('height', h);
+                }
 
-                // Damos un pequeñísimo margen de tiempo para que la UI desaparezca
-                await new Promise(r => setTimeout(r, 100));
+                const svgData = new XMLSerializer().serializeToString(clone);
+                
+                // Usamos base64 para el origen de la imagen. Esto previene el Tainted Canvas en algunos navegadores.
+                const base64SVG = btoa(unescape(encodeURIComponent(svgData)));
+                const dataUrl = 'data:image/svg+xml;base64,' + base64SVG;
 
-                // 3. Capturamos la pantalla con html2canvas
-                const canvas = await html2canvas(viewport, {
-                    backgroundColor: viewport.classList.contains('bg-topo') ? '#483C32' : '#ffffff',
-                    scale: 2, // Alta definición (HD)
-                    useCORS: true, // Permite capturar recursos externos si los hubiera
-                    logging: false // Desactiva los logs en consola
-                });
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                
+                img.onload = async () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
 
-                // 4. Restauramos la UI
-                document.body.classList.remove('capturing-mode');
+                    const isTopo = document.getElementById('viewport').classList.contains('bg-topo');
+                    ctx.fillStyle = isTopo ? '#483C32' : '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                // 5. Procesamos el resultado
-                canvas.toBlob(async (blob) => {
-                    if (!blob) throw new Error("Error al generar la imagen");
+                    ctx.drawImage(img, 0, 0);
 
                     try {
-                        // Intentamos copiar al portapapeles
-                        const item = new ClipboardItem({ 'image/png': blob });
-                        await navigator.clipboard.write([item]);
-                        showToast('¡Captura HD copiada al portapapeles!', 'success');
-                    } catch (clipboardError) {
-                        // Si falla (por ejemplo, en Firefox sin permisos explícitos), descargamos la imagen
-                        console.warn("Portapapeles bloqueado, forzando descarga.", clipboardError);
-                        const fileUrl = URL.createObjectURL(blob);
+                        // Intentamos exportar a PNG. Si el canvas está "tainted", toBlob lanzará un SecurityError.
+                        canvas.toBlob(async (blob) => {
+                            if (!blob) throw new Error("Fallo al crear Blob");
+                            
+                            try {
+                                const item = new ClipboardItem({ 'image/png': blob });
+                                await navigator.clipboard.write([item]);
+                                showToast('¡Imagen copiada al portapapeles!', 'success');
+                            } catch (err) {
+                                // Fallback 1: Descargar PNG si la API de portapapeles falla
+                                const fileUrl = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = fileUrl;
+                                a.download = 'diagrama.png';
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(fileUrl);
+                                showToast('Imagen PNG descargada', 'success');
+                            }
+                        }, 'image/png');
+                    } catch (securityError) {
+                        // Fallback 2: Si el Canvas fue marcado como Tainted (SecurityError)
+                        console.warn("Canvas Tainted. Exportando como SVG...", securityError);
                         const a = document.createElement('a');
-                        a.href = fileUrl;
-                        a.download = 'captura-mermaid.png';
+                        a.href = dataUrl;
+                        a.download = 'diagrama-vectorial.svg';
                         document.body.appendChild(a);
                         a.click();
                         document.body.removeChild(a);
-                        URL.revokeObjectURL(fileUrl);
-                        showToast('Captura descargada como PNG', 'success');
+                        showToast('Restricción de seguridad detectada: SVG descargado en su lugar', 'error');
                     }
-                }, 'image/png');
+                };
+
+                img.onerror = () => {
+                    showToast('Error al renderizar los gráficos', 'error');
+                };
+
+                img.src = dataUrl;
 
             } catch (error) {
-                document.body.classList.remove('capturing-mode');
-                console.error("Error en la captura:", error);
-                showToast('Hubo un error al capturar la pantalla', 'error');
+                console.error(error);
+                showToast('Error inesperado al copiar', 'error');
             }
         }
 
         const initialCode = `
- graph LR
+        graph LR
     %% Definición de Estilos
     classDef principal fill:#3b82f6,stroke:#1d4ed8,color:#fff,stroke-width:4px;
     classDef herramienta fill:#10b981,stroke:#059669,color:#fff;
@@ -300,7 +323,7 @@
     style Interfaz fill:#f1f5f9,stroke:#cbd5e1,stroke-dasharray: 5 5
     style Nav fill:#f1f5f9,stroke:#cbd5e1,stroke-dasharray: 5 5
     style Diseno fill:#f1f5f9,stroke:#cbd5e1,stroke-dasharray: 5 5
-`;
+        `;
 
         function initMermaid(theme = 'default') {
             mermaid.initialize({
@@ -379,8 +402,7 @@
         }
 
         function renderFromEditor() {
-            let code = document.getElementById('mermaid-editor').value;
-            code = code.replace(/\u00A0/g, ' ');
+            const code = document.getElementById('mermaid-editor').value;
             renderDiagram(code);
         }
 
