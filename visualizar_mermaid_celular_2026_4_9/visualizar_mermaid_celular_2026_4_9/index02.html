@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Visualizador Inmersivo Mermaid</title>
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='25' r='12' fill='%233b82f6'/%3E%3Ccircle cx='25' cy='70' r='12' fill='%233b82f6'/%3E%3Ccircle cx='75' cy='70' r='12' fill='%233b82f6'/%3E%3Cpath d='M50 25 L25 70 M50 25 L75 70 M25 70 L75 70' stroke='%233b82f6' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    
+    <style>
+        :root {
+            --accent: #3b82f6;
+            --topo-gray: #483C32;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #f8fafc;
+        }
+
+        #viewport {
+            width: 100vw;
+            height: 100vh;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: #ffffff;
+            touch-action: none;
+        }
+        #viewport.bg-topo { background-color: var(--topo-gray); }
+        #viewport:active { cursor: grabbing; }
+
+        #controls-panel {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 50;
+            width: 90%;
+            max-width: 360px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: top left;
+        }
+        #controls-panel.collapsed {
+            transform: scale(0);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #toggle-panel {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 60;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #toggle-panel.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        #mermaid-output {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Importante: Forzar que el SVG ocupe el contenedor para que pan-zoom calcule bien */
+        #mermaid-output svg {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: none !important;
+            display: block;
+        }
+
+        #mermaid-editor {
+            width: 100%;
+            height: 250px;
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            background: #1e293b;
+            color: #f1f5f9;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            resize: vertical;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+    <button id="toggle-panel" onclick="togglePanel()" class="bg-blue-600 text-white p-4 rounded-xl shadow-2xl hover:bg-blue-700 transition-all border-2 border-white">
+        <span class="text-2xl">🛠️</span>
+    </button>
+
+    <aside id="controls-panel" class="bg-white/95 backdrop-blur shadow-2xl rounded-2xl border border-slate-200 flex flex-col max-h-[90vh]">
+        <div class="p-5 overflow-y-auto">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900">Editor Pro</h1>
+                    <p class="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Multi-Diagrama Fix</p>
+                </div>
+                <button onclick="togglePanel()" class="bg-slate-100 p-2 rounded-lg text-slate-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Fondo</label>
+                    <div class="flex p-1 bg-slate-100 rounded-lg gap-1">
+                        <button onclick="setCanvasBg('light')" id="btn-bg-light" class="flex-1 py-1.5 text-xs font-medium rounded-md transition-all bg-white shadow-sm text-blue-600">Claro</button>
+                        <button onclick="setCanvasBg('topo')" id="btn-bg-topo" class="flex-1 py-1.5 text-xs font-medium rounded-md transition-all text-slate-600">Topo</button>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-semibold text-slate-500 uppercase">Código</label>
+                        <button onclick="renderFromEditor()" class="text-[10px] bg-blue-600 text-white px-2 py-1 rounded font-bold">RE-RENDER</button>
+                    </div>
+                    <textarea id="mermaid-editor" spellcheck="false"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 gap-2">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase">Tema</label>
+                    <select id="theme-select" onchange="updateTheme(this.value)" class="w-full bg-slate-100 rounded-lg p-2 text-sm">
+                        <option value="default">Estándar</option>
+                        <option value="neutral">Neutral</option>
+                        <option value="forest">Bosque</option>
+                        <option value="dark">Oscuro</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4 bg-slate-50 rounded-b-2xl border-t border-slate-100 flex justify-between items-center">
+            <button onclick="resetZoom()" class="text-xs font-bold text-blue-600 hover:bg-blue-100 px-3 py-1 rounded-md">Centrar</button>
+            <button onclick="clearEditor()" class="text-xs font-bold text-red-500 px-3 py-1 rounded-md">Limpiar</button>
+            <span class="text-[10px] text-slate-400 font-mono">v1.9_STABLE</span>
+        </div>
+    </aside>
+
+    <main id="viewport">
+        <div id="mermaid-output"></div>
+    </main>
+
+    <script>
+        let panZoomInstance = null;
+        let currentTheme = 'default';
+        
+        const initialCode = `
+        graph LR
+    %% Definición de Estilos
+    classDef principal fill:#3b82f6,stroke:#1d4ed8,color:#fff,stroke-width:4px;
+    classDef herramienta fill:#10b981,stroke:#059669,color:#fff;
+    classDef truco fill:#f59e0b,stroke:#d97706,color:#fff;
+    classDef navegacion fill:#8b5cf6,stroke:#7c3aed,color:#fff;
+
+    %% Nodo Principal
+    Guia["<b>Guía del Visualizador Mermaid</b>"]:::principal
+
+    %% Ramas Principales
+    Guia --> Controles["Controles de Interfaz"]:::herramienta
+    Guia --> Navegacion["Navegación Inmersiva"]:::navegacion
+    Guia --> Trucos["Trucos de Mermaid"]:::truco
+
+    subgraph Interfaz ["Interfaz y Herramientas"]
+        Controles --> Temas["<b>Temas:</b> Cambia entre Forest, Dark o Neutral"]
+        Controles --> Fondos["<b>Fondos:</b> Alterna entre Claro y Gris Topo"]
+        Controles --> Codigo["<b>Código:</b> Revisa la sintaxis original en el panel"]
+    end
+
+    subgraph Nav ["Navegación con Mouse/Touch"]
+        Navegacion --> Pan["<b>Arrastrar (Pan):</b> Haz clic y mueve para desplazarte"]
+        Navegacion --> Zoom["<b>Zoom:</b> Rueda del mouse o pellizco en táctil"]
+        Navegacion --> Reset["<b>Centrar:</b> El botón Reset reajusta el foco"]
+    end
+
+    subgraph Diseno ["Trucos de Diseño"]
+        Trucos --> Estilos["<b>Estilos:</b> Usa classDef y style para dar color"]
+        Trucos --> Iconos["<b>Iconos:</b> Puedes usar Emojis 🚀 dentro de los nodos"]
+        Trucos --> Subgraphs["<b>Subgraphs:</b> Agrupa nodos para dar jerarquía"]
+        Trucos --> HTML["<b>HTML:</b> Usa etiquetas b o br para formato"]
+    end
+
+    %% Notas Adicionales
+    Nota["Para ver el código de esta guía, copia este texto"]
+    Trucos -.-> Nota
+
+    %% Aplicación de estilos a subgrafos
+    style Interfaz fill:#f1f5f9,stroke:#cbd5e1,stroke-dasharray: 5 5
+    style Nav fill:#f1f5f9,stroke:#cbd5e1,stroke-dasharray: 5 5
+    style Diseno fill:#f1f5f9,stroke:#cbd5e1,stroke-dasharray: 5 5
+        `;
+
+        function initMermaid(theme = 'default') {
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: theme,
+                securityLevel: 'loose',
+                fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+                // Configuraciones específicas para evitar bloqueos de dimensiones
+                flowchart: { htmlLabels: true, useMaxWidth: false },
+                mindmap: { useMaxWidth: false },
+                sequence: { useMaxWidth: false },
+                er: { useMaxWidth: false }
+            });
+        }
+
+        async function renderDiagram(code) {
+            const output = document.getElementById('mermaid-output');
+            
+            // 1. Limpieza total antes de renderizar (Solución al bug de Mindmap)
+            if (panZoomInstance) {
+                panZoomInstance.destroy();
+                panZoomInstance = null;
+            }
+            output.innerHTML = ""; 
+            
+            try {
+                const id = 'svg-' + Math.random().toString(36).substr(2, 9);
+                // 2. Forzar a Mermaid a generar el SVG
+                const { svg } = await mermaid.render(id, code);
+                output.innerHTML = svg;
+                
+                // 3. Pequeño delay para asegurar que el navegador procesó el SVG inyectado
+                requestAnimationFrame(() => {
+                    setTimeout(setupPanZoom, 50);
+                });
+            } catch (e) {
+                console.error(e);
+                output.innerHTML = `<div class="bg-red-50 text-red-600 p-6 rounded-xl border border-red-200 max-w-md">
+                    <h3 class="font-bold">Error de Renderizado</h3>
+                    <p class="text-xs font-mono mt-2">${e.message}</p>
+                </div>`;
+            }
+        }
+
+        function setupPanZoom() {
+            const svgElement = document.querySelector('#mermaid-output svg');
+            if (!svgElement) return;
+
+            const eventsHandler = {
+                haltEventListeners: ['touchstart', 'touchend', 'touchmove', 'touchleave', 'touchcancel'],
+                init: function(options) {
+                    var instance = options.instance, initialScale = 1, pannedX = 0, pannedY = 0;
+                    this.hammer = new Hammer(options.svgElement, {
+                        recognizers: [[Hammer.Pan, { direction: Hammer.DIRECTION_ALL }], [Hammer.Pinch]]
+                    });
+                    this.hammer.on('panstart panmove', (ev) => {
+                        if (ev.type === 'panstart') { pannedX = 0; pannedY = 0; }
+                        instance.panBy({x: ev.deltaX - pannedX, y: ev.deltaY - pannedY});
+                        pannedX = ev.deltaX; pannedY = ev.deltaY;
+                    });
+                    this.hammer.on('pinchstart pinchmove', (ev) => {
+                        if (ev.type === 'pinchstart') {
+                            initialScale = instance.getZoom();
+                            instance.zoomAtPoint(initialScale * ev.scale, {x: ev.center.x, y: ev.center.y});
+                        }
+                        instance.zoomAtPoint(initialScale * ev.scale, {x: ev.center.x, y: ev.center.y});
+                    });
+                    options.svgElement.addEventListener('touchmove', e => e.preventDefault(), {passive: false});
+                },
+                destroy: function() { this.hammer.destroy(); }
+            };
+
+            panZoomInstance = svgPanZoom(svgElement, {
+                zoomEnabled: true,
+                controlIconsEnabled: false,
+                fit: true,
+                center: true,
+                customEventsHandler: eventsHandler
+            });
+        }
+
+        function renderFromEditor() {
+            const code = document.getElementById('mermaid-editor').value;
+            renderDiagram(code);
+        }
+
+        function togglePanel() {
+            const panel = document.getElementById('controls-panel');
+            const btn = document.getElementById('toggle-panel');
+            panel.classList.toggle('collapsed');
+            btn.classList.toggle('visible', panel.classList.contains('collapsed'));
+        }
+
+        function setCanvasBg(mode) {
+            const viewport = document.getElementById('viewport');
+            const btnLight = document.getElementById('btn-bg-light');
+            const btnTopo = document.getElementById('btn-bg-topo');
+            if (mode === 'topo') {
+                viewport.classList.add('bg-topo');
+                btnTopo.className = 'flex-1 py-1.5 text-xs font-medium rounded-md bg-white shadow-sm text-blue-600';
+                btnLight.className = 'flex-1 py-1.5 text-xs font-medium rounded-md text-slate-600';
+            } else {
+                viewport.classList.remove('bg-topo');
+                btnLight.className = 'flex-1 py-1.5 text-xs font-medium rounded-md bg-white shadow-sm text-blue-600';
+                btnTopo.className = 'flex-1 py-1.5 text-xs font-medium rounded-md text-slate-600';
+            }
+        }
+
+        function updateTheme(theme) {
+            initMermaid(theme);
+            renderFromEditor();
+        }
+
+        function resetZoom() {
+            if (panZoomInstance) {
+                panZoomInstance.reset();
+                panZoomInstance.fit();
+                panZoomInstance.center();
+            }
+        }
+
+        function clearEditor() {
+            document.getElementById('mermaid-editor').value = '';
+            document.getElementById('mermaid-output').innerHTML = '<div class="text-slate-300">Lienzo vacío</div>';
+        }
+
+        window.addEventListener('load', () => {
+            initMermaid();
+            const editor = document.getElementById('mermaid-editor');
+            editor.value = initialCode;
+            renderDiagram(initialCode);
+
+            let timeout;
+            editor.addEventListener('input', () => {
+                clearTimeout(timeout);
+                timeout = setTimeout(renderFromEditor, 1200);
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            if (panZoomInstance) {
+                panZoomInstance.resize();
+                panZoomInstance.fit();
+                panZoomInstance.center();
+            }
+        });
+    </script>
+</body>
+</html>
