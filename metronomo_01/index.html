@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temporizador de 24s</title>
+    <style>
+        :root {
+            --device-bg: #82dede;
+            --display-bg: #0b0b0b;
+            --btn-red: #e63946;
+            --btn-red-dark: #c1121f;
+            --btn-blue: #2176ff;
+            --btn-blue-dark: #1255c8;
+            --btn-cyan: #38b6ff;
+            --text-light: #ffffff;
+            --text-dark: #333333;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            user-select: none;
+        }
+
+        .device {
+            background-color: var(--device-bg);
+            width: 360px;
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 
+                inset -5px -5px 15px rgba(0,0,0,0.1),
+                10px 15px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+        }
+
+        /* Speaker Grill */
+        .speaker {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 50px;
+            height: 40px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            border-top-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .speaker-hole {
+            width: 6px;
+            height: 6px;
+            background-color: #333;
+            border-radius: 50%;
+        }
+
+        /* Display Screen */
+        .display-container {
+            background-color: var(--display-bg);
+            border-radius: 15px;
+            height: 90px;
+            margin-top: 10px;
+            margin-left: 60px; /* Space for speaker */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+            border: 4px solid #66c4c4;
+        }
+
+        .display-text {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 3.5rem;
+            color: #ffffff;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Top Controls (ON/OFF) */
+        .top-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: -10px;
+        }
+
+        .btn-power {
+            background-color: var(--btn-red);
+            border: none;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            color: white;
+            font-weight: 900;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 5px 0 var(--btn-red-dark), 0 10px 10px rgba(0,0,0,0.3);
+            transition: transform 0.1s, box-shadow 0.1s;
+            line-height: 1.1;
+            transform: rotate(-10deg);
+        }
+        .btn-power:active {
+            transform: translateY(5px) rotate(-10deg);
+            box-shadow: 0 0 0 var(--btn-red-dark), 0 5px 5px rgba(0,0,0,0.3);
+        }
+
+        /* Loop Button */
+        .btn-loop {
+            background-color: #555;
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #333, 0 10px 10px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+            line-height: 1.2;
+        }
+        .btn-loop:active {
+            transform: translateY(5px);
+            box-shadow: 0 0 0 #333, 0 5px 5px rgba(0,0,0,0.3);
+        }
+        .btn-loop.active {
+            background-color: #ffb703; /* Amarillo/naranja para indicar que está activo */
+            color: #000;
+            box-shadow: 0 5px 0 #d49800, 0 10px 10px rgba(0,0,0,0.3);
+        }
+        .btn-loop.active:active {
+            transform: translateY(5px);
+            box-shadow: 0 0 0 #d49800, 0 5px 5px rgba(0,0,0,0.3);
+        }
+
+        /* Middle Section: Input + Spinners */
+        .middle-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            background-color: rgba(0,0,0,0.05);
+            padding: 10px;
+            border-radius: 15px;
+        }
+
+        .keyboard-input-wrapper {
+            background-color: #21b0b0;
+            padding: 10px 5px;
+            border-radius: 15px;
+            width: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .keyboard-input-wrapper label {
+            font-size: 0.7rem;
+            color: #111;
+            font-weight: bold;
+            margin-bottom: 5px;
+            line-height: 1;
+        }
+        .keyboard-input-wrapper input {
+            width: 60px;
+            padding: 5px;
+            border: 2px solid #333;
+            border-radius: 5px;
+            font-size: 1rem;
+            text-align: center;
+            font-weight: bold;
+            outline: none;
+        }
+
+        .spinners-container {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .spinner-btn {
+            background-color: var(--btn-cyan);
+            border: none;
+            width: 40px;
+            height: 30px;
+            cursor: pointer;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            transition: opacity 0.2s;
+        }
+        .spinner-btn:active { opacity: 0.7; }
+        .spinner-btn.down { clip-path: polygon(50% 100%, 0 0, 100% 0); }
+
+        .spinner-value {
+            background-color: #e0e0e0;
+            color: #000;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: 3px solid #333;
+            border-radius: 8px;
+        }
+
+        /* Bottom Section: Presets + Slider */
+        .bottom-section {
+            display: flex;
+            justify-content: space-between;
+            background-color: #0b0b0b;
+            border-radius: 15px;
+            padding: 15px;
+            border: 4px solid #66c4c4;
+            gap: 15px;
+        }
+
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            flex: 1;
+        }
+
+        .preset-btn {
+            background-color: var(--btn-blue);
+            color: white;
+            border: none;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--btn-blue-dark);
+            transition: transform 0.1s, box-shadow 0.1s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .preset-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 var(--btn-blue-dark);
+        }
+
+        /* Drag Slider */
+        .slider-wrapper {
+            width: 60px;
+            background-color: #222;
+            border-radius: 30px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px 0;
+            box-shadow: inset 0 5px 10px rgba(0,0,0,0.8);
+        }
+
+        .slider-knob {
+            width: 40px;
+            height: 70px;
+            background-color: var(--btn-red);
+            border-radius: 20px;
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            box-sizing: border-box;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.4);
+            position: absolute;
+            z-index: 10;
+            touch-action: none; /* Prevent scroll on touch devices */
+        }
+        .slider-knob:active {
+            cursor: grabbing;
+        }
+        
+        .knob-arrow {
+            color: white;
+            font-size: 0.8rem;
+            pointer-events: none;
+        }
+
+        .slider-instructions {
+            position: absolute;
+            right: -140px;
+            bottom: -20px;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-size: 0.85rem;
+            color: #888;
+            pointer-events: none;
+            width: 130px;
+            transform: rotate(-5deg);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="device">
+        <!-- Speaker -->
+        <div class="speaker">
+            <div class="speaker-hole"></div><div class="speaker-hole"></div>
+            <div class="speaker-hole"></div><div class="speaker-hole"></div>
+            <div class="speaker-hole"></div><div class="speaker-hole"></div>
+        </div>
+
+        <!-- Display Screen -->
+        <div class="display-container">
+            <div class="display-text" id="display">00:00:24</div>
+        </div>
+
+        <!-- Power Button -->
+        <div class="top-controls">
+            <button class="btn-power" id="btn-power">ON/<br>OFF</button>
+            <button class="btn-loop active" id="btn-loop">LOOP<br>⟳</button>
+        </div>
+
+        <!-- Middle Controls -->
+        <div class="middle-section">
+            <div class="keyboard-input-wrapper">
+                <label>Ingresa tiempo por teclado</label>
+                <input type="number" id="keyboard-input" min="0" placeholder="Segs">
+            </div>
+            
+            <div class="spinners-container">
+                <!-- Horas -->
+                <div class="spinner">
+                    <button class="spinner-btn up" onclick="addTime(3600)"></button>
+                    <div class="spinner-value" id="val-h">0</div>
+                    <button class="spinner-btn down" onclick="addTime(-3600)"></button>
+                </div>
+                <!-- Minutos -->
+                <div class="spinner">
+                    <button class="spinner-btn up" onclick="addTime(60)"></button>
+                    <div class="spinner-value" id="val-m">0</div>
+                    <button class="spinner-btn down" onclick="addTime(-60)"></button>
+                </div>
+                <!-- Segundos -->
+                <div class="spinner">
+                    <button class="spinner-btn up" onclick="addTime(1)"></button>
+                    <div class="spinner-value" id="val-s">24</div>
+                    <button class="spinner-btn down" onclick="addTime(-1)"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Controls -->
+        <div class="bottom-section">
+            <div class="presets-grid">
+                <button class="preset-btn" onclick="setTime(24)">24s</button>
+                <button class="preset-btn" onclick="setTime(30)">30s</button>
+                <button class="preset-btn" onclick="setTime(60)">1m</button>
+                <button class="preset-btn" onclick="setTime(300)">5m</button>
+                <button class="preset-btn" onclick="setTime(1800)">30m</button>
+                <button class="preset-btn" onclick="setTime(3600)">1h</button>
+            </div>
+            
+            <div class="slider-wrapper" id="slider-track">
+                <div class="slider-knob" id="drag-knob">
+                    <div class="knob-arrow">▲</div>
+                    <div class="knob-arrow">▼</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Estado del temporizador ---
+        let currentTime = 24; // Por defecto 24 segundos
+        let originalTime = 24; // Memoria del tiempo para el loop
+        let timerInterval = null;
+        let isRunning = false;
+        let isLooping = true; // Loop activado por defecto
+        let audioCtx = null;
+
+        // Referencias del DOM
+        const display = document.getElementById('display');
+        const valH = document.getElementById('val-h');
+        const valM = document.getElementById('val-m');
+        const valS = document.getElementById('val-s');
+        const keyboardInput = document.getElementById('keyboard-input');
+        const btnPower = document.getElementById('btn-power');
+        const btnLoop = document.getElementById('btn-loop');
+        const dragKnob = document.getElementById('drag-knob');
+
+        // --- Inicializar Audio Context ---
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // --- Lógica del Sonido (Acorde A Mayor: A3, C#3, E3, A4) ---
+        function playAlarm() {
+            initAudio();
+            if (!audioCtx) return;
+
+            // Frecuencias exactas solicitadas
+            const frequencies = [
+                220.00, // A3
+                138.59, // C#3
+                164.81, // E3
+                440.00  // A4
+            ];
+
+            const masterGain = audioCtx.createGain();
+            masterGain.connect(audioCtx.destination);
+            
+            // Envolvente de volumen (Fade in y fade out para sonar como campana suave)
+            masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            masterGain.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 0.1);
+            masterGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 2.5);
+
+            frequencies.forEach(freq => {
+                const osc = audioCtx.createOscillator();
+                osc.type = 'sine'; // Tono puro y claro
+                osc.frequency.value = freq;
+                osc.connect(masterGain);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 2.6);
+            });
+        }
+
+        // --- Actualizar Interfaz ---
+        function updateUI() {
+            // Asegurar que el tiempo no sea negativo
+            if (currentTime < 0) currentTime = 0;
+
+            const h = Math.floor(currentTime / 3600);
+            const m = Math.floor((currentTime % 3600) / 60);
+            const s = currentTime % 60;
+
+            // Pantalla Principal (Formato HH:MM:SS)
+            display.innerText = 
+                String(h).padStart(2, '0') + ':' + 
+                String(m).padStart(2, '0') + ':' + 
+                String(s).padStart(2, '0');
+
+            // Cajas (Spinners)
+            valH.innerText = h;
+            valM.innerText = String(m).padStart(2, '0');
+            valS.innerText = String(s).padStart(2, '0');
+            
+            // Sincronizar input si no está enfocado
+            if(document.activeElement !== keyboardInput) {
+                keyboardInput.value = currentTime;
+            }
+        }
+
+        // --- Control de Tiempo ---
+        function addTime(seconds) {
+            initAudio();
+            currentTime += seconds;
+            if (currentTime < 0) currentTime = 0;
+            updateUI();
+        }
+
+        function setTime(seconds) {
+            initAudio();
+            currentTime = seconds;
+            updateUI();
+        }
+
+        // --- Entrada de Teclado ---
+        keyboardInput.addEventListener('change', (e) => {
+            initAudio();
+            const val = parseInt(e.target.value);
+            if (!isNaN(val) && val >= 0) {
+                currentTime = val;
+                updateUI();
+            }
+        });
+
+        // --- Ciclo del Temporizador ---
+        function toggleTimer() {
+            initAudio();
+            if (isRunning) {
+                // Detener
+                clearInterval(timerInterval);
+                isRunning = false;
+                btnPower.style.boxShadow = "0 5px 0 var(--btn-red-dark), 0 10px 10px rgba(0,0,0,0.3)";
+                btnPower.style.transform = "rotate(-10deg)";
+            } else {
+                // Iniciar
+                if (currentTime <= 0) return; // No iniciar en 0
+                isRunning = true;
+                originalTime = currentTime; // Guardar el tiempo actual para reiniciar el loop
+                btnPower.style.boxShadow = "0 2px 0 var(--btn-red-dark), 0 5px 5px rgba(0,0,0,0.3)";
+                btnPower.style.transform = "translateY(3px) rotate(-10deg)";
+                
+                timerInterval = setInterval(() => {
+                    currentTime--;
+                    updateUI();
+                    
+                    if (currentTime <= 0) {
+                        playAlarm();
+                        
+                        if (isLooping) {
+                            currentTime = originalTime; // Reiniciar inmediatamente para el siguiente loop
+                            updateUI();
+                        } else {
+                            clearInterval(timerInterval);
+                            isRunning = false;
+                            btnPower.style.boxShadow = "0 5px 0 var(--btn-red-dark), 0 10px 10px rgba(0,0,0,0.3)";
+                            btnPower.style.transform = "rotate(-10deg)";
+                        }
+                    }
+                }, 1000);
+            }
+        }
+
+        btnPower.addEventListener('click', toggleTimer);
+
+        // --- Lógica del Botón Loop ---
+        btnLoop.addEventListener('click', () => {
+            initAudio();
+            isLooping = !isLooping;
+            btnLoop.classList.toggle('active', isLooping);
+        });
+
+        // --- Lógica del Deslizador (+3s / -3s) ---
+        let isDragging = false;
+        let startY = 0;
+        let accumulatedDelta = 0;
+        const pixelsPerStep = 15; // Cada 15px arrastrados equivalen a 3 segundos
+
+        dragKnob.addEventListener('pointerdown', (e) => {
+            initAudio();
+            isDragging = true;
+            startY = e.clientY;
+            accumulatedDelta = 0;
+            dragKnob.style.transition = 'none'; // Quitar transición suave al arrastrar
+            dragKnob.setPointerCapture(e.pointerId); // Capturar el evento incluso si sale del elemento
+        });
+
+        dragKnob.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            const currentY = e.clientY;
+            const delta = currentY - startY; // Negativo es arriba, positivo es abajo
+
+            // Mover visualmente la perilla (limitar a los bordes de la pista, aprox 40px)
+            const visualY = Math.max(-40, Math.min(40, delta));
+            dragKnob.style.transform = `translateY(${visualY}px)`;
+
+            // Comprobar la distancia para sumar o restar tiempo en tiempo real
+            if (delta - accumulatedDelta <= -pixelsPerStep) {
+                // Arrastró hacia ARRIBA
+                addTime(3);
+                accumulatedDelta -= pixelsPerStep;
+            } else if (delta - accumulatedDelta >= pixelsPerStep) {
+                // Arrastró hacia ABAJO
+                addTime(-3);
+                accumulatedDelta += pixelsPerStep;
+            }
+        });
+
+        function endDrag(e) {
+            if (!isDragging) return;
+            isDragging = false;
+            // Devolver la perilla al centro
+            dragKnob.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            dragKnob.style.transform = `translateY(0px)`;
+            if(e) dragKnob.releasePointerCapture(e.pointerId);
+        }
+
+        dragKnob.addEventListener('pointerup', endDrag);
+        dragKnob.addEventListener('pointercancel', endDrag);
+
+        // --- Inicio ---
+        updateUI(); // Configurar la pantalla a los 24s predeterminados al cargar
+
+    </script>
+</body>
+</html>
