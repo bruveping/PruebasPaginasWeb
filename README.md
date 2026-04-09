@@ -55,6 +55,9 @@ temporizador_01 [temporizador_01](https://bruveping.github.io/PruebasPaginasWeb/
 
 visualizar_mermaid_2026_4_9 [visualizar_mermaid_2026_4_9](https://bruveping.github.io/PruebasPaginasWeb/visualizar_mermaid_2026_4_9/)
 
+visualizar_mermaid_celular_2026_4_9 [visualizar_mermaid_celular_2026_4_9](https://bruveping.github.io/PruebasPaginasWeb/visualizar_mermaid_celular_2026_4_9/)
+
+
 
 
 
