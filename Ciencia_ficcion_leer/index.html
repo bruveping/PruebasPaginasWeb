@@ -213,10 +213,10 @@
                 <!-- Selector de Ordenamiento -->
                 <select id="sortSelector" class="bg-black/80 border border-cyan-800 text-cyan-400 text-[10px] md:text-xs mono-text p-1.5 rounded focus:border-magenta-500 focus:shadow-[0_0_10px_rgba(255,0,234,0.3)] outline-none cursor-pointer transition-all" onchange="applySorting()">
                     <option value="default">ORDEN: RELEVANCIA (API)</option>
-                    <option value="year_desc">FECHA: MÁS NUEVA</option>
-                    <option value="year_asc">FECHA: MÁS ANTIGUA</option>
-                    <option value="title_az">ALFABÉTICO: A-Z (ANVERSO)</option>
-                    <option value="title_za">ALFABÉTICO: Z-A (INVERSO)</option>
+                    <option value="year_desc">VISIBLES: FECHA MÁS NUEVA</option>
+                    <option value="year_asc">VISIBLES: FECHA MÁS ANTIGUA</option>
+                    <option value="title_az">VISIBLES: A-Z (ANVERSO)</option>
+                    <option value="title_za">VISIBLES: Z-A (INVERSO)</option>
                 </select>
             </div>
             
@@ -229,6 +229,13 @@
             <!-- Grid Responsive -->
             <div id="book-grid" class="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 pb-4 pr-1 md:pr-2">
                 <!-- Tarjetas generadas dinámicamente -->
+            </div>
+            
+            <!-- Controles de Paginación -->
+            <div id="pagination-controls" class="flex justify-between items-center mt-2 border-t border-cyan-900/50 pt-3 hidden shrink-0">
+                <button id="prev-page-btn" onclick="changePage(-1)" class="filter-btn !w-auto !mb-0 !py-1.5 !px-4 text-[10px] md:text-xs tracking-widest"><< ANTERIOR</button>
+                <span id="page-indicator" class="text-xs md:text-sm text-cyan-400 mono-text tracking-widest font-bold">PÁGINA 1</span>
+                <button id="next-page-btn" onclick="changePage(1)" class="filter-btn !w-auto !mb-0 !py-1.5 !px-4 text-[10px] md:text-xs tracking-widest">SIGUIENTE >></button>
             </div>
         </section>
 
@@ -309,6 +316,11 @@
         let currentAuthorSearch = ""; // Para el atajo del modal
         let globalBooksList = []; // Buffer para guardar los datos en memoria y poder ordenarlos
 
+        // Variables de Paginación
+        let currentPage = 1;
+        let currentTotal = 0;
+        let currentRawQuery = "";
+
         // --- TRADUCTOR HEURÍSTICO (ES -> API OpenLibrary) ---
         function parseHeuristicQuery(input) {
             let queryParams = [];
@@ -343,7 +355,7 @@
         }
 
         // --- MOTOR DE BÚSQUEDA ---
-        async function executeHeuristicQuery(rawQuery, btnElement = null) {
+        async function executeHeuristicQuery(rawQuery, btnElement = null, page = 1) {
             // Actualizar UI
             if (btnElement) {
                 document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
@@ -361,18 +373,26 @@
             const mobileMenu = document.getElementById('mobile-filters-content');
             if(!mobileMenu.classList.contains('hidden')) toggleMobileFilters();
 
-            searchInput.value = rawQuery;
-            document.getElementById('current-category').innerText = "QUERY: " + rawQuery;
+            currentRawQuery = rawQuery;
+            currentPage = page;
+            
+            if (page === 1) {
+                searchInput.value = rawQuery;
+                document.getElementById('current-category').innerText = "QUERY: " + rawQuery;
+            }
             
             showLoading(true);
-            setStatus("EXTRAYENDO DATOS...", "text-green-400");
+            setStatus(`EXTRAYENDO DATOS (PÁG ${page})...`, "text-green-400");
 
             const apiQuery = parseHeuristicQuery(rawQuery);
-            const url = `https://openlibrary.org/search.json?${apiQuery}&limit=30&fields=key,title,author_name,first_publish_year,cover_i,subject,author_key`;
+            // Uso de page y limit=50 para paginación controlada
+            const url = `https://openlibrary.org/search.json?${apiQuery}&limit=50&page=${page}&fields=key,title,author_name,first_publish_year,cover_i,subject,author_key`;
 
             try {
                 const response = await fetch(url);
                 const data = await response.json();
+                
+                currentTotal = data.numFound; // Total absoluto en la base de datos de OpenLibrary
                 
                 // Mapear datos (Search API formato distinto a Subject API)
                 const books = data.docs.map(work => ({
@@ -387,12 +407,15 @@
 
                 globalBooksList = books; // Guardamos en memoria
                 applySorting(); // Ordenamos (por defecto) y renderizamos
+                updatePaginationUI(); // Actualizamos los botones y el contador de registros
                 
                 setStatus("ENLACE ESTABLE", "text-cyan-600");
+                document.getElementById('book-grid').scrollTop = 0; // Reiniciar scroll de la grilla
             } catch (error) {
                 console.error("API Error:", error);
                 setStatus("FALLO DE RED", "text-red-500");
                 bookGrid.innerHTML = `<div class="col-span-full text-center text-red-500 mono-text py-10">ERROR: IMPOSIBLE RESOLVER QUERY.</div>`;
+                document.getElementById('pagination-controls').classList.add('hidden');
             } finally {
                 showLoading(false);
             }
@@ -401,8 +424,7 @@
         // Renderizado
         function renderGrid(books) {
             bookGrid.innerHTML = '';
-            document.getElementById('results-count').innerText = `RESULTADOS: [ ${books.length} ]`;
-
+            
             if (books.length === 0) {
                 bookGrid.innerHTML = `<div class="col-span-full text-center text-gray-500 mt-10 mono-text text-sm">CERO COINCIDENCIAS. INTENTA OTRO PARÁMETRO.</div>`;
                 return;
@@ -436,6 +458,50 @@
                 `;
                 bookGrid.appendChild(card);
             });
+        }
+
+        // --- SISTEMA DE PAGINACIÓN ---
+        function updatePaginationUI() {
+            const controls = document.getElementById('pagination-controls');
+            const countDisplay = document.getElementById('results-count');
+            
+            if (currentTotal === 0) {
+                countDisplay.innerText = `RESULTADOS: [ 0 ]`;
+                controls.classList.add('hidden');
+                return;
+            }
+
+            // Calcular rango actual
+            const start = (currentPage - 1) * 50 + 1;
+            const end = Math.min(currentPage * 50, currentTotal);
+            
+            countDisplay.innerText = `RESULTADOS: [ ${start} - ${end} ] DE [ ${currentTotal} ]`;
+            controls.classList.remove('hidden');
+            document.getElementById('page-indicator').innerText = `PÁGINA ${currentPage}`;
+            
+            // Lógica de deshabilitar botones en extremos
+            const prevBtn = document.getElementById('prev-page-btn');
+            if (currentPage > 1) {
+                prevBtn.disabled = false;
+                prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                prevBtn.disabled = true;
+                prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            const nextBtn = document.getElementById('next-page-btn');
+            if (end < currentTotal) {
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                nextBtn.disabled = true;
+                nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function changePage(delta) {
+            const newPage = currentPage + delta;
+            executeHeuristicQuery(currentRawQuery, null, newPage);
         }
 
         // --- SISTEMA DE ORDENAMIENTO (CLIENT-SIDE) ---
