@@ -57,6 +57,9 @@ visualizar_mermaid_2026_4_9 [visualizar_mermaid_2026_4_9](https://bruveping.gith
 
 visualizar_mermaid_celular_2026_4_9 [visualizar_mermaid_celular_2026_4_9](https://bruveping.github.io/PruebasPaginasWeb/visualizar_mermaid_celular_2026_4_9/)
 
+Ciencia_ficcion_leer [Ciencia_ficcion_leer](https://bruveping.github.io/PruebasPaginasWeb/Ciencia_ficcion_leer/)
+
+
 
 
 
