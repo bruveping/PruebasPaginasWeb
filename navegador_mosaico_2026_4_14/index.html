@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Navegador Mosaico</title>
+    <title>Mosaico</title>
+    <!-- Favicon SVG en Base64 para que sea autocontenido -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007acc'><path d='M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z'/></svg>">
     <style>
         :root {
             --bg-color: #1e1e1e;
             --panel-bg: #252526;
             --header-bg: #333333;
+            --header-active: #2a3d4d; /* Color cuando el panel tiene el foco */
             --border-color: #000000;
             --accent-color: #007acc;
             --text-color: #cccccc;
@@ -33,20 +36,26 @@
             flex-direction: column;
         }
 
+        /* --- BARRA SUPERIOR MINIMALISTA --- */
         #top-bar {
             background-color: var(--header-bg);
-            padding: 5px 15px;
-            font-size: 14px;
-            font-weight: bold;
-            border-bottom: 1px solid var(--border-color);
             display: flex;
-            justify-content: space-between;
+            justify-content: center; /* Centrado para ser minimalista */
             align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            height: 40px;
+            transition: height 0.3s ease, padding 0.3s ease, border-width 0.3s ease;
+            overflow: hidden;
+        }
+
+        #top-bar.hidden {
+            height: 0;
+            border-bottom-width: 0;
         }
 
         .top-actions {
             display: flex;
-            gap: 10px;
+            gap: 15px;
             align-items: center;
         }
 
@@ -55,7 +64,7 @@
             align-items: center;
             gap: 5px;
             background-color: #2a2a2a;
-            padding: 2px 8px;
+            padding: 3px 8px;
             border-radius: 4px;
             border: 1px solid #444;
         }
@@ -80,7 +89,6 @@
             width: 1px;
             height: 20px;
             background-color: #555;
-            margin: 0 5px;
         }
         
         .btn-top {
@@ -90,10 +98,12 @@
             padding: 4px 10px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 13px;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 5px;
+            height: 26px;
         }
         
         .btn-top:hover {
@@ -102,54 +112,102 @@
             border-color: var(--accent-color);
         }
 
-        .info-text {
-            font-size: 12px;
-            color: #999;
-            font-weight: normal;
+        .btn-top svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
         }
 
+        /* --- TIRADOR DEL MENÚ (Nuevo diseño) --- */
+        #top-bar-wrapper {
+            position: relative;
+            z-index: 1000;
+            background-color: var(--header-bg);
+        }
+
+        #menu-handle {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--header-bg);
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            padding: 2px 20px;
+            cursor: pointer;
+            color: #888;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s, background-color 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        #menu-handle:hover {
+            color: var(--accent-color);
+            background-color: #3a3a3a;
+        }
+
+        #menu-handle svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+            transition: transform 0.3s;
+        }
+
+        /* Rotar la flecha cuando el menú está oculto */
+        #top-bar.hidden + #menu-handle svg {
+            transform: rotate(180deg);
+        }
+
+        /* --- ESPACIO DE TRABAJO --- */
         #workspace {
             flex: 1;
             display: flex;
             width: 100%;
-            height: calc(100% - 30px);
+            /* El alto se ajusta automáticamente gracias al flex column del body */
         }
 
-        /* Contenedores Flex para las divisiones */
         .split-box {
             display: flex;
             flex: 1 1 100%;
             overflow: hidden;
         }
 
-        .split-box.horizontal {
-            flex-direction: row;
-        }
+        .split-box.horizontal { flex-direction: row; }
+        .split-box.vertical { flex-direction: column; }
 
-        .split-box.vertical {
-            flex-direction: column;
-        }
-
-        /* Panel individual */
         .panel {
             display: flex;
             flex-direction: column;
             flex: 1 1 100%;
             background-color: var(--panel-bg);
             border: 1px solid var(--border-color);
-            min-width: 200px;
+            min-width: 150px;
             min-height: 150px;
             position: relative;
+            transition: border-color 0.2s;
+        }
+
+        /* Estilo para el panel ACTIVO (Foco) */
+        .panel.active {
+            border-color: var(--accent-color);
+        }
+
+        .panel.active .panel-header {
+            background-color: var(--header-active);
         }
 
         .panel-header {
             background-color: var(--header-bg);
-            height: 35px;
+            height: 30px;
             display: flex;
             align-items: center;
-            padding: 0 8px;
+            padding: 0 5px;
             gap: 5px;
             border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s;
         }
 
         .url-input {
@@ -157,47 +215,34 @@
             background-color: #3c3c3c;
             border: 1px solid #555;
             color: white;
-            padding: 4px 8px;
+            padding: 2px 6px;
             border-radius: 3px;
-            font-size: 13px;
+            font-size: 12px;
             outline: none;
         }
 
-        .url-input:focus {
-            border-color: var(--accent-color);
-        }
+        .url-input:focus { border-color: var(--accent-color); }
 
         .btn {
             background: transparent;
             border: none;
             color: #ccc;
             cursor: pointer;
-            padding: 4px;
+            padding: 3px;
             border-radius: 3px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .btn:hover {
-            background-color: #555;
-            color: white;
-        }
-
-        .btn svg {
-            width: 16px;
-            height: 16px;
-            fill: currentColor;
-        }
-
-        .btn-close:hover {
-            background-color: #e81123;
-        }
+        .btn:hover { background-color: #555; color: white; }
+        .btn svg { width: 14px; height: 14px; fill: currentColor; }
+        .btn-close:hover { background-color: #e81123; }
 
         .panel-content {
             flex: 1;
             position: relative;
-            background-color: #ffffff; /* Fondo blanco para las webs */
+            background-color: #ffffff;
         }
 
         iframe {
@@ -207,114 +252,276 @@
             display: block;
         }
 
-        /* Overlay invisible para evitar que el iframe robe los eventos del ratón al redimensionar */
+        /* Overlay para el resizer */
         .iframe-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: transparent;
             z-index: 10;
             display: none;
         }
 
-        /* Divisores (Resizers) */
+        /* NUEVO: Overlay para atrapar el primer clic (Foco) */
+        .focus-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.02); /* Un tinte casi invisible */
+            z-index: 5;
+            cursor: pointer;
+        }
+
+        /* Si el panel está activo, la capa de foco desaparece para dejar usar el iframe */
+        .panel.active .focus-overlay {
+            display: none;
+        }
+
+        /* Divisores */
         .resizer {
             background-color: var(--resizer-color);
             z-index: 5;
             transition: background-color 0.2s;
         }
 
-        .resizer:hover, .resizer.active {
-            background-color: var(--resizer-hover);
-        }
-
-        .resizer-h {
-            width: 6px;
-            cursor: col-resize;
-            margin: 0 -3px; /* Para tener un área de clic más grande sin afectar el layout visual */
-        }
-
-        .resizer-v {
-            height: 6px;
-            cursor: row-resize;
-            margin: -3px 0;
-        }
-
-        /* SVG Icons */
-        .icon-split-v { transform: rotate(90deg); }
+        .resizer:hover, .resizer.active { background-color: var(--resizer-hover); }
+        .resizer-h { width: 6px; cursor: col-resize; margin: 0 -3px; }
+        .resizer-v { height: 6px; cursor: row-resize; margin: -3px 0; }
     </style>
 </head>
 <body>
 
-    <div id="top-bar">
-        <span>Navegador Mosaico</span>
-        <div class="top-actions">
-            <span class="info-text"></span>
-            
-            <div class="separator"></div>
-            
-            <div class="generator-group">
-                <span class="info-text" style="color:#ccc;"></span>
-                <input type="number" id="num-frames" value="3" min="1" max="20" class="num-input" title="Cantidad de paneles">
-                <button id="btn-gen-h" class="btn-top" title="Generar en Columnas (Lado a Lado)">|||</button>
-                <button id="btn-gen-v" class="btn-top" title="Generar en Filas (Arriba/Abajo)">三</button>
+    <!-- Contenedor del menú con el tirador -->
+    <div id="top-bar-wrapper">
+        <div id="top-bar">
+            <div class="top-actions">
+                <!-- Bloque Generador -->
+                <div class="generator-group">
+                    <input type="number" id="num-frames" value="3" min="1" max="20" class="num-input" title="Cantidad de paneles a generar en el cuadro activo">
+                    <button id="btn-gen-h" class="btn-top" title="Generar en Columnas (Lado a Lado)">|||</button>
+                    <button id="btn-gen-v" class="btn-top" title="Generar en Filas (Arriba/Abajo)">三</button>
+                </div>
+
+                <div class="separator"></div>
+
+                <!-- Botones Cargar/Guardar Minimalistas -->
+                <button id="btn-load" class="btn-top" title="Cargar JSON (Subir)">
+                    <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+                </button>
+                <button id="btn-save" class="btn-top" title="Guardar JSON (Descargar)">
+                    <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                </button>
+                <input type="file" id="file-input" accept=".json" style="display:none" />
             </div>
-
-            <div class="separator"></div>
-
-            <button id="btn-load" class="btn-top" title="Cargar sesión de enlaces">📂 Cargar JSON</button>
-            <button id="btn-save" class="btn-top" title="Guardar diseño actual">💾 Guardar JSON</button>
-            <input type="file" id="file-input" accept=".json" style="display:none" />
+        </div>
+        <!-- El tirador que siempre queda visible -->
+        <div id="menu-handle" title="Mostrar/Ocultar Menú">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
         </div>
     </div>
 
     <div id="workspace">
-        <!-- El panel inicial se inyectará aquí -->
+        <!-- Paneles -->
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const workspace = document.getElementById('workspace');
+            let activePanel = null; // Variable para rastrear el panel enfocado
 
-            // Iconos SVG reutilizables
             const icons = {
                 go: `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`,
-                splitH: `<svg viewBox="0 0 24 24"><path d="M3 3h8v18H3zm10 0h8v18h-8z"/></svg>`, // Lado a Lado
-                splitV: `<svg viewBox="0 0 24 24"><path d="M3 3h18v8H3zm0 10h18v8H3z"/></svg>`, // Arriba y Abajo
+                splitH: `<svg viewBox="0 0 24 24"><path d="M3 3h8v18H3zm10 0h8v18h-8z"/></svg>`,
+                splitV: `<svg viewBox="0 0 24 24"><path d="M3 3h18v8H3zm0 10h18v8H3z"/></svg>`,
                 close: `<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`
             };
 
-            // URL por defecto
             const defaultUrl = "https://es.wikipedia.org";
 
-            // --- LÓGICA DE GUARDADO / CARGA JSON ---
+            // --- LÓGICA DEL MENÚ CON TIRADOR ---
+            const topBar = document.getElementById('top-bar');
+            const menuHandle = document.getElementById('menu-handle');
+            
+            menuHandle.addEventListener('click', () => {
+                topBar.classList.toggle('hidden');
+            });
+
+            // --- LÓGICA DE FOCO (Click To Focus) ---
+            function focusPanel(panel) {
+                if (activePanel === panel) return;
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                panel.classList.add('active');
+                activePanel = panel;
+            }
+
+            // --- GENERACIÓN INTELIGENTE EN PANEL ENFOCADO ---
+            const btnGenH = document.getElementById('btn-gen-h');
+            const btnGenV = document.getElementById('btn-gen-v');
+            const numFramesInput = document.getElementById('num-frames');
+
+            function buildNPanels(n, direction, urlBase) {
+                if (n <= 1) return createPanel(urlBase);
+
+                const container = document.createElement('div');
+                container.className = `split-box ${direction}`;
+
+                const firstNode = createPanel(urlBase);
+                firstNode.style.flex = `1 1 ${100 / n}%`;
+
+                const restNode = buildNPanels(n - 1, direction, urlBase);
+                restNode.style.flex = `1 1 ${100 - (100 / n)}%`;
+
+                const resizer = document.createElement('div');
+                resizer.className = `resizer resizer-${direction === 'horizontal' ? 'h' : 'v'}`;
+
+                container.appendChild(firstNode);
+                container.appendChild(resizer);
+                container.appendChild(restNode);
+
+                return container;
+            }
+
+            const generateFrames = (direction) => {
+                let count = parseInt(numFramesInput.value, 10);
+                if (isNaN(count) || count < 1) count = 1;
+                if (count > 50) count = 50; 
+                
+                // Si no hay panel activo (porque se borraron todos), tomamos el primero
+                if (!activePanel) activePanel = document.querySelector('.panel');
+
+                if (activePanel) {
+                    const urlActual = activePanel.querySelector('.url-input').value;
+                    const newTree = buildNPanels(count, direction, urlActual);
+                    
+                    // Respetar el tamaño original del panel que vamos a subdividir
+                    newTree.style.flex = activePanel.style.flex || '1 1 100%';
+                    
+                    activePanel.parentNode.replaceChild(newTree, activePanel);
+                    activePanel = null; // Se limpiará y se reasignará al pasar el ratón
+                } else {
+                    // Si el lienzo está 100% en blanco
+                    workspace.innerHTML = '';
+                    workspace.appendChild(buildNPanels(count, direction, defaultUrl));
+                }
+            };
+
+            btnGenH.addEventListener('click', () => generateFrames('horizontal'));
+            btnGenV.addEventListener('click', () => generateFrames('vertical'));
+
+
+            // --- CREACIÓN DE PANELES ---
+            function createPanel(url = defaultUrl) {
+                const panel = document.createElement('div');
+                panel.className = 'panel';
+                panel.style.flex = '1 1 100%';
+
+                panel.innerHTML = `
+                    <div class="panel-header">
+                        <input type="text" class="url-input" value="${url}" placeholder="Ingresa URL" />
+                        <button class="btn btn-go" title="Ir">${icons.go}</button>
+                        <div style="flex: 0 0 5px;"></div>
+                        <button class="btn btn-split-h" title="Dividir Lado a Lado">${icons.splitH}</button>
+                        <button class="btn btn-split-v" title="Dividir Arriba/Abajo">${icons.splitV}</button>
+                        <button class="btn btn-close" title="Cerrar Panel">${icons.close}</button>
+                    </div>
+                    <div class="panel-content">
+                        <div class="iframe-overlay"></div>
+                        <div class="focus-overlay" title="Haz clic para activar este panel"></div>
+                        <iframe src="${url}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    </div>
+                `;
+
+                // Evento para activar el FOCO al hacer clic en el overlay o la cabecera
+                panel.querySelector('.focus-overlay').addEventListener('mousedown', () => focusPanel(panel));
+                panel.querySelector('.panel-header').addEventListener('mousedown', () => focusPanel(panel));
+
+                const input = panel.querySelector('.url-input');
+                const btnGo = panel.querySelector('.btn-go');
+                const iframe = panel.querySelector('iframe');
+                const btnSplitH = panel.querySelector('.btn-split-h');
+                const btnSplitV = panel.querySelector('.btn-split-v');
+                const btnClose = panel.querySelector('.btn-close');
+
+                const navigate = () => {
+                    let newUrl = input.value.trim();
+                    if (newUrl && !newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
+                        newUrl = 'https://' + newUrl;
+                    }
+
+                    const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+                    const ytMatch = newUrl.match(youtubeRegex);
+                    if (ytMatch && ytMatch[1]) {
+                        newUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
+                    }
+
+                    input.value = newUrl;
+                    iframe.src = newUrl;
+                };
+
+                btnGo.addEventListener('click', navigate);
+                input.addEventListener('keypress', (e) => { if (e.key === 'Enter') navigate(); });
+                btnSplitH.addEventListener('click', () => splitPanel(panel, 'horizontal'));
+                btnSplitV.addEventListener('click', () => splitPanel(panel, 'vertical'));
+                btnClose.addEventListener('click', () => closePanel(panel));
+
+                return panel;
+            }
+
+            // --- FUNCIONES DE DIVISIÓN Y CIERRE ---
+            function splitPanel(panel, direction) {
+                const parent = panel.parentNode;
+                const urlActual = panel.querySelector('.url-input').value;
+                
+                const container = document.createElement('div');
+                container.className = `split-box ${direction}`;
+                container.style.flex = panel.style.flex || '1 1 100%';
+
+                const resizer = document.createElement('div');
+                resizer.className = `resizer resizer-${direction === 'horizontal' ? 'h' : 'v'}`;
+
+                const newPanel = createPanel(urlActual);
+
+                panel.style.flex = '1 1 50%';
+                newPanel.style.flex = '1 1 50%';
+
+                parent.replaceChild(container, panel);
+                container.appendChild(panel);
+                container.appendChild(resizer);
+                container.appendChild(newPanel);
+            }
+
+            function closePanel(panel) {
+                if (activePanel === panel) activePanel = null;
+
+                const container = panel.parentNode;
+                if (container.id === 'workspace') {
+                    panel.querySelector('.url-input').value = 'about:blank';
+                    panel.querySelector('iframe').src = 'about:blank';
+                    return;
+                }
+
+                const grandParent = container.parentNode;
+                let sibling = (panel.nextElementSibling && panel.nextElementSibling.classList.contains('resizer')) 
+                    ? panel.nextElementSibling.nextElementSibling 
+                    : panel.previousElementSibling.previousElementSibling;
+
+                sibling.style.flex = container.style.flex || '1 1 100%';
+                grandParent.replaceChild(sibling, container);
+            }
+
+            // --- SERIALIZACIÓN Y ARCHIVOS JSON (Cargar/Guardar) ---
             const btnSave = document.getElementById('btn-save');
             const btnLoad = document.getElementById('btn-load');
             const fileInput = document.getElementById('file-input');
 
-            // Serializar el árbol del DOM a objeto JSON
             function serializeNode(element) {
                 if (element.classList.contains('panel')) {
-                    return {
-                        type: 'panel',
-                        url: element.querySelector('.url-input').value,
-                        flex: element.style.flex || '1 1 100%'
-                    };
+                    return { type: 'panel', url: element.querySelector('.url-input').value, flex: element.style.flex || '1 1 100%' };
                 } else if (element.classList.contains('split-box')) {
                     const direction = element.classList.contains('horizontal') ? 'horizontal' : 'vertical';
                     const children = Array.from(element.children).filter(c => !c.classList.contains('resizer'));
-                    return {
-                        type: 'split',
-                        direction: direction,
-                        flex: element.style.flex || '1 1 100%',
-                        children: children.map(serializeNode)
-                    };
+                    return { type: 'split', direction: direction, flex: element.style.flex || '1 1 100%', children: children.map(serializeNode) };
                 }
             }
 
-            // Deserializar objeto JSON al DOM
             function deserializeNode(data) {
                 if (data.type === 'panel') {
                     const p = createPanel(data.url);
@@ -337,7 +544,7 @@
                 }
             }
 
-            // --- DISTRIBUCIÓN INTELIGENTE DE ARRAY ---
+            // Arbol Inteligente (Por si subes lista cruda de URLs)
             function buildSmartDistribution(urls) {
                 if (urls.length === 0) return createPanel();
                 if (urls.length === 1) return createPanel(urls[0]);
@@ -347,27 +554,23 @@
                 let remaining = urls.length;
                 let index = 0;
 
-                // Dividir URLs en filas matemáticamente (como en tu foto de ejemplo)
                 for (let i = 0; i < rowsCount; i++) {
                     let take = Math.ceil(remaining / (rowsCount - i));
                     rows.push(urls.slice(index, index + take));
-                    index += take;
-                    remaining -= take;
+                    index += take; remaining -= take;
                 }
                 return buildVerticalTree(rows);
             }
 
             function buildVerticalTree(rows) {
                 if (rows.length === 1) return buildHorizontalTree(rows[0]);
-                const firstRow = rows[0];
-                const remainingRows = rows.slice(1);
                 const container = document.createElement('div');
                 container.className = 'split-box vertical';
 
-                const topNode = buildHorizontalTree(firstRow);
+                const topNode = buildHorizontalTree(rows[0]);
                 topNode.style.flex = `1 1 ${100 / rows.length}%`;
 
-                const bottomNode = buildVerticalTree(remainingRows);
+                const bottomNode = buildVerticalTree(rows.slice(1));
                 bottomNode.style.flex = `1 1 ${100 - (100 / rows.length)}%`;
 
                 const resizer = document.createElement('div');
@@ -382,16 +585,14 @@
             function buildHorizontalTree(urls) {
                 if (urls.length === 1) return createPanel(urls[0]);
                 const mid = Math.ceil(urls.length / 2);
-                const leftUrls = urls.slice(0, mid);
-                const rightUrls = urls.slice(mid);
                 const container = document.createElement('div');
                 container.className = 'split-box horizontal';
 
-                const leftNode = buildHorizontalTree(leftUrls);
-                leftNode.style.flex = `1 1 ${(leftUrls.length / urls.length) * 100}%`;
+                const leftNode = buildHorizontalTree(urls.slice(0, mid));
+                leftNode.style.flex = `1 1 ${(urls.slice(0, mid).length / urls.length) * 100}%`;
 
-                const rightNode = buildHorizontalTree(rightUrls);
-                rightNode.style.flex = `1 1 ${(rightUrls.length / urls.length) * 100}%`;
+                const rightNode = buildHorizontalTree(urls.slice(mid));
+                rightNode.style.flex = `1 1 ${(urls.slice(mid).length / urls.length) * 100}%`;
 
                 const resizer = document.createElement('div');
                 resizer.className = 'resizer resizer-h';
@@ -402,29 +603,22 @@
                 return container;
             }
 
-            // Eventos de Guardado y Carga
             btnSave.addEventListener('click', () => {
                 const root = workspace.firstElementChild;
                 if (!root) return;
-                const data = serializeNode(root);
-                const json = JSON.stringify(data, null, 2);
-                
-                let filename = prompt("Nombre del archivo JSON para guardar la sesión:", "sesion_mosaico.json");
-                if (!filename) return; // Cancelado
+                const json = JSON.stringify(serializeNode(root), null, 2);
+                let filename = prompt("Nombre de la sesión (.json):", "sesion_sintes.json");
+                if (!filename) return; 
                 if (!filename.endsWith('.json')) filename += '.json';
 
                 const blob = new Blob([json], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                a.click();
+                a.href = url; a.download = filename; a.click();
                 URL.revokeObjectURL(url);
             });
 
-            btnLoad.addEventListener('click', () => {
-                fileInput.click(); // Abre el diálogo nativo
-            });
+            btnLoad.addEventListener('click', () => fileInput.click());
 
             fileInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
@@ -433,246 +627,46 @@
                 reader.onload = (evt) => {
                     try {
                         const data = JSON.parse(evt.target.result);
-                        workspace.innerHTML = ''; // Limpiar el lienzo
-                        if (Array.isArray(data)) {
-                            // Subdivisión Inteligente desde una lista de Links
-                            workspace.appendChild(buildSmartDistribution(data));
-                        } else {
-                            // Recrear estructura compleja exacta de tu guardado
-                            workspace.appendChild(deserializeNode(data));
-                        }
-                    } catch(err) {
-                        alert("Error al cargar el archivo JSON. Verifica que sea válido.");
-                    }
-                    fileInput.value = ""; // Resetear
+                        workspace.innerHTML = ''; 
+                        if (Array.isArray(data)) workspace.appendChild(buildSmartDistribution(data));
+                        else workspace.appendChild(deserializeNode(data));
+                    } catch(err) { alert("Error al cargar JSON."); }
+                    fileInput.value = "";
                 };
                 reader.readAsText(file);
             });
-            // --- FIN DE LÓGICA DE GUARDADO / CARGA JSON ---
 
-            // --- LÓGICA DEL GENERADOR MÚLTIPLE ---
-            const btnGenH = document.getElementById('btn-gen-h');
-            const btnGenV = document.getElementById('btn-gen-v');
-            const numFramesInput = document.getElementById('num-frames');
-
-            function buildNPanels(n, direction) {
-                if (n <= 1) return createPanel(defaultUrl);
-
-                const container = document.createElement('div');
-                container.className = `split-box ${direction}`;
-
-                // El primer panel toma 1/n del espacio actual
-                const firstNode = createPanel(defaultUrl);
-                firstNode.style.flex = `1 1 ${100 / n}%`;
-
-                // El resto toma (n-1)/n del espacio restante (que internamente se repartirá de nuevo)
-                const restNode = buildNPanels(n - 1, direction);
-                restNode.style.flex = `1 1 ${100 - (100 / n)}%`;
-
-                const resizer = document.createElement('div');
-                resizer.className = `resizer resizer-${direction === 'horizontal' ? 'h' : 'v'}`;
-
-                container.appendChild(firstNode);
-                container.appendChild(resizer);
-                container.appendChild(restNode);
-
-                return container;
-            }
-
-            const generateFrames = (direction) => {
-                let count = parseInt(numFramesInput.value, 10);
-                if (isNaN(count) || count < 1) count = 1;
-                if (count > 50) count = 50; // Límite de seguridad para no colapsar la memoria
-                
-                workspace.innerHTML = '';
-                workspace.appendChild(buildNPanels(count, direction));
-            };
-
-            btnGenH.addEventListener('click', () => generateFrames('horizontal'));
-            btnGenV.addEventListener('click', () => generateFrames('vertical'));
-            // --- FIN DE LÓGICA DEL GENERADOR MÚLTIPLE ---
-
-            // Función para crear un panel DOM nuevo
-            function createPanel(url = defaultUrl) {
-                const panel = document.createElement('div');
-                panel.className = 'panel';
-                panel.style.flex = '1 1 100%';
-
-                panel.innerHTML = `
-                    <div class="panel-header">
-                        <input type="text" class="url-input" value="${url}" placeholder="Ingresa una URL (ej. https://es.wikipedia.org)" />
-                        <button class="btn btn-go" title="Ir">${icons.go}</button>
-                        <div style="flex: 0 0 10px;"></div> <!-- Separador -->
-                        <button class="btn btn-split-h" title="Dividir Lado a Lado">${icons.splitH}</button>
-                        <button class="btn btn-split-v" title="Dividir Arriba/Abajo">${icons.splitV}</button>
-                        <button class="btn btn-close" title="Cerrar Panel">${icons.close}</button>
-                    </div>
-                    <div class="panel-content">
-                        <div class="iframe-overlay"></div>
-                        <iframe src="${url}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-                    </div>
-                `;
-
-                // Referencias a los elementos interactivos
-                const input = panel.querySelector('.url-input');
-                const btnGo = panel.querySelector('.btn-go');
-                const iframe = panel.querySelector('iframe');
-                const btnSplitH = panel.querySelector('.btn-split-h');
-                const btnSplitV = panel.querySelector('.btn-split-v');
-                const btnClose = panel.querySelector('.btn-close');
-
-                // Lógica de navegación
-                const navigate = () => {
-                    let newUrl = input.value.trim();
-                    if (newUrl && !newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
-                        newUrl = 'https://' + newUrl;
-                    }
-
-                                      // Magia anti-bloqueo para YouTube: Convertir enlaces normales a embed
-                    const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-                    const ytMatch = newUrl.match(youtubeRegex);
-                    
-                    if (ytMatch && ytMatch[1]) {
-                        const videoId = ytMatch[1];
-                        newUrl = `https://www.youtube.com/embed/${videoId}`;
-                    }
-
-                    input.value = newUrl;
-                    iframe.src = newUrl;
-                };
-
-                btnGo.addEventListener('click', navigate);
-                input.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') navigate();
-                });
-
-                // Lógica de División
-                btnSplitH.addEventListener('click', () => splitPanel(panel, 'horizontal')); // Lado a lado (Columnas)
-                btnSplitV.addEventListener('click', () => splitPanel(panel, 'vertical')); // Arriba a abajo (Filas)
-
-                // Lógica de Cierre
-                btnClose.addEventListener('click', () => closePanel(panel));
-
-                return panel;
-            }
-
-            // Función para dividir un panel (El núcleo del estilo Blender)
-            function splitPanel(panel, direction) {
-                const parent = panel.parentNode;
-                const urlActual = panel.querySelector('.url-input').value;
-                
-                // 1. Crear un contenedor "split-box" que reemplazará al panel actual
-                const container = document.createElement('div');
-                container.className = `split-box ${direction}`;
-                
-                // Conservar la proporción flex del panel original en el nuevo contenedor
-                container.style.flex = panel.style.flex || '1 1 100%';
-
-                // 2. Crear el divisor (resizer)
-                const resizer = document.createElement('div');
-                resizer.className = `resizer resizer-${direction === 'horizontal' ? 'h' : 'v'}`;
-
-                // 3. Crear el nuevo panel
-                const newPanel = createPanel(urlActual);
-
-                // 4. Ajustar los flex-basis de ambos paneles al 50%
-                panel.style.flex = '1 1 50%';
-                newPanel.style.flex = '1 1 50%';
-
-                // 5. Ensamblar la nueva estructura en el DOM
-                parent.replaceChild(container, panel);
-                container.appendChild(panel);
-                container.appendChild(resizer);
-                container.appendChild(newPanel);
-            }
-
-            // Función para cerrar un panel
-            function closePanel(panel) {
-                const container = panel.parentNode;
-                
-                // Si es el panel principal de todo el workspace, simplemente limpiar la URL
-                if (container.id === 'workspace') {
-                    panel.querySelector('.url-input').value = 'about:blank';
-                    panel.querySelector('iframe').src = 'about:blank';
-                    return;
-                }
-
-                const grandParent = container.parentNode;
-
-                // Identificar el "hermano" (el otro panel en la misma división)
-                // Puede estar antes del divisor, o después
-                let sibling;
-                if (panel.nextElementSibling && panel.nextElementSibling.classList.contains('resizer')) {
-                    sibling = panel.nextElementSibling.nextElementSibling;
-                } else {
-                    sibling = panel.previousElementSibling.previousElementSibling;
-                }
-
-                // El hermano asume el espacio (y estilo flex) que tenía el contenedor
-                sibling.style.flex = container.style.flex || '1 1 100%';
-
-                // Reemplazamos el contenedor padre por el hermano que sobrevivió
-                grandParent.replaceChild(sibling, container);
-            }
-
-            // --- Lógica global de arrastre de los divisores (Resizers) ---
+            // --- ARRASTRE DE DIVISORES ---
             let isResizing = false;
             let currentResizer = null;
 
-            // Delegación de eventos en el workspace para los resizers
             workspace.addEventListener('mousedown', (e) => {
                 if (e.target.classList.contains('resizer')) {
                     isResizing = true;
                     currentResizer = e.target;
                     currentResizer.classList.add('active');
-
-                    // Mostrar los overlays sobre los iframes para no perder el rastro del ratón
                     document.querySelectorAll('.iframe-overlay').forEach(el => el.style.display = 'block');
-
-                    // Cambiar el cursor de toda la página mientras se arrastra
                     document.body.style.cursor = currentResizer.classList.contains('resizer-h') ? 'col-resize' : 'row-resize';
                 }
             });
 
             document.addEventListener('mousemove', (e) => {
                 if (!isResizing || !currentResizer) return;
-
                 const container = currentResizer.parentNode;
-                const prev = currentResizer.previousElementSibling; // Panel 1
-                const next = currentResizer.nextElementSibling;     // Panel 2
-                const isHorizontal = container.classList.contains('horizontal');
-
-                // Obtener las coordenadas del contenedor padre
+                const prev = currentResizer.previousElementSibling;
+                const next = currentResizer.nextElementSibling;
                 const rect = container.getBoundingClientRect();
 
-                if (isHorizontal) {
-                    const totalWidth = rect.width;
-                    const mouseX = e.clientX - rect.left;
-                    // Calcular el porcentaje
-                    let prevPercent = (mouseX / totalWidth) * 100;
-                    
-                    // Limitar a un mínimo de 10%
-                    if (prevPercent < 10) prevPercent = 10;
-                    if (prevPercent > 90) prevPercent = 90;
-                    
-                    let nextPercent = 100 - prevPercent;
-
-                    prev.style.flex = `1 1 ${prevPercent}%`;
-                    next.style.flex = `1 1 ${nextPercent}%`;
+                if (container.classList.contains('horizontal')) {
+                    let percent = ((e.clientX - rect.left) / rect.width) * 100;
+                    percent = Math.max(10, Math.min(90, percent));
+                    prev.style.flex = `1 1 ${percent}%`;
+                    next.style.flex = `1 1 ${100 - percent}%`;
                 } else {
-                    const totalHeight = rect.height;
-                    const mouseY = e.clientY - rect.top;
-                    
-                    let prevPercent = (mouseY / totalHeight) * 100;
-                    
-                    // Limitar a un mínimo de 10%
-                    if (prevPercent < 10) prevPercent = 10;
-                    if (prevPercent > 90) prevPercent = 90;
-                    
-                    let nextPercent = 100 - prevPercent;
-
-                    prev.style.flex = `1 1 ${prevPercent}%`;
-                    next.style.flex = `1 1 ${nextPercent}%`;
+                    let percent = ((e.clientY - rect.top) / rect.height) * 100;
+                    percent = Math.max(10, Math.min(90, percent));
+                    prev.style.flex = `1 1 ${percent}%`;
+                    next.style.flex = `1 1 ${100 - percent}%`;
                 }
             });
 
@@ -682,14 +676,14 @@
                     if (currentResizer) currentResizer.classList.remove('active');
                     currentResizer = null;
                     document.body.style.cursor = 'default';
-
-                    // Ocultar overlays de los iframes
                     document.querySelectorAll('.iframe-overlay').forEach(el => el.style.display = 'none');
                 }
             });
 
-            // Inicializar el espacio de trabajo con un solo panel
-            workspace.appendChild(createPanel(defaultUrl));
+            // Inicializar
+            const initialPanel = createPanel(defaultUrl);
+            workspace.appendChild(initialPanel);
+            focusPanel(initialPanel); // Asegurar que el primero empiece con foco
         });
     </script>
 </body>
