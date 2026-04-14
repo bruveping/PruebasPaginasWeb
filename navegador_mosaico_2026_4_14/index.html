@@ -44,6 +44,64 @@
             align-items: center;
         }
 
+        .top-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .generator-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background-color: #2a2a2a;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #444;
+        }
+
+        .num-input {
+            width: 40px;
+            background-color: #1e1e1e;
+            border: 1px solid #555;
+            color: white;
+            padding: 3px;
+            border-radius: 3px;
+            text-align: center;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .num-input:focus {
+            border-color: var(--accent-color);
+        }
+
+        .separator {
+            width: 1px;
+            height: 20px;
+            background-color: #555;
+            margin: 0 5px;
+        }
+        
+        .btn-top {
+            background-color: #444;
+            color: #ccc;
+            border: 1px solid #555;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .btn-top:hover {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
         .info-text {
             font-size: 12px;
             color: #999;
@@ -192,7 +250,24 @@
 
     <div id="top-bar">
         <span>Navegador Mosaico</span>
-        <span class="info-text">Nota: Algunos sitios (como Google) bloquean ser mostrados en iframes por seguridad (X-Frame-Options). Usa sitios como Wikipedia para probar.</span>
+        <div class="top-actions">
+            <span class="info-text">Nota: Algunos sitios (como Google) bloquean ser mostrados en iframes por seguridad (X-Frame-Options). Usa sitios como Wikipedia para probar.</span>
+            
+            <div class="separator"></div>
+            
+            <div class="generator-group">
+                <span class="info-text" style="color:#ccc;">Generar:</span>
+                <input type="number" id="num-frames" value="3" min="1" max="20" class="num-input" title="Cantidad de paneles">
+                <button id="btn-gen-h" class="btn-top" title="Generar en Columnas (Lado a Lado)">|||</button>
+                <button id="btn-gen-v" class="btn-top" title="Generar en Filas (Arriba/Abajo)">三</button>
+            </div>
+
+            <div class="separator"></div>
+
+            <button id="btn-load" class="btn-top" title="Cargar sesión de enlaces">📂 Cargar JSON</button>
+            <button id="btn-save" class="btn-top" title="Guardar diseño actual">💾 Guardar JSON</button>
+            <input type="file" id="file-input" accept=".json" style="display:none" />
+        </div>
     </div>
 
     <div id="workspace">
@@ -214,6 +289,209 @@
             // URL por defecto
             const defaultUrl = "https://es.wikipedia.org";
 
+            // --- LÓGICA DE GUARDADO / CARGA JSON ---
+            const btnSave = document.getElementById('btn-save');
+            const btnLoad = document.getElementById('btn-load');
+            const fileInput = document.getElementById('file-input');
+
+            // Serializar el árbol del DOM a objeto JSON
+            function serializeNode(element) {
+                if (element.classList.contains('panel')) {
+                    return {
+                        type: 'panel',
+                        url: element.querySelector('.url-input').value,
+                        flex: element.style.flex || '1 1 100%'
+                    };
+                } else if (element.classList.contains('split-box')) {
+                    const direction = element.classList.contains('horizontal') ? 'horizontal' : 'vertical';
+                    const children = Array.from(element.children).filter(c => !c.classList.contains('resizer'));
+                    return {
+                        type: 'split',
+                        direction: direction,
+                        flex: element.style.flex || '1 1 100%',
+                        children: children.map(serializeNode)
+                    };
+                }
+            }
+
+            // Deserializar objeto JSON al DOM
+            function deserializeNode(data) {
+                if (data.type === 'panel') {
+                    const p = createPanel(data.url);
+                    if (data.flex) p.style.flex = data.flex;
+                    return p;
+                } else if (data.type === 'split') {
+                    const container = document.createElement('div');
+                    container.className = `split-box ${data.direction}`;
+                    if (data.flex) container.style.flex = data.flex;
+
+                    const c1 = deserializeNode(data.children[0]);
+                    const c2 = deserializeNode(data.children[1]);
+                    const resizer = document.createElement('div');
+                    resizer.className = `resizer resizer-${data.direction === 'horizontal' ? 'h' : 'v'}`;
+
+                    container.appendChild(c1);
+                    container.appendChild(resizer);
+                    container.appendChild(c2);
+                    return container;
+                }
+            }
+
+            // --- DISTRIBUCIÓN INTELIGENTE DE ARRAY ---
+            function buildSmartDistribution(urls) {
+                if (urls.length === 0) return createPanel();
+                if (urls.length === 1) return createPanel(urls[0]);
+
+                let rowsCount = Math.round(Math.sqrt(urls.length));
+                const rows = [];
+                let remaining = urls.length;
+                let index = 0;
+
+                // Dividir URLs en filas matemáticamente (como en tu foto de ejemplo)
+                for (let i = 0; i < rowsCount; i++) {
+                    let take = Math.ceil(remaining / (rowsCount - i));
+                    rows.push(urls.slice(index, index + take));
+                    index += take;
+                    remaining -= take;
+                }
+                return buildVerticalTree(rows);
+            }
+
+            function buildVerticalTree(rows) {
+                if (rows.length === 1) return buildHorizontalTree(rows[0]);
+                const firstRow = rows[0];
+                const remainingRows = rows.slice(1);
+                const container = document.createElement('div');
+                container.className = 'split-box vertical';
+
+                const topNode = buildHorizontalTree(firstRow);
+                topNode.style.flex = `1 1 ${100 / rows.length}%`;
+
+                const bottomNode = buildVerticalTree(remainingRows);
+                bottomNode.style.flex = `1 1 ${100 - (100 / rows.length)}%`;
+
+                const resizer = document.createElement('div');
+                resizer.className = 'resizer resizer-v';
+
+                container.appendChild(topNode);
+                container.appendChild(resizer);
+                container.appendChild(bottomNode);
+                return container;
+            }
+
+            function buildHorizontalTree(urls) {
+                if (urls.length === 1) return createPanel(urls[0]);
+                const mid = Math.ceil(urls.length / 2);
+                const leftUrls = urls.slice(0, mid);
+                const rightUrls = urls.slice(mid);
+                const container = document.createElement('div');
+                container.className = 'split-box horizontal';
+
+                const leftNode = buildHorizontalTree(leftUrls);
+                leftNode.style.flex = `1 1 ${(leftUrls.length / urls.length) * 100}%`;
+
+                const rightNode = buildHorizontalTree(rightUrls);
+                rightNode.style.flex = `1 1 ${(rightUrls.length / urls.length) * 100}%`;
+
+                const resizer = document.createElement('div');
+                resizer.className = 'resizer resizer-h';
+
+                container.appendChild(leftNode);
+                container.appendChild(resizer);
+                container.appendChild(rightNode);
+                return container;
+            }
+
+            // Eventos de Guardado y Carga
+            btnSave.addEventListener('click', () => {
+                const root = workspace.firstElementChild;
+                if (!root) return;
+                const data = serializeNode(root);
+                const json = JSON.stringify(data, null, 2);
+                
+                let filename = prompt("Nombre del archivo JSON para guardar la sesión:", "sesion_mosaico.json");
+                if (!filename) return; // Cancelado
+                if (!filename.endsWith('.json')) filename += '.json';
+
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            btnLoad.addEventListener('click', () => {
+                fileInput.click(); // Abre el diálogo nativo
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    try {
+                        const data = JSON.parse(evt.target.result);
+                        workspace.innerHTML = ''; // Limpiar el lienzo
+                        if (Array.isArray(data)) {
+                            // Subdivisión Inteligente desde una lista de Links
+                            workspace.appendChild(buildSmartDistribution(data));
+                        } else {
+                            // Recrear estructura compleja exacta de tu guardado
+                            workspace.appendChild(deserializeNode(data));
+                        }
+                    } catch(err) {
+                        alert("Error al cargar el archivo JSON. Verifica que sea válido.");
+                    }
+                    fileInput.value = ""; // Resetear
+                };
+                reader.readAsText(file);
+            });
+            // --- FIN DE LÓGICA DE GUARDADO / CARGA JSON ---
+
+            // --- LÓGICA DEL GENERADOR MÚLTIPLE ---
+            const btnGenH = document.getElementById('btn-gen-h');
+            const btnGenV = document.getElementById('btn-gen-v');
+            const numFramesInput = document.getElementById('num-frames');
+
+            function buildNPanels(n, direction) {
+                if (n <= 1) return createPanel(defaultUrl);
+
+                const container = document.createElement('div');
+                container.className = `split-box ${direction}`;
+
+                // El primer panel toma 1/n del espacio actual
+                const firstNode = createPanel(defaultUrl);
+                firstNode.style.flex = `1 1 ${100 / n}%`;
+
+                // El resto toma (n-1)/n del espacio restante (que internamente se repartirá de nuevo)
+                const restNode = buildNPanels(n - 1, direction);
+                restNode.style.flex = `1 1 ${100 - (100 / n)}%`;
+
+                const resizer = document.createElement('div');
+                resizer.className = `resizer resizer-${direction === 'horizontal' ? 'h' : 'v'}`;
+
+                container.appendChild(firstNode);
+                container.appendChild(resizer);
+                container.appendChild(restNode);
+
+                return container;
+            }
+
+            const generateFrames = (direction) => {
+                let count = parseInt(numFramesInput.value, 10);
+                if (isNaN(count) || count < 1) count = 1;
+                if (count > 50) count = 50; // Límite de seguridad para no colapsar la memoria
+                
+                workspace.innerHTML = '';
+                workspace.appendChild(buildNPanels(count, direction));
+            };
+
+            btnGenH.addEventListener('click', () => generateFrames('horizontal'));
+            btnGenV.addEventListener('click', () => generateFrames('vertical'));
+            // --- FIN DE LÓGICA DEL GENERADOR MÚLTIPLE ---
+
             // Función para crear un panel DOM nuevo
             function createPanel(url = defaultUrl) {
                 const panel = document.createElement('div');
@@ -231,7 +509,7 @@
                     </div>
                     <div class="panel-content">
                         <div class="iframe-overlay"></div>
-                        <iframe src="${url}"></iframe>
+                        <iframe src="${url}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
                     </div>
                 `;
 
@@ -248,8 +526,18 @@
                     let newUrl = input.value.trim();
                     if (newUrl && !newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
                         newUrl = 'https://' + newUrl;
-                        input.value = newUrl;
                     }
+
+                                      // Magia anti-bloqueo para YouTube: Convertir enlaces normales a embed
+                    const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+                    const ytMatch = newUrl.match(youtubeRegex);
+                    
+                    if (ytMatch && ytMatch[1]) {
+                        const videoId = ytMatch[1];
+                        newUrl = `https://www.youtube.com/embed/${videoId}`;
+                    }
+
+                    input.value = newUrl;
                     iframe.src = newUrl;
                 };
 
