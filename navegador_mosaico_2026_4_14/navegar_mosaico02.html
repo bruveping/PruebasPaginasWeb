@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navegador Mosaico</title>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --panel-bg: #252526;
+            --header-bg: #333333;
+            --border-color: #000000;
+            --accent-color: #007acc;
+            --text-color: #cccccc;
+            --resizer-color: #444444;
+            --resizer-hover: #007acc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #top-bar {
+            background-color: var(--header-bg);
+            padding: 5px 15px;
+            font-size: 14px;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #999;
+            font-weight: normal;
+        }
+
+        #workspace {
+            flex: 1;
+            display: flex;
+            width: 100%;
+            height: calc(100% - 30px);
+        }
+
+        /* Contenedores Flex para las divisiones */
+        .split-box {
+            display: flex;
+            flex: 1 1 100%;
+            overflow: hidden;
+        }
+
+        .split-box.horizontal {
+            flex-direction: row;
+        }
+
+        .split-box.vertical {
+            flex-direction: column;
+        }
+
+        /* Panel individual */
+        .panel {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 100%;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            min-width: 200px;
+            min-height: 150px;
+            position: relative;
+        }
+
+        .panel-header {
+            background-color: var(--header-bg);
+            height: 35px;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            gap: 5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .url-input {
+            flex: 1;
+            background-color: #3c3c3c;
+            border: 1px solid #555;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .url-input:focus {
+            border-color: var(--accent-color);
+        }
+
+        .btn {
+            background: transparent;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            background-color: #555;
+            color: white;
+        }
+
+        .btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .btn-close:hover {
+            background-color: #e81123;
+        }
+
+        .panel-content {
+            flex: 1;
+            position: relative;
+            background-color: #ffffff; /* Fondo blanco para las webs */
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        /* Overlay invisible para evitar que el iframe robe los eventos del ratón al redimensionar */
+        .iframe-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            z-index: 10;
+            display: none;
+        }
+
+        /* Divisores (Resizers) */
+        .resizer {
+            background-color: var(--resizer-color);
+            z-index: 5;
+            transition: background-color 0.2s;
+        }
+
+        .resizer:hover, .resizer.active {
+            background-color: var(--resizer-hover);
+        }
+
+        .resizer-h {
+            width: 6px;
+            cursor: col-resize;
+            margin: 0 -3px; /* Para tener un área de clic más grande sin afectar el layout visual */
+        }
+
+        .resizer-v {
+            height: 6px;
+            cursor: row-resize;
+            margin: -3px 0;
+        }
+
+        /* SVG Icons */
+        .icon-split-v { transform: rotate(90deg); }
+    </style>
+</head>
+<body>
+
+    <div id="top-bar">
+        <span>Navegador Mosaico</span>
+        <span class="info-text">Nota: Algunos sitios (como Google) bloquean ser mostrados en iframes por seguridad (X-Frame-Options). Usa sitios como Wikipedia para probar.</span>
+    </div>
+
+    <div id="workspace">
+        <!-- El panel inicial se inyectará aquí -->
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const workspace = document.getElementById('workspace');
+
+            // Iconos SVG reutilizables
+            const icons = {
+                go: `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`,
+                splitH: `<svg viewBox="0 0 24 24"><path d="M3 3h8v18H3zm10 0h8v18h-8z"/></svg>`, // Lado a Lado
+                splitV: `<svg viewBox="0 0 24 24"><path d="M3 3h18v8H3zm0 10h18v8H3z"/></svg>`, // Arriba y Abajo
+                close: `<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`
+            };
+
+            // URL por defecto
+            const defaultUrl = "https://es.wikipedia.org";
+
+            // Función para crear un panel DOM nuevo
+            function createPanel(url = defaultUrl) {
+                const panel = document.createElement('div');
+                panel.className = 'panel';
+                panel.style.flex = '1 1 100%';
+
+                panel.innerHTML = `
+                    <div class="panel-header">
+                        <input type="text" class="url-input" value="${url}" placeholder="Ingresa una URL (ej. https://es.wikipedia.org)" />
+                        <button class="btn btn-go" title="Ir">${icons.go}</button>
+                        <div style="flex: 0 0 10px;"></div> <!-- Separador -->
+                        <button class="btn btn-split-h" title="Dividir Lado a Lado">${icons.splitH}</button>
+                        <button class="btn btn-split-v" title="Dividir Arriba/Abajo">${icons.splitV}</button>
+                        <button class="btn btn-close" title="Cerrar Panel">${icons.close}</button>
+                    </div>
+                    <div class="panel-content">
+                        <div class="iframe-overlay"></div>
+                        <iframe src="${url}"></iframe>
+                    </div>
+                `;
+
+                // Referencias a los elementos interactivos
+                const input = panel.querySelector('.url-input');
+                const btnGo = panel.querySelector('.btn-go');
+                const iframe = panel.querySelector('iframe');
+                const btnSplitH = panel.querySelector('.btn-split-h');
+                const btnSplitV = panel.querySelector('.btn-split-v');
+                const btnClose = panel.querySelector('.btn-close');
+
+                // Lógica de navegación
+                const navigate = () => {
+                    let newUrl = input.value.trim();
+                    if (newUrl && !newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
+                        newUrl = 'https://' + newUrl;
+                        input.value = newUrl;
+                    }
+                    iframe.src = newUrl;
+                };
+
+                btnGo.addEventListener('click', navigate);
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') navigate();
+                });
+
+                // Lógica de División
+                btnSplitH.addEventListener('click', () => splitPanel(panel, 'horizontal')); // Lado a lado (Columnas)
+                btnSplitV.addEventListener('click', () => splitPanel(panel, 'vertical')); // Arriba a abajo (Filas)
+
+                // Lógica de Cierre
+                btnClose.addEventListener('click', () => closePanel(panel));
+
+                return panel;
+            }
+
+            // Función para dividir un panel (El núcleo del estilo Blender)
+            function splitPanel(panel, direction) {
+                const parent = panel.parentNode;
+                const urlActual = panel.querySelector('.url-input').value;
+                
+                // 1. Crear un contenedor "split-box" que reemplazará al panel actual
+                const container = document.createElement('div');
+                container.className = `split-box ${direction}`;
+                
+                // Conservar la proporción flex del panel original en el nuevo contenedor
+                container.style.flex = panel.style.flex || '1 1 100%';
+
+                // 2. Crear el divisor (resizer)
+                const resizer = document.createElement('div');
+                resizer.className = `resizer resizer-${direction === 'horizontal' ? 'h' : 'v'}`;
+
+                // 3. Crear el nuevo panel
+                const newPanel = createPanel(urlActual);
+
+                // 4. Ajustar los flex-basis de ambos paneles al 50%
+                panel.style.flex = '1 1 50%';
+                newPanel.style.flex = '1 1 50%';
+
+                // 5. Ensamblar la nueva estructura en el DOM
+                parent.replaceChild(container, panel);
+                container.appendChild(panel);
+                container.appendChild(resizer);
+                container.appendChild(newPanel);
+            }
+
+            // Función para cerrar un panel
+            function closePanel(panel) {
+                const container = panel.parentNode;
+                
+                // Si es el panel principal de todo el workspace, simplemente limpiar la URL
+                if (container.id === 'workspace') {
+                    panel.querySelector('.url-input').value = 'about:blank';
+                    panel.querySelector('iframe').src = 'about:blank';
+                    return;
+                }
+
+                const grandParent = container.parentNode;
+
+                // Identificar el "hermano" (el otro panel en la misma división)
+                // Puede estar antes del divisor, o después
+                let sibling;
+                if (panel.nextElementSibling && panel.nextElementSibling.classList.contains('resizer')) {
+                    sibling = panel.nextElementSibling.nextElementSibling;
+                } else {
+                    sibling = panel.previousElementSibling.previousElementSibling;
+                }
+
+                // El hermano asume el espacio (y estilo flex) que tenía el contenedor
+                sibling.style.flex = container.style.flex || '1 1 100%';
+
+                // Reemplazamos el contenedor padre por el hermano que sobrevivió
+                grandParent.replaceChild(sibling, container);
+            }
+
+            // --- Lógica global de arrastre de los divisores (Resizers) ---
+            let isResizing = false;
+            let currentResizer = null;
+
+            // Delegación de eventos en el workspace para los resizers
+            workspace.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('resizer')) {
+                    isResizing = true;
+                    currentResizer = e.target;
+                    currentResizer.classList.add('active');
+
+                    // Mostrar los overlays sobre los iframes para no perder el rastro del ratón
+                    document.querySelectorAll('.iframe-overlay').forEach(el => el.style.display = 'block');
+
+                    // Cambiar el cursor de toda la página mientras se arrastra
+                    document.body.style.cursor = currentResizer.classList.contains('resizer-h') ? 'col-resize' : 'row-resize';
+                }
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing || !currentResizer) return;
+
+                const container = currentResizer.parentNode;
+                const prev = currentResizer.previousElementSibling; // Panel 1
+                const next = currentResizer.nextElementSibling;     // Panel 2
+                const isHorizontal = container.classList.contains('horizontal');
+
+                // Obtener las coordenadas del contenedor padre
+                const rect = container.getBoundingClientRect();
+
+                if (isHorizontal) {
+                    const totalWidth = rect.width;
+                    const mouseX = e.clientX - rect.left;
+                    // Calcular el porcentaje
+                    let prevPercent = (mouseX / totalWidth) * 100;
+                    
+                    // Limitar a un mínimo de 10%
+                    if (prevPercent < 10) prevPercent = 10;
+                    if (prevPercent > 90) prevPercent = 90;
+                    
+                    let nextPercent = 100 - prevPercent;
+
+                    prev.style.flex = `1 1 ${prevPercent}%`;
+                    next.style.flex = `1 1 ${nextPercent}%`;
+                } else {
+                    const totalHeight = rect.height;
+                    const mouseY = e.clientY - rect.top;
+                    
+                    let prevPercent = (mouseY / totalHeight) * 100;
+                    
+                    // Limitar a un mínimo de 10%
+                    if (prevPercent < 10) prevPercent = 10;
+                    if (prevPercent > 90) prevPercent = 90;
+                    
+                    let nextPercent = 100 - prevPercent;
+
+                    prev.style.flex = `1 1 ${prevPercent}%`;
+                    next.style.flex = `1 1 ${nextPercent}%`;
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    if (currentResizer) currentResizer.classList.remove('active');
+                    currentResizer = null;
+                    document.body.style.cursor = 'default';
+
+                    // Ocultar overlays de los iframes
+                    document.querySelectorAll('.iframe-overlay').forEach(el => el.style.display = 'none');
+                }
+            });
+
+            // Inicializar el espacio de trabajo con un solo panel
+            workspace.appendChild(createPanel(defaultUrl));
+        });
+    </script>
+</body>
+</html>
