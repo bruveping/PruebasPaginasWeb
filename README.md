@@ -61,6 +61,9 @@ Ciencia_ficcion_leer [Ciencia_ficcion_leer](https://bruveping.github.io/PruebasP
 
 navegador_mosaico_2026_4_14 [navegador_mosaico_2026_4_14](https://bruveping.github.io/PruebasPaginasWeb/navegador_mosaico_2026_4_14/)
 
+navegador_mosaico_liviano_2026_4_14 [navegador_mosaico_liviano_2026_4_14](https://bruveping.github.io/PruebasPaginasWeb/navegador_mosaico_liviano_2026_4_14/)
+
+
 
 
 
