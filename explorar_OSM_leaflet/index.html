@@ -3,42 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Ubicación y Clima</title>
+    <title>Mapa Libre - Ubicación y Clima</title>
     
-    <!-- Leaflet CSS -->
+    <!-- Leaflet CSS (Open Source) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
-    <!-- Tailwind CSS para estilizado rápido de botones -->
+    <!-- Tailwind CSS para una interfaz moderna -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-        }
-        #map {
-            height: 100%;
-            width: 100%;
-            z-index: 1;
-        }
-        
-        /* Estilo de la flecha/triángulo de ubicación */
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
+        #map { height: 100%; width: 100%; z-index: 1; }
+
+        /* Estilo de la flecha de ubicación (Triángulo apuntando al Norte) */
         .location-arrow {
             width: 0;
             height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-bottom: 25px solid #3b82f6; /* Azul Tailwind */
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
-            transition: transform 0.3s ease;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 28px solid #10b981; /* Verde Esmeralda */
+            filter: drop-shadow(0 3px 5px rgba(0,0,0,0.4));
+            transition: transform 0.2s ease;
         }
 
-        /* Contenedor de controles flotantes */
-        .controls-container {
+        /* Controles flotantes esquina inferior derecha */
+        .floating-controls {
             position: absolute;
-            bottom: 20px;
+            bottom: 25px;
             right: 20px;
             display: flex;
             flex-direction: column;
@@ -46,72 +37,81 @@
             z-index: 1000;
         }
 
-        .floating-btn {
+        .btn-ui {
+            width: 60px;
+            height: 60px;
             background: white;
             border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #374151;
         }
 
-        .floating-btn:active {
-            transform: scale(0.9);
+        .btn-ui:hover {
+            background: #f3f4f6;
+            transform: scale(1.05);
         }
 
-        .floating-btn svg {
-            width: 24px;
-            height: 24px;
-            fill: #374151;
+        .btn-ui:active {
+            transform: scale(0.95);
         }
 
-        /* Panel de clima */
-        #weather-info {
+        /* Panel de clima temporal */
+        #weather-panel {
             position: absolute;
-            bottom: 140px;
+            bottom: 165px;
             right: 20px;
             background: rgba(255, 255, 255, 0.95);
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 18px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             z-index: 1000;
             display: none;
-            min-width: 150px;
+            min-width: 180px;
             border: 1px solid #e5e7eb;
-            animation: fadeIn 0.3s ease-out;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes popIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
+
+        /* Quitar marca de agua de Leaflet para un look más limpio (opcional en Open Source) */
+        .leaflet-control-attribution { font-size: 8px !important; }
     </style>
 </head>
 <body>
 
     <div id="map"></div>
 
-    <!-- Panel de información de clima -->
-    <div id="weather-info">
-        <h3 class="font-bold text-sm text-gray-800 mb-1">Clima Local</h3>
-        <p id="weather-data" class="text-xs text-gray-600">Cargando...</p>
+    <!-- Panel de Clima (Se muestra 3 segundos) -->
+    <div id="weather-panel">
+        <div id="weather-content" class="text-center">
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Clima Local</p>
+            <div id="weather-details" class="flex flex-col items-center">
+                <span class="text-3xl font-black text-gray-800" id="temp-val">--°</span>
+                <span class="text-sm text-emerald-600 font-medium" id="condition-val">Cargando...</span>
+            </div>
+        </div>
     </div>
 
-    <!-- Botones Flotantes -->
-    <div class="controls-container">
+    <!-- Controles -->
+    <div class="floating-controls">
         <!-- Botón Clima -->
-        <button onclick="showWeather()" class="floating-btn" title="Información del Clima">
-            <svg viewBox="0 0 24 24"><path d="M12,15C12.83,15 13.5,14.33 13.5,13.5C13.5,12.67 12.83,12 12,12C11.17,12 10.5,12.67 10.5,13.5C10.5,14.33 11.17,15 12,15M17.5,13C17.5,10.24 15.26,8 12.5,8C10.95,8 9.59,8.7 8.7,9.81C8.33,9.61 7.93,9.5 7.5,9.5C6.12,9.5 5,10.62 5,12C5,12.18 5.03,12.35 5.08,12.5C3.25,13.16 2,14.92 2,17C2,19.76 4.24,22 7,22H16.5C19.54,22 22,19.54 22,16.5C22,14.11 20.12,12.16 17.65,11.58C17.56,12.04 17.5,12.5 17.5,13Z" /></svg>
+        <button onclick="getWeatherInfo()" class="btn-ui" title="Info del Clima">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-500"><path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="m19.07 4.93-1.41 1.41"/><path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/></svg>
         </button>
 
-        <!-- Botón Mi Ubicación -->
-        <button onclick="centerMap()" class="floating-btn" title="Centrar en mi ubicación">
-            <svg viewBox="0 0 24 24"><path d="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" /></svg>
+        <!-- Botón Centrar -->
+        <button onclick="centerOnUser()" class="btn-ui" title="Mi Ubicación">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-700"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
         </button>
     </div>
 
@@ -121,102 +121,91 @@
     <script>
         let map;
         let userMarker;
-        let userCoords = null;
-        const apiKey = ""; // La API key se inyecta automáticamente o usa una demo
+        let lastPos = null;
 
-        // Inicializar Mapa
         function initMap() {
-            // Centro inicial (Buenos Aires como ejemplo, se actualizará)
-            map = L.map('map', {
-                zoomControl: false // Quitamos los botones por defecto para que luzca más limpio
-            }).setView([-34.6037, -58.3816], 13);
+            // Inicializamos el mapa con OpenStreetMap (Capa gratuita y libre)
+            map = L.map('map', { zoomControl: false }).setView([0, 0], 2);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
+                attribution: '&copy; OpenStreetMap'
             }).addTo(map);
 
-            // Intentar obtener ubicación inicial
-            startTracking();
-        }
-
-        // Seguimiento de ubicación
-        function startTracking() {
-            if ("geolocation" in navigator) {
+            // Rastreo de ubicación en tiempo real
+            if (navigator.geolocation) {
                 navigator.geolocation.watchPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        userCoords = [latitude, longitude];
+                    (pos) => {
+                        const { latitude, longitude } = pos.coords;
+                        lastPos = [latitude, longitude];
 
                         if (!userMarker) {
-                            // Crear el icono de flecha
+                            // Crear el icono de flecha/triángulo
                             const arrowIcon = L.divIcon({
-                                className: 'custom-div-icon',
+                                className: '',
                                 html: '<div class="location-arrow"></div>',
-                                iconSize: [20, 25],
-                                iconAnchor: [10, 25]
+                                iconSize: [24, 28],
+                                iconAnchor: [12, 28]
                             });
 
-                            userMarker = L.marker(userCoords, { icon: arrowIcon }).addTo(map);
+                            userMarker = L.marker(lastPos, { icon: arrowIcon }).addTo(map);
+                            // Solo centramos la primera vez que se detecta la ubicación
+                            map.setView(lastPos, 14);
                         } else {
-                            userMarker.setLatLng(userCoords);
+                            userMarker.setLatLng(lastPos);
                         }
                     },
-                    (error) => {
-                        console.error("Error obteniendo ubicación:", error);
-                    },
+                    (err) => console.error("Error de GPS: ", err),
                     { enableHighAccuracy: true }
                 );
             }
         }
 
-        // Función para centrar el mapa
-        function centerMap() {
-            if (userCoords) {
-                map.flyTo(userCoords, 16);
+        // Función para centrar manualmente
+        function centerOnUser() {
+            if (lastPos) {
+                map.flyTo(lastPos, 16, { animate: true, duration: 1.5 });
             } else {
-                alert("Buscando tu ubicación todavía...");
+                alert("Esperando señal de GPS...");
             }
         }
 
-        // Función para mostrar el clima durante 3 segundos
-        async function showWeather() {
-            if (!userCoords) {
-                alert("Necesito tu ubicación para saber el clima.");
+        // Función de clima (Open-Meteo API: Libre y sin Key)
+        async function getWeatherInfo() {
+            if (!lastPos) {
+                alert("Ubicación no detectada.");
                 return;
             }
 
-            const weatherPanel = document.getElementById('weather-info');
-            const weatherData = document.getElementById('weather-data');
-            
-            weatherPanel.style.display = 'block';
-            weatherData.innerText = "Consultando satélites...";
+            const panel = document.getElementById('weather-panel');
+            const tempVal = document.getElementById('temp-val');
+            const condVal = document.getElementById('condition-val');
+
+            panel.style.display = 'block';
+            tempVal.innerText = "...";
+            condVal.innerText = "Sincronizando...";
 
             try {
-                // Usamos la API de OpenWeatherMap (v2.5)
-                const lat = userCoords[0];
-                const lon = userCoords[1];
-                const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=es`;
+                const lat = lastPos[0];
+                const lon = lastPos[1];
+                // API Open-Meteo: No requiere API Key, totalmente libre
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
                 
                 const response = await fetch(url);
-                if (!response.ok) throw new Error("Error en la respuesta");
-                
                 const data = await response.json();
                 
-                weatherData.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <span class="text-lg font-bold">${Math.round(data.main.temp)}°C</span>
-                        <span class="capitalize">${data.weather[0].description}</span>
-                    </div>
-                    <div class="mt-1 text-gray-500">Humedad: ${data.main.humidity}%</div>
-                `;
+                if (data.current_weather) {
+                    const temp = Math.round(data.current_weather.temperature);
+                    tempVal.innerText = `${temp}°C`;
+                    condVal.innerText = "Cielo despejado"; // Simplificado para esta versión libre
+                }
             } catch (err) {
-                weatherData.innerText = "Clima no disponible";
-                console.error(err);
+                tempVal.innerText = "Err";
+                condVal.innerText = "Fallo de red";
             }
 
-            // Desaparecer después de 3 segundos
+            // Ocultar automáticamente después de 3 segundos
             setTimeout(() => {
-                weatherPanel.style.display = 'none';
+                panel.style.display = 'none';
             }, 3000);
         }
 
