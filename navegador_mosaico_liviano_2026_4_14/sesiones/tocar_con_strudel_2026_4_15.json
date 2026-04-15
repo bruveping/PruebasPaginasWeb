@@ -1,0 +1,41 @@
+{
+  "type": "split",
+  "direction": "horizontal",
+  "flex": "1 1 100%",
+  "children": [
+    {
+      "type": "split",
+      "direction": "vertical",
+      "flex": "1 1 42.0312%",
+      "children": [
+        {
+          "type": "panel",
+          "url": "https://bruveping.github.io/interfazMutante_2025/Suite_de_Musica/crear_progresiones_con_tecladoVirtual.html",
+          "flex": "1 1 51.0893%"
+        },
+        {
+          "type": "panel",
+          "url": "https://bruveping.github.io/PruebasPaginasWeb/explorador_de_cadencias_2026/",
+          "flex": "1 1 48.9107%"
+        }
+      ]
+    },
+    {
+      "type": "split",
+      "direction": "vertical",
+      "flex": "1 1 57.9688%",
+      "children": [
+        {
+          "type": "panel",
+          "url": "https://bruveping.github.io/PruebasPaginasWeb/midi_a_cifrado/",
+          "flex": "1 1 35.2941%"
+        },
+        {
+          "type": "panel",
+          "url": "https://strudel.cc",
+          "flex": "1 1 64.7059%"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "type": "split",
+  "direction": "vertical",
+  "flex": "1 1 100%",
+  "children": [
+    {
+      "type": "split",
+      "direction": "horizontal",
+      "flex": "1 1 55.8237%",
+      "children": [
+        {
+          "type": "panel",
+          "url": "https://bruveping.github.io/interfazMutante_2025/Suite_de_Musica/",
+          "flex": "1 1 23.3854%"
+        },
+        {
+          "type": "split",
+          "direction": "horizontal",
+          "flex": "1 1 76.6146%",
+          "children": [
+            {
+              "type": "panel",
+              "url": "https://bruveping.github.io/interfazMutante_2025/Suite_de_Musica/crear_progresiones_con_tecladoVirtual.html",
+              "flex": "1 1 22.9784%"
+            },
+            {
+              "type": "split",
+              "direction": "horizontal",
+              "flex": "1 1 77.0216%",
+              "children": [
+                {
+                  "type": "panel",
+                  "url": "https://bruveping.github.io/PruebasPaginasWeb/explorador_de_cadencias_2026/",
+                  "flex": "1 1 72.4625%"
+                },
+                {
+                  "type": "panel",
+                  "url": "https://bruveping.github.io/interfazMutante_2025/Suite_de_Musica/visualizador_de_adsr.html",
+                  "flex": "1 1 27.5375%"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "split",
+      "direction": "horizontal",
+      "flex": "1 1 44.1763%",
+      "children": [
+        {
+          "type": "panel",
+          "url": "https://bruveping.github.io/interfazMutante_2025/Suite_de_Musica/reproducir_partituraABC.html",
+          "flex": "1 1 24.1146%"
+        },
+        {
+          "type": "split",
+          "direction": "horizontal",
+          "flex": "1 1 75.8854%",
+          "children": [
+            {
+              "type": "split",
+              "direction": "horizontal",
+              "flex": "1 1 71.875%",
+              "children": [
+                {
+                  "type": "panel",
+                  "url": "https://bruveping.github.io/PruebasPaginasWeb/Estrategias_motivicas_musicales03/",
+                  "flex": "1 1 50%"
+                },
+                {
+                  "type": "panel",
+                  "url": "https://bruveping.github.io/PruebasPaginasWeb/midi_a_cifrado/",
+                  "flex": "1 1 50%"
+                }
+              ]
+            },
+            {
+              "type": "panel",
+              "url": "https://bruveping.github.io/PruebasPaginasWeb/cifrado_a_midi/",
+              "flex": "1 1 28.125%"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

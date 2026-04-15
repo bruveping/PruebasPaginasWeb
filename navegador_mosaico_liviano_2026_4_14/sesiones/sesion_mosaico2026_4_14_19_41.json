@@ -1,0 +1,53 @@
+{
+  "type": "split",
+  "direction": "horizontal",
+  "flex": "1 1 100%",
+  "children": [
+    {
+      "type": "panel",
+      "url": "https://es.wikipedia.org",
+      "flex": "1 1 20%"
+    },
+    {
+      "type": "split",
+      "direction": "horizontal",
+      "flex": "1 1 80%",
+      "children": [
+        {
+          "type": "panel",
+          "url": "https://bruveping.github.io/PruebasPaginasWeb/lista_de_compras/",
+          "flex": "1 1 25%"
+        },
+        {
+          "type": "split",
+          "direction": "horizontal",
+          "flex": "1 1 75%",
+          "children": [
+            {
+              "type": "panel",
+              "url": "https://bruveping.github.io/PruebasPaginasWeb/sintetizador_modular/sintetizador_modular01.html",
+              "flex": "1 1 33.3333%"
+            },
+            {
+              "type": "split",
+              "direction": "horizontal",
+              "flex": "1 1 66.6667%",
+              "children": [
+                {
+                  "type": "panel",
+                  "url": "https://bruveping.github.io/PruebasPaginasWeb/midi_a_cifrado/",
+                  "flex": "1 1 50%"
+                },
+                {
+                  "type": "panel",
+                  "url": "https://bruveping.github.io/PruebasPaginasWeb/temporizador_01/",
+                  "flex": "1 1 50%"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mosaico Minimalista</title>
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007acc'><path d='M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z'/></svg>">
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --panel-bg: #252526;
+            --header-bg: #2d2d2d;
+            --border-color: #000000;
+            --accent-color: #007acc;
+            --text-color: #cccccc;
+            --resizer-color: #444444;
+            --resizer-hover: #007acc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- BARRA SUPERIOR MINIMALISTA --- */
+        #top-bar {
+            background-color: var(--header-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            height: 35px;
+            transition: height 0.3s ease, border-width 0.3s ease;
+            overflow: hidden;
+            gap: 15px;
+        }
+
+        #top-bar.hidden {
+            height: 0;
+            border-bottom-width: 0;
+        }
+
+        .btn-top {
+            background-color: transparent;
+            color: #ccc;
+            border: 1px solid #555;
+            padding: 4px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        
+        .btn-top:hover {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .btn-top svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        /* --- BOTÓN FLOTANTE OCULTAR MENÚ --- */
+        #menu-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(37, 37, 38, 0.8);
+            border: 1px solid #555;
+            color: #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: all 0.2s;
+            backdrop-filter: blur(5px);
+        }
+
+        #menu-toggle-btn:hover {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+            transform: scale(1.1);
+        }
+
+        #menu-toggle-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* --- ESPACIO DE TRABAJO --- */
+        #workspace {
+            flex: 1;
+            display: flex;
+            width: 100%;
+        }
+
+        /* Contenedores Flex para las divisiones */
+        .split-box {
+            display: flex;
+            flex: 1 1 100%;
+            overflow: hidden;
+        }
+
+        .split-box.horizontal { flex-direction: row; }
+        .split-box.vertical { flex-direction: column; }
+
+        /* Panel individual */
+        .panel {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 100%;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            min-width: 150px;
+            min-height: 150px;
+            position: relative;
+        }
+
+        .panel-header {
+            background-color: var(--header-bg);
+            height: 32px;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            gap: 5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .url-input {
+            flex: 1;
+            background-color: #3c3c3c;
+            border: 1px solid #555;
+            color: white;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .url-input:focus { border-color: var(--accent-color); }
+
+        .btn {
+            background: transparent;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            padding: 3px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:hover { background-color: #555; color: white; }
+        .btn svg { width: 14px; height: 14px; fill: currentColor; }
+        .btn-close:hover { background-color: #e81123; }
+
+        .panel-content {
+            flex: 1;
+            position: relative;
+            background-color: #ffffff;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        /* Overlay invisible para evitar que el iframe robe los eventos del ratón al redimensionar */
+        .iframe-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: transparent;
+            z-index: 10;
+            display: none;
+        }
+
+        /* Divisores (Resizers) */
+        .resizer {
+            background-color: var(--resizer-color);
+            z-index: 5;
+            transition: background-color 0.2s;
+        }
+
+        .resizer:hover, .resizer.active { background-color: var(--resizer-hover); }
+        .resizer-h { width: 6px; cursor: col-resize; margin: 0 -3px; }
+        .resizer-v { height: 6px; cursor: row-resize; margin: -3px 0; }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR -->
+    <div id="top-bar">
+        <button id="btn-load" class="btn-top" title="Cargar Sesión JSON">
+            <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+            Cargar Sesión ↑
+        </button>
+        <button id="btn-save" class="btn-top" title="Descargar Sesión JSON">
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            Guardar Sesión ↓
+        </button>
+        <input type="file" id="file-input" accept=".json" style="display:none" />
+    </div>
+
+    <!-- BOTÓN FLOTANTE PARA OCULTAR MENÚ -->
+    <button id="menu-toggle-btn" title="Ocultar/Mostrar Barra Superior">
+        <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+    </button>
+
+    <!-- ESPACIO DE TRABAJO -->
+    <div id="workspace">
+        <!-- El panel inicial se inyectará aquí -->
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const workspace = document.getElementById('workspace');
+
+            // Iconos SVG reutilizables
+            const icons = {
+                go: `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`,
+                splitH: `<svg viewBox="0 0 24 24"><path d="M3 3h8v18H3zm10 0h8v18h-8z"/></svg>`,
+                splitV: `<svg viewBox="0 0 24 24"><path d="M3 3h18v8H3zm0 10h18v8H3z"/></svg>`,
+                close: `<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`
+            };
+
+            const defaultUrl = "https://es.wikipedia.org";
+
+            // --- LÓGICA DE OCULTAR/MOSTRAR MENÚ ---
+            const topBar = document.getElementById('top-bar');
+            const menuToggleBtn = document.getElementById('menu-toggle-btn');
+            
+            menuToggleBtn.addEventListener('click', () => {
+                topBar.classList.toggle('hidden');
+            });
+
+            // --- LÓGICA DE GUARDADO / CARGA JSON ---
+            const btnSave = document.getElementById('btn-save');
+            const btnLoad = document.getElementById('btn-load');
+            const fileInput = document.getElementById('file-input');
+
+            // Serializar el árbol del DOM a objeto JSON
+            function serializeNode(element) {
+                if (element.classList.contains('panel')) {
+                    return {
+                        type: 'panel',
+                        url: element.querySelector('.url-input').value,
+                        flex: element.style.flex || '1 1 100%'
+                    };
+                } else if (element.classList.contains('split-box')) {
+                    const direction = element.classList.contains('horizontal') ? 'horizontal' : 'vertical';
+                    // Filtramos los resizers, solo nos interesan los paneles o splits hijos
+                    const children = Array.from(element.children).filter(c => !c.classList.contains('resizer'));
+                    return {
+                        type: 'split',
+                        direction: direction,
+                        flex: element.style.flex || '1 1 100%',
+                        children: children.map(serializeNode)
+                    };
+                }
+            }
+
+            // Deserializar objeto JSON al DOM
+            function deserializeNode(data) {
+                if (data.type === 'panel') {
+                    const p = createPanel(data.url);
+                    if (data.flex) p.style.flex = data.flex;
+                    return p;
+                } else if (data.type === 'split') {
+                    const container = document.createElement('div');
+                    container.className = `split-box ${data.direction}`;
+                    if (data.flex) container.style.flex = data.flex;
+
+                    const c1 = deserializeNode(data.children[0]);
+                    const c2 = deserializeNode(data.children[1]);
+                    const resizer = document.createElement('div');
+                    resizer.className = `resizer resizer-${data.direction === 'horizontal' ? 'h' : 'v'}`;
+
+                    container.appendChild(c1);
+                    container.appendChild(resizer);
+                    container.appendChild(c2);
+                    return container;
+                }
+            }
+
+            btnSave.addEventListener('click', () => {
+                const root = workspace.firstElementChild;
+                if (!root) return;
+                const data = serializeNode(root);
+                const json = JSON.stringify(data, null, 2);
+                
+                let filename = prompt("Nombre del archivo JSON para guardar la sesión:", "sesion_mosaico.json");
+                if (!filename) return; // Cancelado
+                if (!filename.endsWith('.json')) filename += '.json';
+
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            btnLoad.addEventListener('click', () => {
+                fileInput.click(); // Abre el diálogo nativo
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    try {
+                        const data = JSON.parse(evt.target.result);
+                        workspace.innerHTML = ''; // Limpiar el lienzo actual
+                        workspace.appendChild(deserializeNode(data)); // Reconstruir el árbol
+                    } catch(err) {
+                        alert("Error al cargar el archivo JSON. Verifica que sea válido.");
+                        console.error(err);
+                    }
+                    fileInput.value = ""; // Resetear el input para permitir recargar el mismo archivo
+                };
+                reader.readAsText(file);
+            });
+
+
+            // --- FUNCIONES CORE DEL MOSAICO (Basadas en tu archivo original) ---
+            function createPanel(url = defaultUrl) {
+                const panel = document.createElement('div');
+                panel.className = 'panel';
+                panel.style.flex = '1 1 100%';
+
+                panel.innerHTML = `
+                    <div class="panel-header">
+                        <input type="text" class="url-input" value="${url}" placeholder="Ingresa una URL" />
+                        <button class="btn btn-go" title="Ir">${icons.go}</button>
+                        <div style="flex: 0 0 10px;"></div>
+                        <button class="btn btn-split-h" title="Dividir Lado a Lado">${icons.splitH}</button>
+                        <button class="btn btn-split-v" title="Dividir Arriba/Abajo">${icons.splitV}</button>
+                        <button class="btn btn-close" title="Cerrar Panel">${icons.close}</button>
+                    </div>
+                    <div class="panel-content">
+                        <div class="iframe-overlay"></div>
+                        <iframe src="${url}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    </div>
+                `;
+
+                const input = panel.querySelector('.url-input');
+                const btnGo = panel.querySelector('.btn-go');
+                const iframe = panel.querySelector('iframe');
+                const btnSplitH = panel.querySelector('.btn-split-h');
+                const btnSplitV = panel.querySelector('.btn-split-v');
+                const btnClose = panel.querySelector('.btn-close');
+
+                const navigate = () => {
+                    let newUrl = input.value.trim();
+                    if (newUrl && !newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
+                        newUrl = 'https://' + newUrl;
+                    }
+
+                    const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+                    const ytMatch = newUrl.match(youtubeRegex);
+                    if (ytMatch && ytMatch[1]) {
+                        newUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
+                    }
+
+                    input.value = newUrl;
+                    iframe.src = newUrl;
+                };
+
+                btnGo.addEventListener('click', navigate);
+                input.addEventListener('keypress', (e) => { if (e.key === 'Enter') navigate(); });
+                btnSplitH.addEventListener('click', () => splitPanel(panel, 'horizontal'));
+                btnSplitV.addEventListener('click', () => splitPanel(panel, 'vertical'));
+                btnClose.addEventListener('click', () => closePanel(panel));
+
+                return panel;
+            }
+
+            function splitPanel(panel, direction) {
+                const parent = panel.parentNode;
+                const urlActual = panel.querySelector('.url-input').value;
+                
+                const container = document.createElement('div');
+                container.className = `split-box ${direction}`;
+                container.style.flex = panel.style.flex || '1 1 100%';
+
+                const resizer = document.createElement('div');
+                resizer.className = `resizer resizer-${direction === 'horizontal' ? 'h' : 'v'}`;
+
+                const newPanel = createPanel(urlActual);
+
+                panel.style.flex = '1 1 50%';
+                newPanel.style.flex = '1 1 50%';
+
+                parent.replaceChild(container, panel);
+                container.appendChild(panel);
+                container.appendChild(resizer);
+                container.appendChild(newPanel);
+            }
+
+            function closePanel(panel) {
+                const container = panel.parentNode;
+                if (container.id === 'workspace') {
+                    panel.querySelector('.url-input').value = 'about:blank';
+                    panel.querySelector('iframe').src = 'about:blank';
+                    return;
+                }
+
+                const grandParent = container.parentNode;
+                let sibling;
+                if (panel.nextElementSibling && panel.nextElementSibling.classList.contains('resizer')) {
+                    sibling = panel.nextElementSibling.nextElementSibling;
+                } else {
+                    sibling = panel.previousElementSibling.previousElementSibling;
+                }
+
+                sibling.style.flex = container.style.flex || '1 1 100%';
+                grandParent.replaceChild(sibling, container);
+            }
+
+            // --- ARRASTRE DE DIVISORES ---
+            let isResizing = false;
+            let currentResizer = null;
+
+            workspace.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('resizer')) {
+                    isResizing = true;
+                    currentResizer = e.target;
+                    currentResizer.classList.add('active');
+                    document.querySelectorAll('.iframe-overlay').forEach(el => el.style.display = 'block');
+                    document.body.style.cursor = currentResizer.classList.contains('resizer-h') ? 'col-resize' : 'row-resize';
+                }
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing || !currentResizer) return;
+
+                const container = currentResizer.parentNode;
+                const prev = currentResizer.previousElementSibling; 
+                const next = currentResizer.nextElementSibling;     
+                const isHorizontal = container.classList.contains('horizontal');
+                const rect = container.getBoundingClientRect();
+
+                if (isHorizontal) {
+                    const totalWidth = rect.width;
+                    const mouseX = e.clientX - rect.left;
+                    let prevPercent = (mouseX / totalWidth) * 100;
+                    
+                    if (prevPercent < 10) prevPercent = 10;
+                    if (prevPercent > 90) prevPercent = 90;
+                    
+                    let nextPercent = 100 - prevPercent;
+                    prev.style.flex = `1 1 ${prevPercent}%`;
+                    next.style.flex = `1 1 ${nextPercent}%`;
+                } else {
+                    const totalHeight = rect.height;
+                    const mouseY = e.clientY - rect.top;
+                    let prevPercent = (mouseY / totalHeight) * 100;
+                    
+                    if (prevPercent < 10) prevPercent = 10;
+                    if (prevPercent > 90) prevPercent = 90;
+                    
+                    let nextPercent = 100 - prevPercent;
+                    prev.style.flex = `1 1 ${prevPercent}%`;
+                    next.style.flex = `1 1 ${nextPercent}%`;
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    if (currentResizer) currentResizer.classList.remove('active');
+                    currentResizer = null;
+                    document.body.style.cursor = 'default';
+                    document.querySelectorAll('.iframe-overlay').forEach(el => el.style.display = 'none');
+                }
+            });
+
+            // Inicializar el espacio de trabajo
+            workspace.appendChild(createPanel(defaultUrl));
+        });
+    </script>
+</body>
+</html>

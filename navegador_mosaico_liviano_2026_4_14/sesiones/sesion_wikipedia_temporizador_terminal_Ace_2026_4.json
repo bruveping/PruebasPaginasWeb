@@ -1,0 +1,29 @@
+{
+  "type": "split",
+  "direction": "horizontal",
+  "flex": "1 1 100%",
+  "children": [
+    {
+      "type": "panel",
+      "url": "https://bruveping.github.io/DesarrollosP5/cronometro01/",
+      "flex": "1 1 46.3542%"
+    },
+    {
+      "type": "split",
+      "direction": "vertical",
+      "flex": "1 1 53.6458%",
+      "children": [
+        {
+          "type": "panel",
+          "url": "https://bruveping.github.io/DesarrollosP5/cronometro01/",
+          "flex": "1 1 50%"
+        },
+        {
+          "type": "panel",
+          "url": "https://bruveping.github.io/DesarrollosP5/Editor_Ace001/index.html",
+          "flex": "1 1 50%"
+        }
+      ]
+    }
+  ]
+}
