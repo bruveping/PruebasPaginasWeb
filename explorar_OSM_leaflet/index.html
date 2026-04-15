@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Ubicación y Clima</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Tailwind CSS para estilizado rápido de botones -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+            z-index: 1;
+        }
+        
+        /* Estilo de la flecha/triángulo de ubicación */
+        .location-arrow {
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 25px solid #3b82f6; /* Azul Tailwind */
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+            transition: transform 0.3s ease;
+        }
+
+        /* Contenedor de controles flotantes */
+        .controls-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 1000;
+        }
+
+        .floating-btn {
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .floating-btn:active {
+            transform: scale(0.9);
+        }
+
+        .floating-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: #374151;
+        }
+
+        /* Panel de clima */
+        #weather-info {
+            position: absolute;
+            bottom: 140px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: none;
+            min-width: 150px;
+            border: 1px solid #e5e7eb;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <!-- Panel de información de clima -->
+    <div id="weather-info">
+        <h3 class="font-bold text-sm text-gray-800 mb-1">Clima Local</h3>
+        <p id="weather-data" class="text-xs text-gray-600">Cargando...</p>
+    </div>
+
+    <!-- Botones Flotantes -->
+    <div class="controls-container">
+        <!-- Botón Clima -->
+        <button onclick="showWeather()" class="floating-btn" title="Información del Clima">
+            <svg viewBox="0 0 24 24"><path d="M12,15C12.83,15 13.5,14.33 13.5,13.5C13.5,12.67 12.83,12 12,12C11.17,12 10.5,12.67 10.5,13.5C10.5,14.33 11.17,15 12,15M17.5,13C17.5,10.24 15.26,8 12.5,8C10.95,8 9.59,8.7 8.7,9.81C8.33,9.61 7.93,9.5 7.5,9.5C6.12,9.5 5,10.62 5,12C5,12.18 5.03,12.35 5.08,12.5C3.25,13.16 2,14.92 2,17C2,19.76 4.24,22 7,22H16.5C19.54,22 22,19.54 22,16.5C22,14.11 20.12,12.16 17.65,11.58C17.56,12.04 17.5,12.5 17.5,13Z" /></svg>
+        </button>
+
+        <!-- Botón Mi Ubicación -->
+        <button onclick="centerMap()" class="floating-btn" title="Centrar en mi ubicación">
+            <svg viewBox="0 0 24 24"><path d="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" /></svg>
+        </button>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        let map;
+        let userMarker;
+        let userCoords = null;
+        const apiKey = ""; // La API key se inyecta automáticamente o usa una demo
+
+        // Inicializar Mapa
+        function initMap() {
+            // Centro inicial (Buenos Aires como ejemplo, se actualizará)
+            map = L.map('map', {
+                zoomControl: false // Quitamos los botones por defecto para que luzca más limpio
+            }).setView([-34.6037, -58.3816], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Intentar obtener ubicación inicial
+            startTracking();
+        }
+
+        // Seguimiento de ubicación
+        function startTracking() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.watchPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        userCoords = [latitude, longitude];
+
+                        if (!userMarker) {
+                            // Crear el icono de flecha
+                            const arrowIcon = L.divIcon({
+                                className: 'custom-div-icon',
+                                html: '<div class="location-arrow"></div>',
+                                iconSize: [20, 25],
+                                iconAnchor: [10, 25]
+                            });
+
+                            userMarker = L.marker(userCoords, { icon: arrowIcon }).addTo(map);
+                        } else {
+                            userMarker.setLatLng(userCoords);
+                        }
+                    },
+                    (error) => {
+                        console.error("Error obteniendo ubicación:", error);
+                    },
+                    { enableHighAccuracy: true }
+                );
+            }
+        }
+
+        // Función para centrar el mapa
+        function centerMap() {
+            if (userCoords) {
+                map.flyTo(userCoords, 16);
+            } else {
+                alert("Buscando tu ubicación todavía...");
+            }
+        }
+
+        // Función para mostrar el clima durante 3 segundos
+        async function showWeather() {
+            if (!userCoords) {
+                alert("Necesito tu ubicación para saber el clima.");
+                return;
+            }
+
+            const weatherPanel = document.getElementById('weather-info');
+            const weatherData = document.getElementById('weather-data');
+            
+            weatherPanel.style.display = 'block';
+            weatherData.innerText = "Consultando satélites...";
+
+            try {
+                // Usamos la API de OpenWeatherMap (v2.5)
+                const lat = userCoords[0];
+                const lon = userCoords[1];
+                const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=es`;
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Error en la respuesta");
+                
+                const data = await response.json();
+                
+                weatherData.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg font-bold">${Math.round(data.main.temp)}°C</span>
+                        <span class="capitalize">${data.weather[0].description}</span>
+                    </div>
+                    <div class="mt-1 text-gray-500">Humedad: ${data.main.humidity}%</div>
+                `;
+            } catch (err) {
+                weatherData.innerText = "Clima no disponible";
+                console.error(err);
+            }
+
+            // Desaparecer después de 3 segundos
+            setTimeout(() => {
+                weatherPanel.style.display = 'none';
+            }, 3000);
+        }
+
+        window.onload = initMap;
+    </script>
+</body>
+</html>
