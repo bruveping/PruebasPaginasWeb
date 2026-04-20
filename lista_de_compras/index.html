@@ -82,73 +82,74 @@
     <script>
         // Datos integrados (basados en tu listado maestro)
         const db = {
-            "supermercado": [
-                {
-                    "id": "cat-1",
-                    "categoria": "Carnicería y Granja", "icono": "🥩",
-                    "subcategorias": [
-                        { "nombre": "Vacuno", "productos": ["Milanesas (Nalga/Bola de lomo)", "Peceto", "Cuadril", "Asado / Tira de asado", "Vacío", "Carne picada (Especial/Común)", "Matambre"] },
-                        { "nombre": "Pollo", "productos": ["Pollo entero", "Supremas (Pechugas)", "Pata y Muslo", "Menudos"] },
-                        { "nombre": "Masas", "productos": ["Tapas de empanadas (Horno)", "Tapas de empanadas (Freír)", "Tapas de tarta (Hojaldre)", "Tapas de tarta (Pascualina)"] }
-                    ]
-                },
-                {
-                    "id": "cat-2",
-                    "categoria": "Lácteos y Quesos", "icono": "🧀",
-                    "subcategorias": [
-                        { "nombre": "Básicos", "productos": ["Leche (Entera/Desnatada)", "Yogur (Firme/Bebible)", "Manteca", "Crema de leche", "Dulce de leche"] },
-                        { "nombre": "Quesos y Fiambrería", "productos": ["Queso cremoso", "Queso de máquina en fetas", "Queso de rallar (Reggianito/Parmesano)", "Jamón cocido", "Salame / Salamín"] }
-                    ]
-                },
-                {
-                    "id": "cat-3",
-                    "categoria": "Verdulería", "icono": "🥦",
-                    "subcategorias": [
-                        { "nombre": "Vegetales", "productos": ["Papa", "Cebolla", "Zanahoría", "Calabaza / Zapallo", "Lechuga", "Tomate Perita", "Tomate Redondo", "Morrón (Rojo/Verde)"] },
-                        { "nombre": "Frutas", "productos": ["Banana", "Manzana", "Naranja", "Limón", "Palta", "Uva", "Frutilla"] }
-                    ]
-                },
-                {
-                    "id": "cat-4",
-                    "categoria": "Almacén", "icono": "🥫",
-                    "subcategorias": [
-                        { "nombre": "Secos", "productos": ["Arroz", "Fideos (Tallarines/Tirabuzones)", "Harina (000/Leudante)", "Pan rallado / Rebozador", "Polenta", "Lentejas"] },
-                        { "nombre": "Condimentos", "productos": ["Aceite (Girasol/Oliva)", "Sal (Fina/Gruesa)", "Azúcar", "Mayonesa / Mostaza / Ketchup", "Vinagre / Aceto balsámico", "Especias (Pimienta, Ají, Comino)"] }
-                    ]
-                },
-                {
-                    "id": "cat-5",
-                    "categoria": "Limpieza e Higiene", "icono": "🧽",
-                    "subcategorias": [
-                        { "nombre": "Hogar", "productos": ["Detergente","Alcohol", "Lavandina", "Jabón líquido para ropa", "Suavizante", "Rollos de cocina", "Limpiador de pisos"] },
-                        { "nombre": "Personal", "productos": ["Papel higiénico", "Shampoo / Acondicionador", "Jabón de tocador", "Desodorante", "Pasta dental", "Espuma de afeitar"] }
-                    ]
-                },
-                {
-                    "id": "cat-6",
-                    "categoria": "Bebidas", "icono": "💧",
-                    "subcategorias": [
-                        { "nombre": "Agua", "productos": ["Agua en botella", "Agua en bidón"] },
-                        { "nombre": "Jugos", "productos": ["Jugo Pura fruta", "Jugo Cepita"] }
-                    ]
-                },
-                {
-                    "id": "cat-7",
-                    "categoria": "Pescadería", "icono": "🐟🐠🦈",
-                    "subcategorias": [
-                        { "nombre": "pescado", "productos": ["Filet de merluza", "Rabas de Calamar","Cornalitos"] }
-                    ]
-                }
-		                {
-                    "id": "cat-8",
-                    "categoria": "Enlatados", "icono": "🥫",
-                    "subcategorias": [
-                        { "nombre": "enlatados", "productos": ["Atún", "Sardina","Tomate triturado"] }
-                    ]
-                }
-
-            ]
-        };
+  "supermercado": [
+    {
+      "id": "cat-1",
+      "categoria": "Carnicería y Granja",
+      "icono": "🥩",
+      "subcategorias": [
+        { "nombre": "Vacuno", "productos": ["Milanesas (Nalga/Bola de lomo)", "Peceto", "Cuadril", "Asado / Tira de asado", "Vacío", "Carne picada (Especial/Común)", "Matambre"] },
+        { "nombre": "Pollo", "productos": ["Pollo entero", "Supremas (Pechugas)", "Pata y Muslo", "Menudos"] },
+        { "nombre": "Masas", "productos": ["Tapas de empanadas (Horno)", "Tapas de empanadas (Freír)", "Tapas de tarta (Hojaldre)", "Tapas de tarta (Pascualina)"] }
+      ]
+    },
+    {
+      "id": "cat-2",
+      "categoria": "Lácteos y Quesos",
+      "icono": "🧀",
+      "subcategorias": [
+        { "nombre": "Básicos", "productos": ["Leche (Entera/Desnatada)", "Yogur (Firme/Bebible)", "Manteca", "Crema de leche", "Dulce de leche"] },
+        { "nombre": "Quesos y Fiambrería", "productos": ["Queso cremoso", "Queso de máquina en fetas", "Queso de rallar (Reggianito/Parmesano)", "Jamón cocido", "Salame / Salamín"] }
+      ]
+    },
+    {
+      "id": "cat-3",
+      "categoria": "Verdulería",
+      "icono": "🥦",
+      "subcategorias": [
+        { "nombre": "Vegetales", "productos": ["Papa", "Cebolla", "Zanahoría", "Calabaza / Zapallo", "Lechuga", "Tomate Perita", "Tomate Redondo", "Morrón (Rojo/Verde)"] },
+        { "nombre": "Frutas", "productos": ["Banana", "Manzana", "Naranja", "Limón", "Palta", "Uva", "Frutilla"] }
+      ]
+    },
+    {
+      "id": "cat-4",
+      "categoria": "Almacén",
+      "icono": "🥫",
+      "subcategorias": [
+        { "nombre": "Secos", "productos": ["Arroz", "Fideos (Tallarines/Tirabuzones)", "Harina (000/Leudante)", "Pan rallado / Rebozador", "Polenta", "Lentejas"] },
+        { "nombre": "Condimentos", "productos": ["Aceite (Girasol/Oliva)", "Sal (Fina/Gruesa)", "Azúcar", "Mayonesa / Mostaza / Ketchup", "Vinagre / Aceto balsámico", "Especias (Pimienta, Ají, Comino)"] },
+        { "nombre": "Enlatados", "productos": ["Atún", "Sardinas"] },
+        { "nombre": "Embotellados", "productos": ["Tomate Triturado"] }
+      ]
+    },
+    {
+      "id": "cat-5",
+      "categoria": "Limpieza e Higiene",
+      "icono": "🧽",
+      "subcategorias": [
+        { "nombre": "Hogar", "productos": ["Detergente", "Alcohol", "Lavandina", "Jabón líquido para ropa", "Suavizante", "Rollos de cocina", "Limpiador de pisos"] },
+        { "nombre": "Personal", "productos": ["Papel higiénico", "Shampoo / Acondicionador", "Jabón de tocador", "Desodorante", "Pasta dental", "Espuma de afeitar"] }
+      ]
+    },
+    {
+      "id": "cat-6",
+      "categoria": "Bebidas",
+      "icono": "💧",
+      "subcategorias": [
+        { "nombre": "Agua", "productos": ["Agua en botella", "Agua en bidón"] },
+        { "nombre": "Jugos", "productos": ["Jugo Pura fruta", "Jugo Cepita"] }
+      ]
+    },
+    {
+      "id": "cat-7",
+      "categoria": "Pescadería",
+      "icono": "🐟🐠🦈",
+      "subcategorias": [
+        { "nombre": "pescado", "productos": ["Filet de merluza", "Rabas de Calamar", "Cornalitos"] }
+      ]
+    }
+  ]
+};
 
         let selectedProducts = new Set();
 
