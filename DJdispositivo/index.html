@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Player DJ - A/B Deck</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            touch-action: manipulation;
+        }
+        .waveform-container {
+            position: relative;
+            height: 120px;
+            background: #1e293b;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        .waveform-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        .cursor-line {
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background-color: #f97316; /* Naranja como en el dibujo */
+            pointer-events: none;
+            z-index: 10;
+        }
+        .deck-active {
+            border: 2px solid #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+        }
+        .deck-active-b {
+            border: 2px solid #22c55e;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+        }
+        input[type=range] {
+            accent-color: #f97316;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 10px;
+        }
+        /* Estilos para botones de navegación estilo esquema */
+        .nav-btn {
+            background: #334155;
+            border: 1px solid #475569;
+            color: #22c55e; /* Color verde como en el esquema */
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover {
+            background: #475569;
+            color: #4ade80;
+        }
+        .nav-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+    </style>
+</head>
+<body class="p-2 md:p-6 min-h-screen">
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- SECCIÓN IZQUIERDA: CONTROLES Y DECKS -->
+        <div class="lg:col-span-8 space-y-6">
+            
+            <!-- HEADER -->
+            <div class="bg-slate-800 p-4 rounded-xl flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-xl font-bold text-orange-500 uppercase tracking-tighter">Mixer Digital</h1>
+                    <p class="text-[10px] text-slate-400">DISEÑO RESPONSIVE ADAPTADO</p>
+                </div>
+
+                <button id="loadBtn" class="bg-orange-600 hover:bg-orange-500 px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2">
+                    📁 CARGAR ARCHIVOS
+                </button>
+                <input type="file" id="fileInput" multiple accept="audio/*" class="hidden">
+            </div>
+
+            <!-- DECKS A Y B -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- DECK A -->
+                <div id="deckA-container" class="bg-slate-800 p-4 rounded-xl border border-slate-700 transition-all">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="bg-blue-600 px-3 py-1 rounded text-[10px] font-bold">DECK A</span>
+                        <div class="flex items-center gap-2 w-3/4 justify-end">
+                            <span class="text-[9px] text-slate-400">ZOOM</span>
+                            <input type="range" id="zoomA" min="1" max="15" step="0.5" value="1" class="w-full">
+                        </div>
+                    </div>
+                    <div class="waveform-container" id="containerA">
+                        <canvas id="canvasA" class="waveform-canvas"></canvas>
+                        <div id="cursorA" class="cursor-line" style="left: 0%"></div>
+                    </div>
+                    
+                    <!-- CONTROLES DE NAVEGACIÓN INDIVIDUALES A -->
+                    <div class="mt-4 flex flex-col gap-3">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="prevTrack('A')" class="nav-btn" title="Anterior">
+                                <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                            </button>
+                            <button onclick="playDeck('A')" id="playBtnA" class="nav-btn" title="Reproducir">
+                                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            </button>
+                            <button onclick="pauseDeck('A')" class="nav-btn" title="Pausa">
+                                <svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                            </button>
+                            <button onclick="stopDeck('A', true)" class="nav-btn" title="Stop">
+                                <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+                            </button>
+                            <button onclick="nextTrack('A')" class="nav-btn" title="Siguiente">
+                                <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-3 bg-slate-900/50 p-2 rounded">
+                            <span class="text-[9px] font-bold text-blue-400">VOL A</span>
+                            <input type="range" id="volA" min="0" max="1" step="0.01" value="1" class="flex-1">
+                            <button onclick="resetVol('A')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300 px-2 py-1 rounded border border-slate-600 transition-colors" title="Restaurar a 1.0">1.0</button>
+                        </div>
+                        <div id="infoA" class="text-[10px] text-slate-400 truncate text-center italic">Sin pista</div>
+                    </div>
+                </div>
+
+                <!-- DECK B -->
+                <div id="deckB-container" class="bg-slate-800 p-4 rounded-xl border border-slate-700 transition-all">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="bg-green-600 px-3 py-1 rounded text-[10px] font-bold">DECK B</span>
+                        <div class="flex items-center gap-2 w-3/4 justify-end">
+                            <span class="text-[9px] text-slate-400">ZOOM</span>
+                            <input type="range" id="zoomB" min="1" max="15" step="0.5" value="1" class="w-full">
+                        </div>
+                    </div>
+                    <div class="waveform-container" id="containerB">
+                        <canvas id="canvasB" class="waveform-canvas"></canvas>
+                        <div id="cursorB" class="cursor-line" style="left: 0%"></div>
+                    </div>
+                    
+                    <!-- CONTROLES DE NAVEGACIÓN INDIVIDUALES B -->
+                    <div class="mt-4 flex flex-col gap-3">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="prevTrack('B')" class="nav-btn" title="Anterior">
+                                <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                            </button>
+                            <button onclick="playDeck('B')" id="playBtnB" class="nav-btn" title="Reproducir">
+                                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            </button>
+                            <button onclick="pauseDeck('B')" class="nav-btn" title="Pausa">
+                                <svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                            </button>
+                            <button onclick="stopDeck('B', true)" class="nav-btn" title="Stop">
+                                <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+                            </button>
+                            <button onclick="nextTrack('B')" class="nav-btn" title="Siguiente">
+                                <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-3 bg-slate-900/50 p-2 rounded">
+                            <span class="text-[9px] font-bold text-green-400">VOL B</span>
+                            <input type="range" id="volB" min="0" max="1" step="0.01" value="1" class="flex-1">
+                            <button onclick="resetVol('B')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300 px-2 py-1 rounded border border-slate-600 transition-colors" title="Restaurar a 1.0">1.0</button>
+                        </div>
+                        <div id="infoB" class="text-[10px] text-slate-400 truncate text-center italic">Sin pista</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MASTER GAIN PANEL (NUEVA UBICACIÓN INFERIOR) -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center gap-4">
+                <label class="text-xs font-bold text-orange-400 whitespace-nowrap">V. GENERAL (0-2)</label>
+                <input type="range" id="masterGain" min="0" max="2" step="0.01" value="1" class="flex-1">
+                <span id="masterValue" class="text-orange-400 font-mono text-sm w-8 text-center">1.0</span>
+                <button onclick="resetVol('Master')" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-2 rounded border border-slate-600 transition-colors font-bold" title="Restaurar a 1.0">1.0</button>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DERECHA: BIBLIOTECA -->
+        <div class="lg:col-span-4 flex flex-col gap-4 max-h-[85vh]">
+            <div class="bg-slate-800 p-4 rounded-xl flex-1 flex flex-col min-h-0 border border-slate-700">
+                <h2 class="text-xs font-bold mb-3 flex items-center gap-2">
+                    <span class="text-orange-500 animate-pulse">●</span> DISPOSITIVO LOCAL
+                </h2>
+                <div id="unassignedList" class="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                    <p class="text-[10px] text-slate-500 italic text-center mt-4">Carga archivos para empezar</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 flex-1 min-h-0">
+                <div class="bg-slate-900/50 p-3 rounded-xl border border-blue-900/30 flex flex-col">
+                    <h3 class="text-[9px] font-bold text-blue-400 mb-2 uppercase text-center">Playlist A</h3>
+                    <div id="listA" class="flex-1 overflow-y-auto custom-scrollbar space-y-1 text-[10px]"></div>
+                </div>
+                <div class="bg-slate-900/50 p-3 rounded-xl border border-green-900/30 flex flex-col">
+                    <h3 class="text-[9px] font-bold text-green-400 mb-2 uppercase text-center">Playlist B</h3>
+                    <div id="listB" class="flex-1 overflow-y-auto custom-scrollbar space-y-1 text-[10px]"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="msgBox" class="fixed bottom-4 right-4 bg-orange-600 text-white px-4 py-2 rounded-lg shadow-lg transform translate-y-20 transition-transform duration-300 pointer-events-none text-xs z-50">
+        ¡Acción completada!
+    </div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const masterGainNode = audioCtx.createGain();
+        masterGainNode.connect(audioCtx.destination);
+        masterGainNode.gain.value = 1.0;
+
+        const state = {
+            unassigned: [],
+            playlistA: [],
+            playlistB: [],
+            deckA: { buffer: null, source: null, gain: null, startTime: 0, pausedAt: 0, playing: false, info: null, currentIndex: -1 },
+            deckB: { buffer: null, source: null, gain: null, startTime: 0, pausedAt: 0, playing: false, info: null, currentIndex: -1 }
+        };
+
+        const fileInput = document.getElementById('fileInput');
+        const loadBtn = document.getElementById('loadBtn');
+        const unassignedList = document.getElementById('unassignedList');
+        const listA = document.getElementById('listA');
+        const listB = document.getElementById('listB');
+
+        state.deckA.gain = audioCtx.createGain();
+        state.deckA.gain.connect(masterGainNode);
+        state.deckB.gain = audioCtx.createGain();
+        state.deckB.gain.connect(masterGainNode);
+
+        // --- GESTIÓN DE ARCHIVOS ---
+        loadBtn.onclick = () => fileInput.click();
+        fileInput.onchange = async (e) => {
+            const files = Array.from(e.target.files);
+            for (const file of files) {
+                const id = Math.random().toString(36).substr(2, 9);
+                state.unassigned.push({ id, file, name: file.name });
+            }
+            renderLists();
+            showMsg("Archivos listos para asignar");
+        };
+
+        function renderLists() {
+            unassignedList.innerHTML = '';
+            if (state.unassigned.length === 0 && state.playlistA.length === 0 && state.playlistB.length === 0) {
+                unassignedList.innerHTML = '<p class="text-[10px] text-slate-500 italic text-center mt-4">Vacio</p>';
+            }
+            state.unassigned.forEach((item) => {
+                const div = document.createElement('div');
+                div.className = 'bg-slate-700/30 p-2 rounded flex items-center justify-between hover:bg-slate-700/60 transition-all';
+                div.innerHTML = `
+                    <span class="text-[10px] truncate max-w-[120px]">${item.name}</span>
+                    <div class="flex gap-1">
+                        <button onclick="moveTo('A', '${item.id}')" class="bg-blue-600/80 px-2 py-0.5 rounded text-[9px] font-bold">A</button>
+                        <button onclick="moveTo('B', '${item.id}')" class="bg-green-600/80 px-2 py-0.5 rounded text-[9px] font-bold">B</button>
+                    </div>
+                `;
+                unassignedList.appendChild(div);
+            });
+
+            listA.innerHTML = state.playlistA.map((item, i) => 
+                `<div class="p-1.5 border-b border-slate-800 flex justify-between items-center ${state.deckA.currentIndex === i ? 'bg-blue-600/40' : 'bg-blue-900/10'} mb-1 rounded group">
+                    <span class="truncate cursor-pointer flex-1 hover:text-white transition-colors" onclick="loadDeck('A', ${i})" title="Cargar pista en el Deck">${i+1}. ${item.name}</span>
+                    <button onclick="removeFrom('A', '${item.id}')" class="text-slate-500 hover:text-red-500 ml-2 px-1">×</button>
+                </div>`).join('');
+            
+            listB.innerHTML = state.playlistB.map((item, i) => 
+                `<div class="p-1.5 border-b border-slate-800 flex justify-between items-center ${state.deckB.currentIndex === i ? 'bg-green-600/40' : 'bg-green-900/10'} mb-1 rounded group">
+                    <span class="truncate cursor-pointer flex-1 hover:text-white transition-colors" onclick="loadDeck('B', ${i})" title="Cargar pista en el Deck">${i+1}. ${item.name}</span>
+                    <button onclick="removeFrom('B', '${item.id}')" class="text-slate-500 hover:text-red-500 ml-2 px-1">×</button>
+                </div>`).join('');
+        }
+
+        window.moveTo = (target, id) => {
+            const index = state.unassigned.findIndex(i => i.id === id);
+            const item = state.unassigned.splice(index, 1)[0];
+            if (target === 'A') {
+                state.playlistA.push(item);
+                if (state.deckA.currentIndex === -1) loadDeck('A', 0);
+            } else {
+                state.playlistB.push(item);
+                if (state.deckB.currentIndex === -1) loadDeck('B', 0);
+            }
+            renderLists();
+        };
+
+        window.removeFrom = (target, id) => {
+            const list = target === 'A' ? state.playlistA : state.playlistB;
+            const index = list.findIndex(i => i.id === id);
+            const item = list.splice(index, 1)[0];
+            state.unassigned.push(item);
+            renderLists();
+        }
+
+        // --- AUDIO Y NAVEGACIÓN ---
+        async function loadDeck(type, index) {
+            const deck = type === 'A' ? state.deckA : state.deckB;
+            const playlist = type === 'A' ? state.playlistA : state.playlistB;
+            if (!playlist[index]) return;
+            
+            stopDeck(type, true);
+            const item = playlist[index];
+            deck.currentIndex = index;
+            deck.info = item;
+            deck.pausedAt = 0;
+            document.getElementById(`info${type}`).innerText = item.name;
+
+            const arrayBuffer = await item.file.arrayBuffer();
+            deck.buffer = await audioCtx.decodeAudioData(arrayBuffer);
+            drawWaveform(type, deck.buffer);
+            renderLists();
+        }
+
+        function playDeck(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const otherType = type === 'A' ? 'B' : 'A';
+            stopDeck(otherType, false); // Apaga el otro deck (Requisito)
+
+            const deck = type === 'A' ? state.deckA : state.deckB;
+            if (!deck.buffer) return;
+            if (deck.playing) return;
+
+            const source = audioCtx.createBufferSource();
+            source.buffer = deck.buffer;
+            source.connect(deck.gain);
+            const offset = deck.pausedAt % deck.buffer.duration;
+            source.start(0, offset);
+            
+            deck.source = source;
+            deck.startTime = audioCtx.currentTime - offset;
+            deck.playing = true;
+            
+            document.getElementById(`deck${type}-container`).classList.add(type === 'A' ? 'deck-active' : 'deck-active-b');
+            
+            source.onended = () => {
+                if (deck.playing) {
+                    deck.playing = false;
+                    deck.pausedAt = 0;
+                    
+                    // Lógica de alternancia cruzada: 1A -> 1B -> 2A -> 2B
+                    if (type === 'A') {
+                        // De A pasamos a B en el mismo índice
+                        if (state.playlistB.length > deck.currentIndex) {
+                            loadDeck('B', deck.currentIndex).then(() => playDeck('B'));
+                        } else {
+                            nextTrack('A'); // Fallback si no hay elemento B correspondiente
+                        }
+                    } else {
+                        // De B pasamos a A en el siguiente índice
+                        const nextIndex = deck.currentIndex + 1;
+                        if (state.playlistA.length > nextIndex) {
+                            loadDeck('A', nextIndex).then(() => playDeck('A'));
+                        } else if (state.playlistA.length > 0) {
+                            loadDeck('A', 0).then(() => playDeck('A')); // Loop al inicio si se acabó todo
+                        }
+                    }
+                }
+            };
+        }
+
+        function pauseDeck(type) {
+            const deck = type === 'A' ? state.deckA : state.deckB;
+            if (deck.source && deck.playing) {
+                deck.pausedAt = audioCtx.currentTime - deck.startTime;
+                deck.source.onended = null;
+                deck.source.stop();
+                deck.source = null;
+                deck.playing = false;
+                document.getElementById(`deck${type}-container`).classList.remove('deck-active', 'deck-active-b');
+            }
+        }
+
+        function stopDeck(type, resetProgress = true) {
+            pauseDeck(type);
+            if (resetProgress) {
+                const deck = type === 'A' ? state.deckA : state.deckB;
+                deck.pausedAt = 0;
+                document.getElementById(`cursor${type}`).style.left = '0%';
+            }
+        }
+
+        window.nextTrack = (type) => {
+            const playlist = type === 'A' ? state.playlistA : state.playlistB;
+            const deck = type === 'A' ? state.deckA : state.deckB;
+            let nextIndex = deck.currentIndex + 1;
+            
+            if (nextIndex >= playlist.length) {
+                // Si no hay más en esta lista, la lógica de loop sugiere ir al otro deck
+                // o volver al principio. Aquí volvemos al principio de la misma lista.
+                nextIndex = 0;
+            }
+            if (playlist.length > 0) {
+                loadDeck(type, nextIndex).then(() => playDeck(type));
+            }
+        };
+
+        window.prevTrack = (type) => {
+            const deck = type === 'A' ? state.deckA : state.deckB;
+            const playlist = type === 'A' ? state.playlistA : state.playlistB;
+            let prevIndex = deck.currentIndex - 1;
+            if (prevIndex < 0) prevIndex = playlist.length - 1;
+            if (playlist.length > 0) {
+                loadDeck(type, prevIndex).then(() => playDeck(type));
+            }
+        };
+
+        // Función para resetear volúmenes
+        window.resetVol = (target) => {
+            if (target === 'A') {
+                state.deckA.gain.gain.value = 1.0;
+                document.getElementById('volA').value = 1.0;
+            } else if (target === 'B') {
+                state.deckB.gain.gain.value = 1.0;
+                document.getElementById('volB').value = 1.0;
+            } else if (target === 'Master') {
+                masterGainNode.gain.value = 1.0;
+                document.getElementById('masterGain').value = 1.0;
+                document.getElementById('masterValue').innerText = '1.0';
+            }
+        };
+
+        // --- VISUALIZACIÓN ---
+        function drawWaveform(type, buffer) {
+            const canvas = document.getElementById(`canvas${type}`);
+            const ctx = canvas.getContext('2d');
+            const zoom = parseFloat(document.getElementById(`zoom${type}`).value);
+            const width = canvas.width = canvas.offsetWidth;
+            const height = canvas.height = canvas.offsetHeight;
+            const data = buffer.getChannelData(0);
+            const step = Math.ceil(data.length / (width * zoom));
+            const amp = height / 2;
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = type === 'A' ? '#3b82f6' : '#22c55e';
+            for (let i = 0; i < width; i++) {
+                let min = 1.0; let max = -1.0;
+                for (let j = 0; j < step; j++) {
+                    const datum = data[(i * step) + j];
+                    if (datum < min) min = datum;
+                    if (datum > max) max = datum;
+                }
+                ctx.fillRect(i, (1 + min) * amp, 1, Math.max(1, (max - min) * amp));
+            }
+        }
+
+        function setupWaveformEvents(type) {
+            const container = document.getElementById(`container${type}`);
+            const cursor = document.getElementById(`cursor${type}`);
+            const updateSeek = (e) => {
+                const deck = type === 'A' ? state.deckA : state.deckB;
+                if (!deck.buffer) return;
+                const rect = container.getBoundingClientRect();
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const x = clientX - rect.left;
+                const percent = Math.max(0, Math.min(1, x / rect.width));
+                cursor.style.left = (percent * 100) + '%';
+                const newTime = percent * deck.buffer.duration;
+                if (deck.playing) {
+                    stopDeck(type, false);
+                    deck.pausedAt = newTime;
+                    playDeck(type);
+                } else {
+                    deck.pausedAt = newTime;
+                }
+            };
+            container.onmousedown = (e) => { container._isDragging = true; updateSeek(e); };
+            window.addEventListener('mousemove', (e) => { if (container._isDragging) updateSeek(e); });
+            window.addEventListener('mouseup', () => container._isDragging = false);
+            container.ontouchstart = (e) => { container._isDragging = true; updateSeek(e); };
+            container.ontouchmove = (e) => { if (container._isDragging) { e.preventDefault(); updateSeek(e); } };
+            container.ontouchend = () => container._isDragging = false;
+        }
+
+        function updateCursors() {
+            ['A', 'B'].forEach(type => {
+                const deck = type === 'A' ? state.deckA : state.deckB;
+                if (deck.playing && deck.buffer) {
+                    const currentTime = (audioCtx.currentTime - deck.startTime) % deck.buffer.duration;
+                    const percent = (currentTime / deck.buffer.duration) * 100;
+                    document.getElementById(`cursor${type}`).style.left = percent + '%';
+                }
+            });
+            requestAnimationFrame(updateCursors);
+        }
+
+        // --- EVENT LISTENERS ---
+        document.getElementById('volA').oninput = (e) => state.deckA.gain.gain.value = e.target.value;
+        document.getElementById('volB').oninput = (e) => state.deckB.gain.gain.value = e.target.value;
+        document.getElementById('masterGain').oninput = (e) => {
+            const v = parseFloat(e.target.value);
+            masterGainNode.gain.value = v;
+            document.getElementById('masterValue').innerText = v.toFixed(1);
+        };
+        document.getElementById('zoomA').oninput = () => state.deckA.buffer && drawWaveform('A', state.deckA.buffer);
+        document.getElementById('zoomB').oninput = () => state.deckB.buffer && drawWaveform('B', state.deckB.buffer);
+
+        function showMsg(txt) {
+            const box = document.getElementById('msgBox');
+            box.innerText = txt; box.classList.remove('translate-y-20');
+            setTimeout(() => box.classList.add('translate-y-20'), 2000);
+        }
+
+        setupWaveformEvents('A');
+        setupWaveformEvents('B');
+        updateCursors();
+        window.onresize = () => {
+            state.deckA.buffer && drawWaveform('A', state.deckA.buffer);
+            state.deckB.buffer && drawWaveform('B', state.deckB.buffer);
+        };
+    </script>
+</body>
+</html>
