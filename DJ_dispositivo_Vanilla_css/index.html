@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Player DJ - A/B Deck (Offline)</title>
+    <style>
+        /* === VARIABLES DE COLOR Y DISEÑO === */
+        :root {
+            --bg-body: #0f172a;
+            --bg-panel: #1e293b;
+            --bg-panel-light: #334155;
+            --bg-panel-dark: rgba(15, 23, 42, 0.5);
+            --border-color: #334155;
+            --border-color-light: #475569;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-muted-dark: #64748b;
+            
+            --orange-main: #ea580c;
+            --orange-hover: #f97316;
+            --orange-text: #fb923c;
+            
+            --blue-main: #2563eb;
+            --blue-light: #60a5fa;
+            --blue-bg-active: rgba(37, 99, 235, 0.4);
+            --blue-bg-dim: rgba(30, 58, 138, 0.1);
+            
+            --green-main: #16a34a;
+            --green-light: #4ade80;
+            --green-bg-active: rgba(22, 163, 74, 0.4);
+            --green-bg-dim: rgba(20, 83, 45, 0.1);
+
+            --red-hover: #ef4444;
+        }
+
+        /* === RESET Y BASE === */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            touch-action: manipulation;
+            padding: 1rem;
+            min-height: 100vh;
+        }
+
+        @media (min-width: 768px) {
+            body { padding: 1.5rem; }
+        }
+
+        /* === LAYOUT PRINCIPAL === */
+        .container {
+            max-width: 1152px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 1024px) {
+            .container { grid-template-columns: 2fr 1fr; }
+        }
+
+        .main-col { display: flex; flex-direction: column; gap: 1.5rem; }
+        .side-col { display: flex; flex-direction: column; gap: 1rem; max-height: 85vh; }
+
+        /* === COMPONENTES COMUNES === */
+        .panel {
+            background-color: var(--bg-panel);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .flex-row { display: flex; align-items: center; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .text-xs { font-size: 0.75rem; }
+        .text-sm { font-size: 0.875rem; }
+        .font-bold { font-weight: 700; }
+        .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .text-wrap-break { white-space: normal; word-break: break-word; line-height: 1.4; }
+        
+        /* === BOTONES === */
+        button {
+            cursor: pointer;
+            border: none;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background-color: var(--orange-main);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover { background-color: var(--orange-hover); }
+
+        .btn-small {
+            background-color: var(--bg-panel-light);
+            color: #cbd5e1;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.625rem;
+            border: 1px solid var(--border-color-light);
+            transition: background 0.2s;
+        }
+
+        .btn-small:hover { background-color: var(--border-color-light); }
+
+        /* === HEADER === */
+        .header-panel { flex-wrap: wrap; gap: 1rem; }
+        .header-title { font-size: 1.25rem; font-weight: bold; color: var(--orange-hover); text-transform: uppercase; letter-spacing: -0.05em; }
+        .header-subtitle { font-size: 0.625rem; color: var(--text-muted); }
+
+        /* === DECKS === */
+        .decks-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .decks-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        .deck-panel { transition: all 0.3s ease; }
+        .deck-active { border: 2px solid var(--blue-main); box-shadow: 0 0 15px rgba(37, 99, 235, 0.3); }
+        .deck-active-b { border: 2px solid var(--green-main); box-shadow: 0 0 15px rgba(22, 163, 74, 0.3); }
+
+        .deck-badge { padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.625rem; font-weight: bold; }
+        .badge-a { background-color: var(--blue-main); }
+        .badge-b { background-color: var(--green-main); }
+
+        .zoom-control { display: flex; align-items: center; gap: 0.5rem; width: 75%; justify-content: flex-end; }
+        .zoom-control span { font-size: 0.56rem; color: var(--text-muted); }
+        .zoom-control input { width: 100%; }
+
+        /* Waveform */
+        .waveform-container {
+            position: relative;
+            height: 120px;
+            background: var(--bg-panel);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: crosshair;
+            margin-bottom: 1rem;
+        }
+        .waveform-canvas { width: 100%; height: 100%; }
+        .cursor-line {
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background-color: var(--orange-hover);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Controles de Navegación */
+        .nav-controls { display: flex; flex-direction: column; gap: 0.75rem; }
+        .nav-btns-row { display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        
+        .nav-btn {
+            background: var(--bg-panel-light);
+            border: 1px solid var(--border-color-light);
+            color: var(--green-light);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover { background: var(--border-color-light); color: #86efac; }
+        .nav-btn svg { width: 20px; height: 20px; fill: currentColor; }
+
+        /* Controles de Volumen */
+        .vol-control {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: var(--bg-panel-dark);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
+        .vol-label-a { font-size: 0.56rem; font-weight: bold; color: var(--blue-light); }
+        .vol-label-b { font-size: 0.56rem; font-weight: bold; color: var(--green-light); }
+        .vol-control input { flex: 1; }
+
+        .track-info {
+            font-size: 0.625rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+        }
+
+        /* === PANEL MASTER === */
+        .master-panel { gap: 1rem; }
+        .master-label { font-size: 0.75rem; font-weight: bold; color: var(--orange-text); white-space: nowrap; }
+        .master-panel input { flex: 1; }
+        .master-value { color: var(--orange-text); font-family: monospace; font-size: 0.875rem; width: 2rem; text-align: center; }
+
+        /* === INPUTS Y SCROLLBAR === */
+        input[type=range] { accent-color: var(--orange-hover); }
+        input[type=file] { display: none; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: var(--bg-panel); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border-color-light); border-radius: 10px; }
+
+        /* === BIBLIOTECA Y LISTAS === */
+        .library-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+        .library-title { font-size: 0.75rem; font-weight: bold; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+        .library-title span { color: var(--orange-hover); animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
+        @keyframes pulse { 50% { opacity: .5; } }
+
+        .list-container { flex: 1; overflow-y: auto; padding-right: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+        
+        .empty-msg { font-size: 0.625rem; color: var(--text-muted-dark); font-style: italic; text-align: center; margin-top: 1rem; }
+
+        .unassigned-item {
+            background-color: rgba(51, 65, 85, 0.3);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.2s;
+        }
+        .unassigned-item:hover { background-color: rgba(51, 65, 85, 0.6); }
+        .unassigned-item span { font-size: 0.625rem; flex: 1; padding-right: 0.5rem; }
+        .unassigned-btns { display: flex; gap: 0.25rem; }
+        .btn-move-a { background-color: rgba(37, 99, 235, 0.8); color: white; padding: 0.1rem 0.4rem; border-radius: 0.25rem; font-size: 0.56rem; font-weight: bold; }
+        .btn-move-b { background-color: rgba(22, 163, 74, 0.8); color: white; padding: 0.1rem 0.4rem; border-radius: 0.25rem; font-size: 0.56rem; font-weight: bold; }
+
+        .playlists-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; flex: 1; min-height: 0; }
+        
+        .playlist-panel {
+            background-color: var(--bg-panel-dark);
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .playlist-panel.border-a { border: 1px solid rgba(30, 58, 138, 0.3); }
+        .playlist-panel.border-b { border: 1px solid rgba(20, 83, 45, 0.3); }
+        
+        .playlist-title-a { font-size: 0.56rem; font-weight: bold; color: var(--blue-light); margin-bottom: 0.5rem; text-transform: uppercase; text-align: center; }
+        .playlist-title-b { font-size: 0.56rem; font-weight: bold; color: var(--green-light); margin-bottom: 0.5rem; text-transform: uppercase; text-align: center; }
+
+        .playlist-item {
+            padding: 0.375rem;
+            border-bottom: 1px solid var(--bg-panel);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 0.25rem;
+            margin-bottom: 0.25rem;
+            font-size: 0.625rem;
+        }
+        .playlist-item.bg-a-dim { background-color: var(--blue-bg-dim); }
+        .playlist-item.bg-b-dim { background-color: var(--green-bg-dim); }
+        .playlist-item.active-a { background-color: var(--blue-bg-active); }
+        .playlist-item.active-b { background-color: var(--green-bg-active); }
+        
+        .playlist-item span { flex: 1; cursor: pointer; transition: color 0.2s; padding-right: 0.5rem; }
+        .btn-remove { color: var(--text-muted-dark); background: transparent; padding: 0 0.25rem; margin-left: 0.5rem; font-size: 0.875rem; line-height: 1;}
+        .btn-remove:hover { color: var(--red-hover); }
+
+        /* === MENSAJE FLOTANTE === */
+        .msg-box {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background-color: var(--orange-main);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            font-size: 0.75rem;
+            z-index: 50;
+            pointer-events: none;
+            transition: transform 0.3s ease-in-out;
+            transform: translateY(150%);
+        }
+        .msg-box.show { transform: translateY(0); }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- SECCIÓN IZQUIERDA: CONTROLES Y DECKS -->
+        <div class="main-col">
+            
+            <!-- HEADER -->
+            <header class="panel flex-between header-panel">
+                <div>
+                    <h1 class="header-title">Mixer Digital</h1>
+                    <p class="header-subtitle">DISEÑO OFFLINE / APK LISTO</p>
+                </div>
+
+                <button id="loadBtn" class="btn-primary">
+                    📁 CARGAR ARCHIVOS
+                </button>
+                <input type="file" id="fileInput" multiple accept="audio/*">
+            </header>
+
+            <!-- DECKS A Y B -->
+            <div class="decks-grid">
+                <!-- DECK A -->
+                <div id="deckA-container" class="panel deck-panel">
+                    <div class="flex-between" style="margin-bottom: 0.5rem;">
+                        <span class="deck-badge badge-a text-main">DECK A</span>
+                        <div class="zoom-control">
+                            <span>ZOOM</span>
+                            <input type="range" id="zoomA" min="1" max="15" step="0.5" value="1">
+                        </div>
+                    </div>
+                    <div class="waveform-container" id="containerA">
+                        <canvas id="canvasA" class="waveform-canvas"></canvas>
+                        <div id="cursorA" class="cursor-line" style="left: 0%"></div>
+                    </div>
+                    
+                    <!-- CONTROLES DE NAVEGACIÓN INDIVIDUALES A -->
+                    <div class="nav-controls">
+                        <div class="nav-btns-row">
+                            <button onclick="prevTrack('A')" class="nav-btn" title="Anterior">
+                                <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                            </button>
+                            <button onclick="playDeck('A')" id="playBtnA" class="nav-btn" title="Reproducir">
+                                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            </button>
+                            <button onclick="pauseDeck('A')" class="nav-btn" title="Pausa">
+                                <svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                            </button>
+                            <button onclick="stopDeck('A', true)" class="nav-btn" title="Stop">
+                                <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+                            </button>
+                            <button onclick="nextTrack('A')" class="nav-btn" title="Siguiente">
+                                <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                            </button>
+                        </div>
+                        <div class="vol-control">
+                            <span class="vol-label-a">VOL A</span>
+                            <input type="range" id="volA" min="0" max="1" step="0.01" value="1">
+                            <button onclick="resetVol('A')" class="btn-small font-bold" title="Restaurar a 1.0">1.0</button>
+                        </div>
+                        <div id="infoA" class="track-info truncate">Sin pista</div>
+                    </div>
+                </div>
+
+                <!-- DECK B -->
+                <div id="deckB-container" class="panel deck-panel">
+                    <div class="flex-between" style="margin-bottom: 0.5rem;">
+                        <span class="deck-badge badge-b text-main">DECK B</span>
+                        <div class="zoom-control">
+                            <span>ZOOM</span>
+                            <input type="range" id="zoomB" min="1" max="15" step="0.5" value="1">
+                        </div>
+                    </div>
+                    <div class="waveform-container" id="containerB">
+                        <canvas id="canvasB" class="waveform-canvas"></canvas>
+                        <div id="cursorB" class="cursor-line" style="left: 0%"></div>
+                    </div>
+                    
+                    <!-- CONTROLES DE NAVEGACIÓN INDIVIDUALES B -->
+                    <div class="nav-controls">
+                        <div class="nav-btns-row">
+                            <button onclick="prevTrack('B')" class="nav-btn" title="Anterior">
+                                <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                            </button>
+                            <button onclick="playDeck('B')" id="playBtnB" class="nav-btn" title="Reproducir">
+                                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            </button>
+                            <button onclick="pauseDeck('B')" class="nav-btn" title="Pausa">
+                                <svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                            </button>
+                            <button onclick="stopDeck('B', true)" class="nav-btn" title="Stop">
+                                <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+                            </button>
+                            <button onclick="nextTrack('B')" class="nav-btn" title="Siguiente">
+                                <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                            </button>
+                        </div>
+                        <div class="vol-control">
+                            <span class="vol-label-b">VOL B</span>
+                            <input type="range" id="volB" min="0" max="1" step="0.01" value="1">
+                            <button onclick="resetVol('B')" class="btn-small font-bold" title="Restaurar a 1.0">1.0</button>
+                        </div>
+                        <div id="infoB" class="track-info truncate">Sin pista</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MASTER GAIN PANEL -->
+            <div class="panel flex-row master-panel">
+                <label class="master-label">V. GENERAL (0-2)</label>
+                <input type="range" id="masterGain" min="0" max="2" step="0.01" value="1">
+                <span id="masterValue" class="master-value">1.0</span>
+                <button onclick="resetVol('Master')" class="btn-small font-bold" style="padding: 0.5rem;" title="Restaurar a 1.0">1.0</button>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DERECHA: BIBLIOTECA -->
+        <div class="side-col">
+            <div class="panel library-panel">
+                <h2 class="library-title">
+                    <span>●</span> DISPOSITIVO LOCAL
+                </h2>
+                <div id="unassignedList" class="list-container custom-scrollbar">
+                    <p class="empty-msg">Carga archivos para empezar</p>
+                </div>
+            </div>
+
+            <div class="playlists-grid">
+                <div class="playlist-panel border-a">
+                    <h3 class="playlist-title-a">Playlist A</h3>
+                    <div id="listA" class="list-container custom-scrollbar"></div>
+                </div>
+                <div class="playlist-panel border-b">
+                    <h3 class="playlist-title-b">Playlist B</h3>
+                    <div id="listB" class="list-container custom-scrollbar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MENSAJE FLOTANTE -->
+    <div id="msgBox" class="msg-box">
+        ¡Acción completada!
+    </div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const masterGainNode = audioCtx.createGain();
+        masterGainNode.connect(audioCtx.destination);
+        masterGainNode.gain.value = 1.0;
+
+        const state = {
+            unassigned: [],
+            playlistA: [],
+            playlistB: [],
+            deckA: { buffer: null, source: null, gain: null, startTime: 0, pausedAt: 0, playing: false, info: null, currentIndex: -1 },
+            deckB: { buffer: null, source: null, gain: null, startTime: 0, pausedAt: 0, playing: false, info: null, currentIndex: -1 }
+        };
+
+        const fileInput = document.getElementById('fileInput');
+        const loadBtn = document.getElementById('loadBtn');
+        const unassignedList = document.getElementById('unassignedList');
+        const listA = document.getElementById('listA');
+        const listB = document.getElementById('listB');
+
+        state.deckA.gain = audioCtx.createGain();
+        state.deckA.gain.connect(masterGainNode);
+        state.deckB.gain = audioCtx.createGain();
+        state.deckB.gain.connect(masterGainNode);
+
+        // --- GESTIÓN DE ARCHIVOS ---
+        loadBtn.onclick = () => fileInput.click();
+        fileInput.onchange = async (e) => {
+            const files = Array.from(e.target.files);
+            for (const file of files) {
+                const id = Math.random().toString(36).substr(2, 9);
+                state.unassigned.push({ id, file, name: file.name });
+            }
+            renderLists();
+            showMsg("Archivos listos para asignar");
+        };
+
+        function renderLists() {
+            unassignedList.innerHTML = '';
+            if (state.unassigned.length === 0 && state.playlistA.length === 0 && state.playlistB.length === 0) {
+                unassignedList.innerHTML = '<p class="empty-msg">Vacio</p>';
+            }
+            state.unassigned.forEach((item) => {
+                const div = document.createElement('div');
+                div.className = 'unassigned-item';
+                div.innerHTML = `
+                    <span class="text-wrap-break" title="${item.name}">${item.name}</span>
+                    <div class="unassigned-btns">
+                        <button onclick="moveTo('A', '${item.id}')" class="btn-move-a">A</button>
+                        <button onclick="moveTo('B', '${item.id}')" class="btn-move-b">B</button>
+                    </div>
+                `;
+                unassignedList.appendChild(div);
+            });
+
+            listA.innerHTML = state.playlistA.map((item, i) => {
+                const activeClass = state.deckA.currentIndex === i ? 'active-a' : 'bg-a-dim';
+                return `<div class="playlist-item ${activeClass}">
+                    <span class="text-wrap-break" onclick="loadDeck('A', ${i})" title="Cargar pista en el Deck">${i+1}. ${item.name}</span>
+                    <button onclick="removeFrom('A', '${item.id}')" class="btn-remove">×</button>
+                </div>`;
+            }).join('');
+            
+            listB.innerHTML = state.playlistB.map((item, i) => {
+                const activeClass = state.deckB.currentIndex === i ? 'active-b' : 'bg-b-dim';
+                return `<div class="playlist-item ${activeClass}">
+                    <span class="text-wrap-break" onclick="loadDeck('B', ${i})" title="Cargar pista en el Deck">${i+1}. ${item.name}</span>
+                    <button onclick="removeFrom('B', '${item.id}')" class="btn-remove">×</button>
+                </div>`;
+            }).join('');
+        }
+
+        window.moveTo = (target, id) => {
+            const index = state.unassigned.findIndex(i => i.id === id);
+            const item = state.unassigned.splice(index, 1)[0];
+            if (target === 'A') {
+                state.playlistA.push(item);
+                if (state.deckA.currentIndex === -1) loadDeck('A', 0);
+            } else {
+                state.playlistB.push(item);
+                if (state.deckB.currentIndex === -1) loadDeck('B', 0);
+            }
+            renderLists();
+        };
+
+        window.removeFrom = (target, id) => {
+            const list = target === 'A' ? state.playlistA : state.playlistB;
+            const index = list.findIndex(i => i.id === id);
+            const item = list.splice(index, 1)[0];
+            state.unassigned.push(item);
+            renderLists();
+        }
+
+        // --- AUDIO Y NAVEGACIÓN ---
+        async function loadDeck(type, index) {
+            const deck = type === 'A' ? state.deckA : state.deckB;
+            const playlist = type === 'A' ? state.playlistA : state.playlistB;
+            if (!playlist[index]) return;
+            
+            stopDeck(type, true);
+            const item = playlist[index];
+            deck.currentIndex = index;
+            deck.info = item;
+            deck.pausedAt = 0;
+            document.getElementById(`info${type}`).innerText = item.name;
+
+            const arrayBuffer = await item.file.arrayBuffer();
+            deck.buffer = await audioCtx.decodeAudioData(arrayBuffer);
+            drawWaveform(type, deck.buffer);
+            renderLists();
+        }
+
+        function playDeck(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const otherType = type === 'A' ? 'B' : 'A';
+            stopDeck(otherType, false); // Apaga el otro deck
+
+            const deck = type === 'A' ? state.deckA : state.deckB;
+            if (!deck.buffer) return;
+            if (deck.playing) return;
+
+            const source = audioCtx.createBufferSource();
+            source.buffer = deck.buffer;
+            source.connect(deck.gain);
+            const offset = deck.pausedAt % deck.buffer.duration;
+            source.start(0, offset);
+            
+            deck.source = source;
+            deck.startTime = audioCtx.currentTime - offset;
+            deck.playing = true;
+            
+            document.getElementById(`deck${type}-container`).classList.add(type === 'A' ? 'deck-active' : 'deck-active-b');
+            
+            source.onended = () => {
+                if (deck.playing) {
+                    deck.playing = false;
+                    deck.pausedAt = 0;
+                    
+                    // Lógica de alternancia cruzada: 1A -> 1B -> 2A -> 2B
+                    if (type === 'A') {
+                        if (state.playlistB.length > deck.currentIndex) {
+                            loadDeck('B', deck.currentIndex).then(() => playDeck('B'));
+                        } else {
+                            nextTrack('A');
+                        }
+                    } else {
+                        const nextIndex = deck.currentIndex + 1;
+                        if (state.playlistA.length > nextIndex) {
+                            loadDeck('A', nextIndex).then(() => playDeck('A'));
+                        } else if (state.playlistA.length > 0) {
+                            loadDeck('A', 0).then(() => playDeck('A'));
+                        }
+                    }
+                }
+            };
+        }
+
+        function pauseDeck(type) {
+            const deck = type === 'A' ? state.deckA : state.deckB;
+            if (deck.source && deck.playing) {
+                deck.pausedAt = audioCtx.currentTime - deck.startTime;
+                deck.source.onended = null;
+                deck.source.stop();
+                deck.source = null;
+                deck.playing = false;
+                document.getElementById(`deck${type}-container`).classList.remove('deck-active', 'deck-active-b');
+            }
+        }
+
+        function stopDeck(type, resetProgress = true) {
+            pauseDeck(type);
+            if (resetProgress) {
+                const deck = type === 'A' ? state.deckA : state.deckB;
+                deck.pausedAt = 0;
+                document.getElementById(`cursor${type}`).style.left = '0%';
+            }
+        }
+
+        window.nextTrack = (type) => {
+            const playlist = type === 'A' ? state.playlistA : state.playlistB;
+            const deck = type === 'A' ? state.deckA : state.deckB;
+            let nextIndex = deck.currentIndex + 1;
+            
+            if (nextIndex >= playlist.length) {
+                nextIndex = 0;
+            }
+            if (playlist.length > 0) {
+                loadDeck(type, nextIndex).then(() => playDeck(type));
+            }
+        };
+
+        window.prevTrack = (type) => {
+            const deck = type === 'A' ? state.deckA : state.deckB;
+            const playlist = type === 'A' ? state.playlistA : state.playlistB;
+            let prevIndex = deck.currentIndex - 1;
+            if (prevIndex < 0) prevIndex = playlist.length - 1;
+            if (playlist.length > 0) {
+                loadDeck(type, prevIndex).then(() => playDeck(type));
+            }
+        };
+
+        window.resetVol = (target) => {
+            if (target === 'A') {
+                state.deckA.gain.gain.value = 1.0;
+                document.getElementById('volA').value = 1.0;
+            } else if (target === 'B') {
+                state.deckB.gain.gain.value = 1.0;
+                document.getElementById('volB').value = 1.0;
+            } else if (target === 'Master') {
+                masterGainNode.gain.value = 1.0;
+                document.getElementById('masterGain').value = 1.0;
+                document.getElementById('masterValue').innerText = '1.0';
+            }
+        };
+
+        // --- VISUALIZACIÓN ---
+        function drawWaveform(type, buffer) {
+            const canvas = document.getElementById(`canvas${type}`);
+            const ctx = canvas.getContext('2d');
+            const zoom = parseFloat(document.getElementById(`zoom${type}`).value);
+            const width = canvas.width = canvas.offsetWidth;
+            const height = canvas.height = canvas.offsetHeight;
+            const data = buffer.getChannelData(0);
+            const step = Math.ceil(data.length / (width * zoom));
+            const amp = height / 2;
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = type === 'A' ? '#3b82f6' : '#22c55e';
+            for (let i = 0; i < width; i++) {
+                let min = 1.0; let max = -1.0;
+                for (let j = 0; j < step; j++) {
+                    const datum = data[(i * step) + j];
+                    if (datum < min) min = datum;
+                    if (datum > max) max = datum;
+                }
+                ctx.fillRect(i, (1 + min) * amp, 1, Math.max(1, (max - min) * amp));
+            }
+        }
+
+        function setupWaveformEvents(type) {
+            const container = document.getElementById(`container${type}`);
+            const cursor = document.getElementById(`cursor${type}`);
+            const updateSeek = (e) => {
+                const deck = type === 'A' ? state.deckA : state.deckB;
+                if (!deck.buffer) return;
+                const rect = container.getBoundingClientRect();
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const x = clientX - rect.left;
+                const percent = Math.max(0, Math.min(1, x / rect.width));
+                cursor.style.left = (percent * 100) + '%';
+                const newTime = percent * deck.buffer.duration;
+                if (deck.playing) {
+                    stopDeck(type, false);
+                    deck.pausedAt = newTime;
+                    playDeck(type);
+                } else {
+                    deck.pausedAt = newTime;
+                }
+            };
+            container.onmousedown = (e) => { container._isDragging = true; updateSeek(e); };
+            window.addEventListener('mousemove', (e) => { if (container._isDragging) updateSeek(e); });
+            window.addEventListener('mouseup', () => container._isDragging = false);
+            container.ontouchstart = (e) => { container._isDragging = true; updateSeek(e); };
+            container.ontouchmove = (e) => { if (container._isDragging) { e.preventDefault(); updateSeek(e); } };
+            container.ontouchend = () => container._isDragging = false;
+        }
+
+        function updateCursors() {
+            ['A', 'B'].forEach(type => {
+                const deck = type === 'A' ? state.deckA : state.deckB;
+                if (deck.playing && deck.buffer) {
+                    const currentTime = (audioCtx.currentTime - deck.startTime) % deck.buffer.duration;
+                    const percent = (currentTime / deck.buffer.duration) * 100;
+                    document.getElementById(`cursor${type}`).style.left = percent + '%';
+                }
+            });
+            requestAnimationFrame(updateCursors);
+        }
+
+        // --- EVENT LISTENERS ---
+        document.getElementById('volA').oninput = (e) => state.deckA.gain.gain.value = e.target.value;
+        document.getElementById('volB').oninput = (e) => state.deckB.gain.gain.value = e.target.value;
+        document.getElementById('masterGain').oninput = (e) => {
+            const v = parseFloat(e.target.value);
+            masterGainNode.gain.value = v;
+            document.getElementById('masterValue').innerText = v.toFixed(1);
+        };
+        document.getElementById('zoomA').oninput = () => state.deckA.buffer && drawWaveform('A', state.deckA.buffer);
+        document.getElementById('zoomB').oninput = () => state.deckB.buffer && drawWaveform('B', state.deckB.buffer);
+
+        function showMsg(txt) {
+            const box = document.getElementById('msgBox');
+            box.innerText = txt; 
+            box.classList.add('show');
+            setTimeout(() => box.classList.remove('show'), 2000);
+        }
+
+        setupWaveformEvents('A');
+        setupWaveformEvents('B');
+        updateCursors();
+        window.onresize = () => {
+            state.deckA.buffer && drawWaveform('A', state.deckA.buffer);
+            state.deckB.buffer && drawWaveform('B', state.deckB.buffer);
+        };
+    </script>
+</body>
+</html>
