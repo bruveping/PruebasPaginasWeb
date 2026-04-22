@@ -66,6 +66,8 @@ navegador_mosaico_liviano_2026_4_14 [navegador_mosaico_liviano_2026_4_14](https:
 
 explorar_OSM_leaflet [explorar_OSM_leaflet](https://bruveping.github.io/PruebasPaginasWeb/explorar_OSM_leaflet/)
 
+DJdispositivo [DJdispositivo](https://bruveping.github.io/PruebasPaginasWeb/DJdispositivo/)
+
 
 
 
