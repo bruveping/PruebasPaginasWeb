@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contador de Sílabas Simplificado</title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            background-color: #fcfbf9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h2 {
+            font-size: 18px;
+            color: #8c5a4c;
+            margin-top: 0;
+        }
+
+        textarea {
+            flex: 1;
+            padding: 15px;
+            font-family: 'Georgia', serif;
+            font-size: 16px;
+            line-height: 1.6;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+            outline: none;
+        }
+
+        #resultado {
+            flex: 1;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+
+        /* Estilo para los párrafos de salida */
+        #resultado p {
+            margin: 0;
+            line-height: 1.6;
+            font-size: 16px;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .conteo {
+            color: #8c5a4c;
+            font-weight: bold;
+            display: inline-block;
+            width: 40px;
+        }
+
+        .etiqueta {
+            color: #888;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="panel">
+        <h2>1. Escribe aquí tu poema</h2>
+        <textarea id="poema" placeholder="Escribe tus versos aquí...&#10;[verso]&#10;La luna brillante me mira..."></textarea>
+    </div>
+
+    <div class="panel">
+        <h2>2. Conteo de sílabas</h2>
+        <div id="resultado">
+            </div>
+    </div>
+
+    <script>
+        const textarea = document.getElementById('poema');
+        const resultadoDiv = document.getElementById('resultado');
+
+        function esVocal(c) {
+            return /[aeiouáéíóúü]/i.test(c);
+        }
+
+        function ajusteMetrico(palabra) {
+            palabra = palabra.replace(/[^a-záéíóúüñ]/gi, '').toLowerCase();
+            if (!palabra) return 0;
+
+            let indexAcento = -1;
+            for (let i = palabra.length - 1; i >= 0; i--) {
+                if ("áéíóú".includes(palabra[i])) {
+                    indexAcento = i;
+                    break;
+                }
+            }
+
+            let silabasMatch = palabra.match(/[aeiouáéíóúü]+/g);
+            let numSilabas = silabasMatch ? silabasMatch.length : 0;
+            
+            if (numSilabas <= 1) return 1; // Monosílabos suman 1
+
+            if (indexAcento !== -1) {
+                let textoDespues = palabra.substring(indexAcento + 1);
+                let vocalesDespues = textoDespues.match(/[aeiouáéíóúü]+/g);
+                let cuentaDespues = vocalesDespues ? vocalesDespues.length : 0;
+
+                if (cuentaDespues === 0) return 1; // Aguda
+                if (cuentaDespues === 1) return 0; // Llana
+                if (cuentaDespues >= 2) return -1; // Esdrújula
+            } else {
+                let ultimaLetra = palabra[palabra.length - 1];
+                if (['n', 's', 'a', 'e', 'i', 'o', 'u'].includes(ultimaLetra)) {
+                    return 0; // Llana
+                } else {
+                    return 1; // Aguda
+                }
+            }
+            return 0;
+        }
+
+        function contarSilabas(linea) {
+            let limpia = linea.trim().toLowerCase();
+            
+            // Limpiar puntuación
+            limpia = limpia.replace(/[.,:;?!¡¿"()\-]/g, ' ');
+            let palabras = limpia.split(/\s+/).filter(p => p.length > 0);
+            if (palabras.length === 0) return 0;
+
+            let totalSilabas = 0;
+
+            for (let i = 0; i < palabras.length; i++) {
+                let palabra = palabras[i];
+                let silabasPalabra = 0;
+
+                let gruposVocales = palabra.match(/[aeiouáéíóúü]+/g);
+                if (gruposVocales) {
+                    for (let v of gruposVocales) {
+                        let silabasGrupo = 1;
+                        for (let j = 0; j < v.length - 1; j++) {
+                            if (/[aeoáéíóú]/.test(v[j]) && /[aeoáéíóú]/.test(v[j+1])) {
+                                silabasGrupo++;
+                            }
+                        }
+                        silabasPalabra += silabasGrupo;
+                    }
+                }
+                totalSilabas += silabasPalabra;
+
+                if (i > 0) {
+                    let palabraAnterior = palabras[i-1];
+                    let ultimaLetraAnt = palabraAnterior[palabraAnterior.length - 1];
+                    let primeraLetraAct = (palabra[0] === 'h' && palabra.length > 1) ? palabra[1] : palabra[0];
+                    let esYVocalica = (palabra === 'y');
+
+                    if (esVocal(ultimaLetraAnt) && (esVocal(primeraLetraAct) || esYVocalica)) {
+                        totalSilabas--; 
+                    }
+                }
+            }
+
+            totalSilabas += ajusteMetrico(palabras[palabras.length - 1]);
+            return totalSilabas;
+        }
+
+        // Actualizar el HTML en tiempo real
+        textarea.addEventListener('input', () => {
+            const lineas = textarea.value.split('\n');
+            let htmlSalida = '';
+
+            lineas.forEach(linea => {
+                let lineaTrim = linea.trim();
+                
+                // Si está vacía, ponemos un salto de línea invisible para mantener la estructura
+                if (lineaTrim === '') {
+                    htmlSalida += `<p><br></p>`;
+                } 
+                // Si es una etiqueta entre corchetes, la ignoramos en el conteo
+                else if (/^\[.*\]$/.test(lineaTrim)) {
+                    htmlSalida += `<p><span class="conteo">—</span> <span class="etiqueta">${linea}</span></p>`;
+                } 
+                // Si es un verso normal, lo contamos
+                else {
+                    let conteo = contarSilabas(linea);
+                    htmlSalida += `<p><span class="conteo">${conteo}</span> ${linea}</p>`;
+                }
+            });
+
+            resultadoDiv.innerHTML = htmlSalida;
+        });
+
+        // Disparar evento inicial para que no esté vacío si recargas la página
+        textarea.dispatchEvent(new Event('input'));
+    </script>
+</body>
+</html>
