@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marp Live Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+
+    <!-- Motor Marp -->
+    <script src="https://cdn.jsdelivr.net/npm/@marp-team/marp-core@3.4.0/lib/marp-core.browser.js"></script>
+    <!-- Captura de slides como imagen -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Generación de PPTX -->
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-deep:    #07080f;
+            --bg-mid:     #0d0e1a;
+            --bg-surface: #11121f;
+            --bg-panel:   #161726;
+            --border:     #1e2035;
+            --border-hi:  #2a2c48;
+            --accent:     #e0416a;
+            --accent-dim: rgba(224,65,106,.15);
+            --accent-glow:rgba(224,65,106,.35);
+            --green:      #3de8a0;
+            --amber:      #f5a623;
+            --text-1:     #e8eaf6;
+            --text-2:     #9094b8;
+            --text-3:     #4a4e72;
+            --font-ui:    'Space Grotesk', sans-serif;
+            --font-mono:  'JetBrains Mono', monospace;
+            --font-brand: 'Syne', sans-serif;
+        }
+
+        html, body { height: 100%; overflow: hidden; }
+
+        body {
+            font-family: var(--font-ui);
+            background: var(--bg-deep);
+            color: var(--text-1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-deep); }
+        ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+
+        /* ── Header ── */
+        #header {
+            height: 52px;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            gap: 12px;
+        }
+
+        .brand {
+            font-family: var(--font-brand);
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--text-1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .brand-dot {
+            display: inline-block;
+            width: 8px; height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-glow);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%,100% { box-shadow: 0 0 8px var(--accent-glow); }
+            50%      { box-shadow: 0 0 18px var(--accent-glow), 0 0 30px var(--accent-dim); }
+        }
+
+        .badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid var(--accent-glow);
+            border-radius: 4px;
+            padding: 1px 6px;
+        }
+
+        .header-right { display: flex; align-items: center; gap: 8px; }
+
+        #status-info {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-3);
+            margin-right: 4px;
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 500;
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border-hi);
+            background: var(--bg-panel);
+            color: var(--text-2);
+            cursor: pointer;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .btn:hover { border-color: var(--border-hi); background: var(--bg-mid); color: var(--text-1); }
+        .btn svg { flex-shrink: 0; }
+
+        .btn-accent {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+            font-weight: 700;
+        }
+        .btn-accent:hover { background: #f0506f; border-color: #f0506f; color: #fff; }
+
+        .btn-accent.loading {
+            background: #5c1a2b;
+            border-color: #5c1a2b;
+            color: #e88;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* ── Status bar ── */
+        #statusbar {
+            height: 24px;
+            background: var(--bg-deep);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .statusbar-left, .statusbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .status-item {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-3);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .status-item.active { color: var(--green); }
+        .status-item.warn   { color: var(--amber); }
+
+        /* ── Main layout ── */
+        #workspace {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ── Editor pane ── */
+        #editor-pane {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+        }
+
+        .pane-header {
+            height: 32px;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .pane-label {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: .1em;
+        }
+
+        #markdown-input {
+            flex: 1;
+            width: 100%;
+            padding: 20px 24px;
+            background: var(--bg-deep);
+            color: var(--text-1);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.7;
+            border: none;
+            resize: none;
+            outline: none;
+            tab-size: 2;
+        }
+        #markdown-input::placeholder { color: var(--text-3); }
+
+        /* ── Preview pane ── */
+        #preview-pane {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-mid);
+        }
+
+        .preview-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-btn {
+            width: 20px; height: 20px;
+            background: var(--bg-deep);
+            border: 1px solid var(--border-hi);
+            border-radius: 4px;
+            color: var(--text-2);
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .15s;
+        }
+        .nav-btn:hover { color: var(--text-1); border-color: var(--accent); }
+        #slide-nav-label {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-3);
+            min-width: 40px;
+            text-align: center;
+        }
+
+        #marp-preview {
+            flex: 1;
+            border: none;
+            background: #1a1b2e;
+        }
+
+        /* ── Hidden render container ── */
+        #render-offscreen {
+            position: fixed;
+            top: 0;
+            left: -9999px;
+            width: 1280px;
+            height: 720px;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-hi);
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity .25s, transform .25s;
+            pointer-events: none;
+            z-index: 9999;
+            max-width: 340px;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); }
+        .toast-icon { font-size: 14px; }
+
+        /* ── Progress overlay ── */
+        #progress-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(7,8,15,.75);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+        #progress-overlay.show { display: flex; }
+        .progress-box {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-hi);
+            border-radius: 12px;
+            padding: 28px 36px;
+            text-align: center;
+            min-width: 280px;
+        }
+        .progress-title {
+            font-family: var(--font-brand);
+            font-size: 16px;
+            color: var(--text-1);
+            margin-bottom: 8px;
+        }
+        .progress-sub {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-2);
+            margin-bottom: 20px;
+        }
+        .progress-track {
+            width: 100%;
+            height: 4px;
+            background: var(--bg-deep);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: width .3s;
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+        .progress-count {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-3);
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Header ── -->
+    <header id="header">
+        <div class="brand">
+            <span class="brand-dot"></span>
+            Marp Studio
+            <span class="badge">v3.0</span>
+        </div>
+        <div class="header-right">
+            <span id="status-info">Iniciando motor…</span>
+            <button class="btn" id="btn-theme" title="Cambiar tema Marp">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                Tema
+            </button>
+            <button class="btn" id="btn-html">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                HTML
+            </button>
+            <button class="btn btn-accent" id="btn-pptx">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                Exportar PPTX
+            </button>
+        </div>
+    </header>
+
+    <!-- ── Status bar ── -->
+    <div id="statusbar">
+        <div class="statusbar-left">
+            <span class="status-item" id="st-engine">
+                <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>
+                Cargando motor
+            </span>
+            <span class="status-item" id="st-slides">Slides: —</span>
+            <span class="status-item" id="st-theme">Tema: —</span>
+        </div>
+        <div class="statusbar-right">
+            <span class="status-item" id="st-msg"></span>
+        </div>
+    </div>
+
+    <!-- ── Workspace ── -->
+    <main id="workspace">
+
+        <!-- Editor -->
+        <div id="editor-pane">
+            <div class="pane-header">
+                <span class="pane-label">Markdown · Marp</span>
+                <span class="pane-label" id="char-count">0 chars</span>
+            </div>
+            <textarea id="markdown-input" spellcheck="false" placeholder="Escribe tu presentación aquí…"></textarea>
+        </div>
+
+        <!-- Preview -->
+        <div id="preview-pane">
+            <div class="pane-header">
+                <span class="pane-label">Vista previa</span>
+                <div class="preview-nav">
+                    <button class="nav-btn" id="btn-prev">◀</button>
+                    <span id="slide-nav-label">— / —</span>
+                    <button class="nav-btn" id="btn-next">▶</button>
+                </div>
+            </div>
+            <iframe id="marp-preview" sandbox="allow-same-origin"></iframe>
+        </div>
+
+    </main>
+
+    <!-- Hidden offscreen rendering target for html2canvas -->
+    <div id="render-offscreen"></div>
+
+    <!-- Progress overlay -->
+    <div id="progress-overlay">
+        <div class="progress-box">
+            <div class="progress-title">Generando PPTX</div>
+            <div class="progress-sub" id="progress-sub">Renderizando slides…</div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+            </div>
+            <div class="progress-count" id="progress-count">0 / 0</div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast">
+        <span class="toast-icon" id="toast-icon">✓</span>
+        <span id="toast-msg"></span>
+    </div>
+
+    <script>
+    // ─── Utilidades UI ────────────────────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg, type = 'ok') {
+        const t = document.getElementById('toast');
+        document.getElementById('toast-msg').textContent = msg;
+        document.getElementById('toast-icon').textContent = type === 'ok' ? '✓' : type === 'warn' ? '⚠' : '✕';
+        t.style.borderColor = type === 'ok' ? '#3de8a0' : type === 'warn' ? '#f5a623' : '#e0416a';
+        t.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    function setStatus(msg) { document.getElementById('st-msg').textContent = msg; }
+
+    function setProgress(current, total) {
+        const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('progress-count').textContent = `${current} / ${total}`;
+        document.getElementById('progress-sub').textContent = current < total
+            ? `Renderizando slide ${current + 1} de ${total}…`
+            : 'Escribiendo archivo…';
+    }
+
+    // ─── Estado global ────────────────────────────────────────────────────────
+    const THEMES = ['default', 'gaia', 'uncover'];
+    let themeIdx = 0;
+    let engine   = null;
+    let slideCount = 0;
+    let navIdx     = 0;
+    let lastCss    = '';
+    let lastHtml   = '';
+
+    // ─── Plantilla por defecto ────────────────────────────────────────────────
+    const DEFAULT_MD = `---
+marp: true
+theme: default
+paginate: true
+---
+
+# Bienvenido a Marp Studio
+## Presentaciones en Markdown
+
+Edita en la izquierda · Previsualiza a la derecha
+
+---
+
+# Slide 2 · Listas
+
+- ✅ Exporta a **PPTX** con un clic
+- ✅ Exporta a **HTML** estático
+- ✅ Tres temas: default, gaia, uncover
+- ✅ Previsualización en tiempo real
+
+---
+
+# Slide 3 · Código
+
+\`\`\`javascript
+const marp = new Marp({ container: false });
+const { html, css } = marp.render(markdown);
+console.log("¡Listo!");
+\`\`\`
+
+> Escribe tus slides en **Markdown** estándar
+
+---
+
+# Slide 4 · Tipografía
+
+Texto **negrita**, _cursiva_, ~~tachado~~
+
+Usa \`---\` para separar slides
+
+Agrega \`<!-- _class: lead -->\` para centrar contenido
+
+---
+
+<!-- _class: lead -->
+
+# Fin
+
+**¡Exporta tu presentación ahora!**
+`;
+
+    // ─── Inicialización del motor Marp ────────────────────────────────────────
+    function initMarp() {
+        const core = window.marpCore
+                  || window.MarpCore
+                  || (typeof marpCore !== 'undefined' ? marpCore : null);
+
+        if (!core?.Marp) {
+            setTimeout(initMarp, 200);
+            return;
+        }
+
+        engine = new core.Marp({ container: false, html: true });
+
+        const input   = document.getElementById('markdown-input');
+        const preview = document.getElementById('marp-preview');
+
+        // ── Render ──────────────────────────────────────────────────
+        function render() {
+            if (!engine) return;
+            try {
+                const { html, css } = engine.render(input.value);
+                lastHtml = html;
+                lastCss  = css;
+
+                // Contar slides
+                const tmp = new DOMParser().parseFromString(
+                    `<body>${html}</body>`, 'text/html'
+                );
+                slideCount = tmp.querySelectorAll('section').length;
+                navIdx = Math.min(navIdx, Math.max(0, slideCount - 1));
+
+                // Actualizar statusbar
+                document.getElementById('st-slides').textContent = `Slides: ${slideCount}`;
+                const tm = input.value.match(/theme:\s*(\S+)/);
+                document.getElementById('st-theme').textContent  = `Tema: ${tm ? tm[1] : 'default'}`;
+                document.getElementById('char-count').textContent = `${input.value.length} chars`;
+                updateNavLabel();
+
+                // Preview: todos los slides apilados, escalados al ancho
+                preview.srcdoc = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+${css}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 16px; background: #1a1b2e; display: flex; flex-direction: column; gap: 16px; align-items: center; }
+section {
+    display: block !important;
+    box-shadow: 0 4px 24px rgba(0,0,0,.6);
+    border-radius: 4px;
+    max-width: 100%;
+    transform-origin: top center;
+}
+</style>
+</head>
+<body>${html}</body>
+</html>`;
+
+            } catch (e) {
+                setStatus('⚠ Error al renderizar: ' + e.message);
+            }
+        }
+
+        function updateNavLabel() {
+            document.getElementById('slide-nav-label').textContent =
+                slideCount > 0 ? `${navIdx + 1} / ${slideCount}` : '— / —';
+        }
+
+        // ── Tema ────────────────────────────────────────────────────
+        document.getElementById('btn-theme').onclick = () => {
+            themeIdx = (themeIdx + 1) % THEMES.length;
+            const theme = THEMES[themeIdx];
+            if (/^theme:\s*\S+/m.test(input.value)) {
+                input.value = input.value.replace(/^(theme:\s*)\S+/m, `$1${theme}`);
+            } else if (input.value.startsWith('---')) {
+                const end = input.value.indexOf('\n---', 3);
+                if (end !== -1) {
+                    input.value = input.value.slice(0, end) + `\ntheme: ${theme}` + input.value.slice(end);
+                }
+            }
+            render();
+            showToast(`Tema: ${theme}`, 'warn');
+        };
+
+        // ── Nav ─────────────────────────────────────────────────────
+        document.getElementById('btn-prev').onclick = () => {
+            if (navIdx > 0) { navIdx--; updateNavLabel(); }
+        };
+        document.getElementById('btn-next').onclick = () => {
+            if (navIdx < slideCount - 1) { navIdx++; updateNavLabel(); }
+        };
+
+        // ── Exportar HTML ───────────────────────────────────────────
+        document.getElementById('btn-html').onclick = () => {
+            if (!lastHtml) { showToast('Nada para exportar', 'err'); return; }
+            const content = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presentación Marp</title>
+<style>
+${lastCss}
+body { margin: 0; background: #111; display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 24px; }
+section { box-shadow: 0 4px 24px rgba(0,0,0,.5); }
+</style>
+</head>
+<body>${lastHtml}</body>
+</html>`;
+            download('presentacion.html', content, 'text/html');
+            showToast('HTML exportado ✓');
+        };
+
+        // ── Exportar PPTX ───────────────────────────────────────────
+        document.getElementById('btn-pptx').onclick = exportPptx;
+
+        // ── Inicio ──────────────────────────────────────────────────
+        input.value = DEFAULT_MD;
+        input.addEventListener('input', render);
+        render();
+
+        const stEngine = document.getElementById('st-engine');
+        stEngine.textContent = 'Motor listo';
+        stEngine.classList.add('active');
+        document.getElementById('status-info').textContent = 'Motor Marp activo';
+        setStatus('');
+    }
+
+    // ─── Exportar a PPTX ──────────────────────────────────────────────────────
+    async function exportPptx() {
+        if (!engine || slideCount === 0) {
+            showToast('No hay slides que exportar', 'err');
+            return;
+        }
+
+        const btn = document.getElementById('btn-pptx');
+        btn.classList.add('loading');
+        btn.textContent = 'Generando…';
+
+        const overlay = document.getElementById('progress-overlay');
+        overlay.classList.add('show');
+        setProgress(0, slideCount);
+
+        try {
+            const input  = document.getElementById('markdown-input');
+            const { html, css } = engine.render(input.value);
+
+            // Parsear sections
+            const tmpDoc   = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+            const sections = Array.from(tmpDoc.querySelectorAll('section'));
+
+            if (sections.length === 0) throw new Error('No se encontraron secciones');
+
+            const container = document.getElementById('render-offscreen');
+            const pptx = new PptxGenJS();
+            pptx.layout  = 'LAYOUT_16x9';
+            pptx.title   = 'Presentación Marp';
+            pptx.subject = 'Exportado desde Marp Studio';
+
+            for (let i = 0; i < sections.length; i++) {
+                setProgress(i, sections.length);
+                setStatus(`Renderizando ${i + 1}/${sections.length}…`);
+
+                // Volcar el CSS + sección en el contenedor offscreen
+                container.innerHTML = `
+                    <style>
+                        ${css}
+                        html, body { margin: 0; padding: 0; background: transparent; }
+                        section { margin: 0 !important; border-radius: 0 !important; }
+                    </style>
+                    <div style="width:1280px;height:720px;overflow:hidden;position:relative;">
+                        ${sections[i].outerHTML}
+                    </div>`;
+
+                // Esperar un frame para que el DOM se pinte
+                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+                await new Promise(r => setTimeout(r, 80));
+
+                const slideDiv = container.querySelector('div');
+                const canvas   = await html2canvas(slideDiv, {
+                    width:  1280,
+                    height: 720,
+                    scale:  1.5,          // mayor resolución
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: null,
+                    logging: false,
+                    imageTimeout: 8000
+                });
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.93);
+                const slide   = pptx.addSlide();
+                slide.addImage({ data: imgData, x: 0, y: 0, w: '100%', h: '100%' });
+            }
+
+            container.innerHTML = '';
+            setProgress(sections.length, sections.length);
+            setStatus('Escribiendo PPTX…');
+
+            await pptx.writeFile({ fileName: 'presentacion.pptx' });
+
+            showToast(`PPTX listo · ${sections.length} slides`);
+            setStatus(`Exportado: ${sections.length} slides`);
+
+        } catch (err) {
+            console.error('[PPTX]', err);
+            showToast('Error: ' + err.message, 'err');
+            setStatus('Error en exportación');
+        } finally {
+            overlay.classList.remove('show');
+            btn.classList.remove('loading');
+            btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> Exportar PPTX`;
+        }
+    }
+
+    // ─── Descarga genérica ────────────────────────────────────────────────────
+    function download(filename, content, mimeType) {
+        const blob = new Blob([content], { type: mimeType });
+        const a    = document.createElement('a');
+        a.href     = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    }
+
+    // ─── Arranque ─────────────────────────────────────────────────────────────
+    window.addEventListener('load', initMarp);
+    </script>
+</body>
+</html>
