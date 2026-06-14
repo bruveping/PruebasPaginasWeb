@@ -35,6 +35,10 @@ midi_a_cifrado [midi_a_cifrado](https://bruveping.github.io/PruebasPaginasWeb/mi
 
 explorador_de_cadencias_2026 [explorador_de_cadencias_2026](https://bruveping.github.io/PruebasPaginasWeb/explorador_de_cadencias_2026/)
 
+bloquear_Texto_Alinear_justificado [bloquear_Texto_Alinear_justificado](https://bruveping.github.io/PruebasPaginasWeb/bloquear_Texto_Alinear_justificado/)
+
+
+
 miniaturas_de_acordes_teclado [miniaturas_de_acordes_teclado](https://bruveping.github.io/PruebasPaginasWeb/miniaturas_de_acordes_teclado/)
 
 sintetizador_modular [sintetizador_modular](https://bruveping.github.io/PruebasPaginasWeb/sintetizador_modular/sintetizador_modular00.html)
