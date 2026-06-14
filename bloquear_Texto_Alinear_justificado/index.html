@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diseñador de Pósters en Bloque</title>
+  
+  <!-- Tailwind CSS para diseño de interfaz premium -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- p5.js Core -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+
+  <style>
+    /* Estilos personalizados para scrollbar de la UI */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1f2937;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #4b5563;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #6b7280;
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col lg:flex-row font-sans">
+
+  <!-- Panel Izquierdo: Controles -->
+  <aside class="w-full lg:w-[400px] bg-zinc-900 border-b lg:border-b-0 lg:border-r border-zinc-800 p-6 flex flex-col justify-between shrink-0">
+    <div class="space-y-6">
+      <!-- Encabezado de la App -->
+      <div>
+        <div class="flex items-center space-x-2 text-amber-500 mb-1">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          <span class="text-xs font-bold uppercase tracking-widest">Herramienta Creativa</span>
+        </div>
+        <h1 class="text-2xl font-black tracking-tight text-white">BLOCK TYPE POSTER</h1>
+        <p class="text-xs text-zinc-400 mt-1">Generador tipográfico proporcional sin deformación.</p>
+      </div>
+
+      <hr class="border-zinc-800" />
+
+      <!-- Control 1: Buscador e Selector de Tipografías -->
+      <div class="space-y-2">
+        <label class="block text-xs font-bold uppercase tracking-wider text-zinc-300">1. Seleccionar Tipografía</label>
+        
+        <!-- Input de búsqueda -->
+        <div class="relative">
+          <input 
+            id="buscadorFuente" 
+            type="text" 
+            placeholder="Buscar fuente (ej. Arial, Impact, Courier)..." 
+            class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-500 transition-colors"
+          />
+          <span class="absolute right-3 top-2.5 text-zinc-500">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          </span>
+        </div>
+
+        <!-- Selector desplegable -->
+        <select 
+          id="selectorFuente" 
+          class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500 transition-colors"
+        >
+          <!-- Se poblará dinámicamente -->
+        </select>
+        
+        <div id="infoCarga" class="text-[10px] text-zinc-500 font-mono">
+          Detectando tipografías del sistema...
+        </div>
+      </div>
+
+      <!-- Control 2: Área de entrada de Texto -->
+      <div class="space-y-2">
+        <label class="block text-xs font-bold uppercase tracking-wider text-zinc-300">2. Texto del Póster (Mayúsculas automáticas)</label>
+        <textarea 
+          id="areaTexto" 
+          rows="6" 
+          class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-sm font-mono text-zinc-100 focus:outline-none focus:border-amber-500 transition-colors uppercase resize-y"
+          placeholder="ESCRIBE CADA PALABRA EN UN RENGLÓN DIFERENTE"
+        >DO IT
+NOW
+SOMETIMES
+LATER
+BECOMES
+NEVER</textarea>
+        <p class="text-[10px] text-zinc-500">Presioná ENTER para crear nuevas líneas del bloque.</p>
+      </div>
+
+      <!-- Control 3: Ajuste de Interlineado -->
+      <div class="space-y-2">
+        <div class="flex justify-between items-center">
+          <label class="text-xs font-bold uppercase tracking-wider text-zinc-300">3. Interlineado adicional</label>
+          <span id="valorInterlineado" class="text-xs font-mono text-amber-500">3 px</span>
+        </div>
+        <input 
+          id="sliderInterlineado" 
+          type="range" 
+          min="0" 
+          max="40" 
+          value="3" 
+          class="w-full accent-amber-500 cursor-pointer"
+        />
+      </div>
+    </div>
+
+    <!-- Acciones Finales -->
+    <div class="mt-8 space-y-3">
+      <button 
+        id="btnExportar" 
+        class="w-full bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all shadow-lg shadow-amber-500/10 active:scale-95"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        <span>Exportar SVG Editable</span>
+      </button>
+      <div class="text-[10px] text-center text-zinc-600">
+        Compatible con Adobe Illustrator, Inkscape y Figma.
+      </div>
+    </div>
+  </aside>
+
+  <!-- Panel Derecho: Vista Previa Realista -->
+  <main class="flex-1 p-6 flex flex-col items-center justify-center bg-zinc-950 overflow-auto relative">
+    
+    <!-- Decoración de fondo de estudio -->
+    <div class="absolute inset-0 bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:16px_16px] opacity-30 pointer-events-none"></div>
+    
+    <!-- Contenedor del Póster Enmarcado -->
+    <div class="relative bg-zinc-900 p-8 rounded-xl border border-zinc-800 shadow-2xl max-w-full flex flex-col items-center z-10">
+      
+      <!-- Indicador visual superior del marco -->
+      <div class="text-[10px] font-mono tracking-widest text-zinc-500 mb-4 uppercase">
+        Área de diseño — Vista Previa en Vivo
+      </div>
+
+      <!-- El Canvas de p5 se inyectará acá -->
+      <div id="canvas-holder" class="bg-white p-4 shadow-inner rounded border border-zinc-200"></div>
+
+      <!-- Info del formato -->
+      <div id="canvas-dimensions" class="text-[10px] font-mono text-zinc-500 mt-4">
+        Caja: 300px × --px
+      </div>
+    </div>
+  </main>
+
+  <!-- Notificaciones Toasts elegantes estilo Tailwind -->
+  <div id="toast-container" class="fixed top-5 right-5 space-y-2 z-50 pointer-events-none"></div>
+
+  <!-- Lógica Principal de la Aplicación -->
+  <script>
+    // ==========================================
+    // 1. CONFIGURACIÓN Y VARIABLES GLOBALES
+    // ==========================================
+    let lineas = [];
+    let fuentesDisponibles = [];
+    let fuenteActual = "Arial Black";
+    let interlineado = 3;
+    const anchoCaja = 300;
+    const margen = 40;
+
+    let layoutEstable = false;
+    let fuenteCargadaYLista = true;
+
+    // Listado de fuentes candidatas del sistema a analizar
+    const fuentesCandidatas = [
+      "Arial Black", "Impact", "Arial", "Helvetica", "Verdana", "Tahoma", 
+      "Trebuchet MS", "Georgia", "Times New Roman", "Palatino Linotype",
+      "Courier New", "Lucida Console", "Monaco", "Consolas",
+      "Comic Sans MS", "Century Gothic", "Bookman Old Style",
+      "Garamond", "Cambria", "Calibri", "Candara", "Constantia",
+      "Corbel", "Franklin Gothic Medium", "Lucida Sans Unicode",
+      "Segoe UI", "Rockwell", "Copperplate", "Optima", "Baskerville"
+    ];
+
+    // Elementos DOM asignados nativamente para mejor integración
+    const domBuscador = document.getElementById('buscadorFuente');
+    const domSelector = document.getElementById('selectorFuente');
+    const domAreaTexto = document.getElementById('areaTexto');
+    const domSliderInterlineado = document.getElementById('sliderInterlineado');
+    const domValorInterlineado = document.getElementById('valorInterlineado');
+    const domBtnExportar = document.getElementById('btnExportar');
+    const domInfoCarga = document.getElementById('infoCarga');
+    const domCanvasDimensions = document.getElementById('canvas-dimensions');
+
+    // ==========================================
+    // 2. DETECTOR SÍNCRONO DE FUENTES DEL SISTEMA
+    // ==========================================
+    function detectarFuentesSistema() {
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      const textoPrueba = "abcdefghijklmnopqrstuvwxyz0123456789";
+      
+      // Medimos el ancho usando fuentes genéricas de respaldo (fallback)
+      context.font = "72px monospace";
+      const anchoMonospace = context.measureText(textoPrueba).width;
+      context.font = "72px sans-serif";
+      const anchoSansSerif = context.measureText(textoPrueba).width;
+
+      return fuentesCandidatas.filter(fuente => {
+        // Comparamos la tipografía candidata contra monospace
+        context.font = `72px "${fuente}", monospace`;
+        const anchoTestMono = context.measureText(textoPrueba).width;
+        
+        if (anchoTestMono !== anchoMonospace) {
+          return true; // Si es diferente, el navegador cargó la tipografía local
+        }
+
+        // Caso de seguridad: comparamos contra sans-serif
+        context.font = `72px "${fuente}", sans-serif`;
+        const anchoTestSans = context.measureText(textoPrueba).width;
+        return anchoTestSans !== anchoSansSerif;
+      });
+    }
+
+    // ==========================================
+    // 3. ENTRADA DE DATOS E INTERFAZ
+    // ==========================================
+    function inicializarInterfaz() {
+      // 1. Detectar tipografías locales
+      fuentesDisponibles = detectarFuentesSistema();
+      
+      // Si por cuestiones del navegador no detecta ninguna, usamos un fallback asegurado
+      if (fuentesDisponibles.length === 0) {
+        fuentesDisponibles = ["Arial", "Courier New", "Georgia", "Times New Roman"];
+      }
+
+      domInfoCarga.innerText = `${fuentesDisponibles.length} tipografías detectadas en tu computadora.`;
+
+      // 2. Poblar el Select
+      poblarSelect("");
+
+      // 3. Evento buscador
+      domBuscador.addEventListener('input', (e) => {
+        poblarSelect(e.target.value);
+      });
+
+      // 4. Evento cambio de fuente
+      domSelector.addEventListener('change', (e) => {
+        fuenteActual = e.target.value;
+        layoutEstable = false;
+        loop();
+      });
+
+      // 5. Evento cambio de texto
+      domAreaTexto.addEventListener('input', actualizarTexto);
+
+      // 6. Evento slider interlineado
+      domSliderInterlineado.addEventListener('input', (e) => {
+        interlineado = parseInt(e.target.value);
+        domValorInterlineado.innerText = `${interlineado} px`;
+        layoutEstable = false;
+        loop();
+      });
+
+      // 7. Evento exportación
+      domBtnExportar.addEventListener('click', exportarSVG);
+
+      // Carga inicial de texto
+      actualizarTexto();
+    }
+
+    function poblarSelect(filtro) {
+      domSelector.innerHTML = "";
+      const filtradas = fuentesDisponibles.filter(f => 
+        f.toLowerCase().includes(filtro.toLowerCase())
+      );
+
+      filtradas.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f;
+        opt.innerText = f;
+        domSelector.appendChild(opt);
+      });
+
+      // Intentar reasignar o buscar el fallback inicial ("Arial Black" o "Impact")
+      if (filtradas.length > 0) {
+        if (filtradas.includes("Arial Black") && filtro === "") {
+          domSelector.value = "Arial Black";
+        } else if (filtradas.includes("Impact") && filtro === "") {
+          domSelector.value = "Impact";
+        }
+        fuenteActual = domSelector.value;
+      } else {
+        fuenteActual = "sans-serif";
+      }
+      layoutEstable = false;
+      if (typeof loop === 'function') loop();
+    }
+
+    function actualizarTexto() {
+      const textoPlano = domAreaTexto.value;
+      lineas = textoPlano.toUpperCase()
+                         .split('\n')
+                         .map(l => l.trim())
+                         .filter(l => l.length > 0);
+      layoutEstable = false;
+      if (typeof loop === 'function') loop();
+    }
+
+    // Sistema de notificaciones elegante (Toast)
+    function mostrarNotificacion(titulo, mensaje, tipo = "info") {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const colores = {
+        success: "bg-zinc-900 border-emerald-500 text-zinc-100",
+        error: "bg-zinc-900 border-red-500 text-zinc-100",
+        info: "bg-zinc-900 border-amber-500 text-zinc-100"
+      };
+
+      toast.className = `p-4 rounded-lg border-l-4 shadow-xl flex flex-col pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0 max-w-sm ${colores[tipo]}`;
+      toast.innerHTML = `
+        <span class="font-bold text-xs uppercase tracking-wider text-amber-500">${titulo}</span>
+        <span class="text-sm mt-1">${mensaje}</span>
+      `;
+
+      container.appendChild(toast);
+      
+      // Forzar layout para animación
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+
+      // Autodestrucción
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+
+    // ==========================================
+    // 4. LÓGICA DE P5.JS (SKETCH)
+    // ==========================================
+    function setup() {
+      // Inicializar interfaz antes de dibujar
+      inicializarInterfaz();
+
+      let canvas = createCanvas(anchoCaja + margen * 2, 600);
+      canvas.parent('canvas-holder');
+      
+      background(255);
+    }
+
+    function draw() {
+      background(255);
+      
+      let altoTotal = dibujarBloqueTexto(this, margen, margen, anchoCaja);
+
+      if (altoTotal > 0) {
+        // Adaptar el Canvas de p5 dinámicamente al alto proporcional calculado
+        if (height !== altoTotal + margen * 2) {
+          resizeCanvas(width, altoTotal + margen * 2);
+          domCanvasDimensions.innerText = `Caja: ${anchoCaja}px × ${Math.round(altoTotal)}px`;
+        } else {
+          // El diseño se ha asentado perfectamente en dimensiones reales
+          noLoop();
+          layoutEstable = true;
+        }
+      }
+
+      // Caja guía perimetral del póster
+      noFill();
+      stroke(220);
+      strokeWeight(1);
+      rect(margen, margen, anchoCaja, altoTotal);
+    }
+
+    // ==========================================
+    // 5. CÁLCULO TIPOGRÁFICO DE ALTA PRECISIÓN
+    // ==========================================
+    function dibujarBloqueTexto(contexto, x, y, ancho) {
+      if (lineas.length === 0 || !fuenteActual) return 0;
+
+      contexto.push();
+      contexto.fill(0);
+      contexto.noStroke();
+      contexto.textFont(fuenteActual);
+      contexto.textAlign(LEFT, TOP);
+
+      let yActual = y;
+      let medicionesValidas = true;
+
+      for (let linea of lineas) {
+        // Usamos un tamaño de referencia alto para medir con precisión las métricas
+        contexto.textSize(100);
+        let anchoOriginal = contexto.textWidth(linea);
+
+        if (anchoOriginal <= 0) {
+          medicionesValidas = false;
+          anchoOriginal = 10; // Evita división por cero en frames inestables
+        }
+
+        // Escala matemática sin deformación de los vectores
+        let tamañoProporcional = (ancho / anchoOriginal) * 100;
+        contexto.textSize(tamañoProporcional);
+        
+        // Dibujo directo del texto
+        contexto.text(linea, x, yActual);
+
+        // Métrica vertical: 0.74 es el factor de compensación óptimo para sans-serif/impact
+        let altoLinea = tamañoProporcional * 0.74;
+        yActual += altoLinea + interlineado;
+      }
+
+      contexto.pop();
+      
+      if (!medicionesValidas) {
+        fuenteCargadaYLista = false;
+      } else {
+        fuenteCargadaYLista = true;
+      }
+
+      // Devolvemos la altura neta ocupada
+      return (yActual - y) - interlineado;
+    }
+
+    // ==========================================
+    // 6. EXPORTACIÓN A SVG VECTORIAL EDITABLE
+    // ==========================================
+    function exportarSVG() {
+      if (lineas.length === 0) {
+        mostrarNotificacion("Falta contenido", "Escribí algo en el cuadro de texto primero.", "error");
+        return;
+      }
+
+      if (!layoutEstable) {
+        mostrarNotificacion("Espera un momento", "Aún se están calculando las proporciones métricas.", "info");
+        return;
+      }
+
+      // Medimos el layout de forma exacta
+      let layout = [];
+      let yAcumulado = margen;
+
+      push();
+      textFont(fuenteActual);
+      textAlign(LEFT, TOP);
+
+      for (let linea of lineas) {
+        textSize(100);
+        let w = textWidth(linea);
+        if (w <= 0) w = 10;
+        let fs = (anchoCaja / w) * 100;
+        layout.push({ text: linea, x: margen, y: yAcumulado, fontSize: fs });
+        yAcumulado += (fs * 0.74) + interlineado;
+      }
+      pop();
+
+      let altoContenedorTotal = (yAcumulado - interlineado) + margen;
+      let svgWidth = width;
+      let svgHeight = altoContenedorTotal;
+
+      // Construcción manual de un SVG limpio y semántico
+      let svg = `<?xml version="1.0" encoding="utf-8"?>\n`;
+      svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">\n`;
+      
+      // Fondo blanco del póster
+      svg += `  <rect width="100%" height="100%" fill="white"/>\n`;
+
+      // Inyección de elementos <text> reales editables
+      layout.forEach(item => {
+        svg += `  <text x="${item.x}" y="${item.y}" font-family="${escapeXml(fuenteActual)}" font-size="${item.fontSize.toFixed(2)}" font-weight="bold" fill="black" dominant-baseline="hanging">${escapeXml(item.text)}</text>\n`;
+      });
+
+      svg += `</svg>`;
+
+      // Descarga del blob del archivo
+      let blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a');
+      a.href = url;
+      a.download = `poster_bloque_${fuenteActual.toLowerCase().replace(/\s+/g, '_')}.svg`;
+      a.click();
+      
+      // Liberamos recursos de memoria
+      URL.revokeObjectURL(url);
+
+      mostrarNotificacion("¡Éxito!", "Se ha descargado el archivo SVG editable de tu diseño.", "success");
+    }
+
+    // Helper para escapar caracteres problemáticos en XML
+    function escapeXml(unsafe) {
+      return unsafe.replace(/[<>&'"]/g, function (c) {
+        switch (c) {
+          case '<': return '&lt;';
+          case '>': return '&gt;';
+          case '&': return '&amp;';
+          case "'": return '&apos;';
+          case '"': return '&quot;';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
