@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Visor SVG con exportación</title>
+  <style>
+    body { font-family: sans-serif; }
+    #svgContainer {
+      border: 1px solid #ccc;
+      width: 80vw;
+      height: 80vh;
+      overflow: hidden;
+      position: relative;
+    }
+    svg {
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+  </style>
+</head>
+<body>
+  <h2>Cargar y navegar SVG</h2>
+  <input type="file" id="fileInput" accept=".svg">
+  <button id="exportBtn">Exportar a PNG</button>
+  <div id="svgContainer"></div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const svgContainer = document.getElementById('svgContainer');
+    const exportBtn = document.getElementById('exportBtn');
+    let svgElement;
+
+    // Cargar SVG
+    fileInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = evt => {
+        svgContainer.innerHTML = evt.target.result;
+        svgElement = svgContainer.querySelector('svg');
+        // Habilitar zoom y pan
+        enablePanZoom(svgElement);
+      };
+      reader.readAsText(file);
+    });
+
+    // Función de zoom y pan básicos
+    function enablePanZoom(svg) {
+      let isPanning = false;
+      let startX, startY;
+      let viewBox = svg.viewBox.baseVal;
+
+      if (!viewBox || viewBox.width === 0) {
+        const bbox = svg.getBBox();
+        svg.setAttribute("viewBox", `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
+        viewBox = svg.viewBox.baseVal;
+      }
+
+      svg.addEventListener('mousedown', e => {
+        isPanning = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        svg.style.cursor = 'grabbing';
+      });
+
+      svg.addEventListener('mousemove', e => {
+        if (!isPanning) return;
+        const dx = (startX - e.clientX) * (viewBox.width / svg.clientWidth);
+        const dy = (startY - e.clientY) * (viewBox.height / svg.clientHeight);
+        viewBox.x += dx;
+        viewBox.y += dy;
+        startX = e.clientX;
+        startY = e.clientY;
+      });
+
+      svg.addEventListener('mouseup', () => {
+        isPanning = false;
+        svg.style.cursor = 'grab';
+      });
+	svg.addEventListener('wheel', e => {
+	  e.preventDefault();
+
+	  const rect = svg.getBoundingClientRect();
+	  const mouseX = e.clientX - rect.left;
+	  const mouseY = e.clientY - rect.top;
+
+	  // Coordenadas relativas dentro del viewBox
+	  const svgX = viewBox.x + (mouseX / svg.clientWidth) * viewBox.width;
+	  const svgY = viewBox.y + (mouseY / svg.clientHeight) * viewBox.height;
+
+	  const scale = e.deltaY > 0 ? 1.1 : 0.9;
+
+	  // Nuevo tamaño
+	  const newWidth = viewBox.width * scale;
+	  const newHeight = viewBox.height * scale;
+
+	  // Recalcular para que el mouse quede en el mismo lugar relativo
+	  viewBox.x = svgX - (mouseX / svg.clientWidth) * newWidth;
+	  viewBox.y = svgY - (mouseY / svg.clientHeight) * newHeight;
+	  viewBox.width = newWidth;
+	  viewBox.height = newHeight;
+	});
+
+    }
+
+    // Exportar a PNG
+    exportBtn.addEventListener('click', () => {
+      if (!svgElement) return;
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+      const url = URL.createObjectURL(svgBlob);
+
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = svgElement.clientWidth;
+        canvas.height = svgElement.clientHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+
+        const pngUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = 'export.png';
+        link.href = pngUrl;
+        link.click();
+      };
+      img.src = url;
+    });
+  </script>
+</body>
+</html>
